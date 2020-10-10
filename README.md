@@ -1,9 +1,6 @@
 # Generic Python DJango Backend
--------------------------------
 ## Getting started:
--------------------
 ### Virtual Environment Installation:
--------------------------------------
 Install virtual environment wrapper:
 ```
 pip install virtualenvwrapper
@@ -33,7 +30,6 @@ pip3 install -r requirements.txt
 ```
 
 ### Postgresql Database (Ubuntu 18.04):
----------------------------------------
 Install Postgresql database in your system.
 ```
 sudo apt update
@@ -72,7 +68,6 @@ sudo service postgresql restart
 ```
 
 ### DJango Database Settings:
------------------------------
 Update the `DATABASE` variable in `backend/settings.py` as follows:
 ```
 DATABASES = {
@@ -90,7 +85,6 @@ python manage.py migrate
 ```
 
 ### Run DJango Server:
----------------
 ```
 python manage.py runserver
 ```
