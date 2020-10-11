@@ -1,0 +1,22 @@
+{
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.python"
+    },
+    "editor.formatOnSave": true,
+    "python.linting.pylintArgs": [
+        "--max-line-length=80",
+        "--disable=E0401",
+        "--disable=import-error"
+    ],
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4,
+    "editor.detectIndentation": false,
+    "prettier.useTabs": false,
+    "files.trimTrailingWhitespace": true,
+    "editor.rulers": [80],
+    "python.pythonPath": "/home/sai/.virtualenvs/py3/bin/python",
+    "python.linting.pylintEnabled": false,
+    "python.linting.pycodestyleEnabled": true,
+    "python.linting.enabled": true,
+    "prettier.tabWidth": 4
+}
