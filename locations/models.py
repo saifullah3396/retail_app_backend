@@ -1,5 +1,7 @@
 import uuid
 from django.db import models
+from django.contrib.gis.db import models
+from django.contrib.gis.geos import Point
 
 
 class Location(models.Model):
@@ -54,6 +56,13 @@ class Block(models.Model):
 
     # block name
     name = models.CharField(default='Main', max_length=24, blank=True)
+
+    # add image field for block floor map
+    floor_map = models.ImageField(
+        upload_to='maps', blank=True, null=True)
+
+    # local coordinate frame of the block
+    coordinate_frame = models.PointField(default=Point(0, 0))
 
     # location with which this floor is associated
     floor = models.ForeignKey(
