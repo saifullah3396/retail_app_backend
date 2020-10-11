@@ -14,18 +14,46 @@ class LocationDetailView(RetrieveAPIView):
 
 
 class FloorListView(ListAPIView):
-    queryset = Floor.objects.all()
     serializer_class = FloorSerializer
+
+    def get_queryset(self):
+        queryset = Floor.objects.all()
+        location = self.request.query_params.get('location', None)
+        if location is not None:
+            # get the floor number
+            queryset = queryset.filter(location__title=location)
+
+        return queryset
 
 
 class FloorDetailView(RetrieveAPIView):
-    queryset = Floor.objects.all()
     serializer_class = FloorSerializer
+
+    def get_queryset(self):
+        queryset = Floor.objects.all()
+        location = self.request.query_params.get('location', None)
+        if location is not None:
+            # get the floor number
+            queryset = queryset.filter(location__title=location)
+
+        return queryset
 
 
 class BlockListView(ListAPIView):
-    queryset = Block.objects.all()
     serializer_class = BlockSerializer
+
+    def get_queryset(self):
+        queryset = Block.objects.all()
+        location = self.request.query_params.get('location', None)
+        if location is not None:
+            # get the floor number
+            queryset = queryset.filter(floor__location__title=location)
+
+        floor_number = self.request.query_params.get('floor', None)
+        if floor_number is not None:
+            # get the floor number
+            queryset = queryset.filter(floor__number=floor_number)
+        return queryset
 
 
 class BlockDetailView(RetrieveAPIView):
