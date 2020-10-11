@@ -53,7 +53,7 @@ class Block(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     # block name
-    name = models.CharField(max_length=24, blank=True)
+    name = models.CharField(default='Main', max_length=24, blank=True)
 
     # location with which this floor is associated
     floor = models.ForeignKey(
