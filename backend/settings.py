@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'organizations',
     'locations',
+    'cameras'
 ]
 
 MIDDLEWARE = [
@@ -158,3 +159,6 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
     ]
 }
+
+MEDIA_ROOT = '/home/sai/project/backend/media/'
+MEDIA_URL = '/media/'
