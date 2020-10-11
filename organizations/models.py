@@ -7,7 +7,7 @@ class Organization(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     # organization title
-    title = models.CharField(max_length=120)
+    title = models.CharField(max_length=120, default="Unknown")
 
     # organization description
     desc = models.TextField()
