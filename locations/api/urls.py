@@ -7,6 +7,6 @@ urlpatterns = [
     path('<pk>', LocationDetailView.as_view()),
     path('floors/', FloorListView.as_view()),
     path('floors/<pk>', FloorDetailView.as_view()),
-    path('floors/blocks/', BlockListView.as_view()),
-    path('floors/blocks/<pk>', BlockDetailView.as_view()),
+    path('blocks/', BlockListView.as_view()),
+    path('blocks/<pk>', BlockDetailView.as_view()),
 ]
