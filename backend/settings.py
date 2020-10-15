@@ -55,6 +55,7 @@ INSTALLED_APPS = [
 
     'corsheaders',
     'rest_framework',
+    'rest_registration',
     'organizations',
     'locations',
     'cameras'
@@ -162,3 +163,19 @@ REST_FRAMEWORK = {
 
 MEDIA_ROOT = '/home/sai/project/backend/media/'
 MEDIA_URL = '/media/'
+
+# REST registration settings
+REST_REGISTRATION = {
+    'REGISTER_VERIFICATION_URL': 'https://frontend-host/verify-user/',
+    'RESET_PASSWORD_VERIFICATION_URL': 'https://frontend-host/reset-password/',
+    'REGISTER_EMAIL_VERIFICATION_URL': 'https://frontend-host/verify-email/',
+
+    'VERIFICATION_FROM_EMAIL': 'no-reply@example.com',
+}
+
+# Email backend
+SEND_EMAIL_TO_FILE = False
+if SEND_EMAIL_TO_FILE:
+    EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
