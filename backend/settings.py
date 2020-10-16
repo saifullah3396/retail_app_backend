@@ -58,7 +58,8 @@ INSTALLED_APPS = [
     'rest_registration',
     'organizations',
     'locations',
-    'cameras'
+    'cameras',
+    'users'
 ]
 
 MIDDLEWARE = [
@@ -110,6 +111,12 @@ DATABASES = {
 #     )
 # }
 
+# User config
+AUTH_USER_MODEL = "users.AppUser"
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+)
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
@@ -171,6 +178,7 @@ REST_REGISTRATION = {
     'REGISTER_EMAIL_VERIFICATION_URL': 'https://frontend-host/verify-email/',
 
     'VERIFICATION_FROM_EMAIL': 'no-reply@example.com',
+    # 'USER_LOGIN_FIELDS': ['username']
 }
 
 # Email backend

@@ -1,1 +1,0 @@
-username=sai&password=Abcd1234@&password_confirm=Abcd1234@&email=saifullah3396@gmail.com
