@@ -5,7 +5,7 @@ from ..models import Location, Floor, Block
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
-        fields = ('id', 'title', 'desc', 'organization', 'sub_organization')
+        fields = ('id', 'name', 'desc', 'organization', 'sub_organization')
 
 
 class FloorSerializer(serializers.ModelSerializer):

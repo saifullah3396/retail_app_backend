@@ -8,8 +8,8 @@ class Location(models.Model):
     # generate unique uuid for each location
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    # location title
-    title = models.CharField(max_length=120, default="Unknown", unique=True)
+    # location name
+    name = models.CharField(max_length=120, default="Unknown", unique=True)
 
     # location description
     desc = models.TextField(blank=True)
@@ -30,7 +30,7 @@ class Location(models.Model):
     )
 
     def __str__(self):
-        return self.title
+        return self.name
 
 
 class Floor(models.Model):
