@@ -61,7 +61,7 @@ INSTALLED_APPS = [
     'organizations',
     'locations',
     'cameras',
-    # 'users'
+    'users'
 ]
 
 MIDDLEWARE = [
@@ -108,7 +108,7 @@ DATABASES = {
 }
 
 # User config
-#AUTH_USER_MODEL = "users.AppUser"
+AUTH_USER_MODEL = "users.AppUser"
 
 AUTHENTICATION_BACKENDS = [
     # Needed to login by username in Django admin, regardless of `allauth`
@@ -197,3 +197,7 @@ ACCOUNT_EMAIL_CONFIRMATION_HMAC = True
 REST_AUTH_REGISTER_PERMISSION_CLASSES = [
     'rest_framework.permissions.IsAuthenticated']
 
+REST_AUTH_REGISTER_SERIALIZERS = {
+    'REGISTER_SERIALIZER': 'users.serializers.AppRegisterSerializer',
+}
+ACCOUNT_ADAPTER = 'users.adapter.AppAccountAdapter'
