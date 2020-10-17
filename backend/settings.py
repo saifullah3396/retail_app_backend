@@ -53,10 +53,6 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
 
-    # login types
-    # 'allauth.socialaccount.providers.google',
-    # 'allauth.socialaccount.providers.facebook',
-
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
