@@ -1,28 +1,33 @@
-from rest_framework import permissions
-from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView
+from rest_framework import authentication, permissions
+from rest_framework.generics import GenericAPIView, ListAPIView, RetrieveAPIView, CreateAPIView
 from ..models import Organization, SubOrganization
-from .serializers import OrganizationSerializer, SubOrganizationSerializer
+from .serializers import AdminOnlyOrganizationSerializer, AdminOnlySubOrganizationSerializer
+from django.contrib.auth.mixins import UserPassesTestMixin
 
 
 class OrganizationListView(ListAPIView):
     queryset = Organization.objects.all()
-    serializer_class = OrganizationSerializer
-    permission_classes = (permissions.AllowAny, )
+    serializer_class = AdminOnlyOrganizationSerializer
+    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser)
+    authentication_classes = [authentication.TokenAuthentication]
 
 
-class OrganizationDetailView(RetrieveAPIView):
+class OrganizationDetailView(UserPassesTestMixin, RetrieveAPIView):
     queryset = Organization.objects.all()
-    serializer_class = OrganizationSerializer
-    permission_classes = (permissions.AllowAny, )
+    serializer_class = AdminOnlyOrganizationSerializer
+    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser)
+    authentication_classes = [authentication.TokenAuthentication]
 
 
-class SubOrganizationListView(ListAPIView):
+class SubOrganizationListView(UserPassesTestMixin, ListAPIView):
     queryset = SubOrganization.objects.all()
-    serializer_class = SubOrganizationSerializer
-    permission_classes = (permissions.AllowAny, )
+    serializer_class = AdminOnlySubOrganizationSerializer
+    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser)
+    authentication_classes = [authentication.TokenAuthentication]
 
 
-class SubOrganizationDetailView(RetrieveAPIView):
+class SubOrganizationDetailView(UserPassesTestMixin, RetrieveAPIView):
     queryset = SubOrganization.objects.all()
-    serializer_class = SubOrganizationSerializer
-    permission_classes = (permissions.AllowAny, )
+    serializer_class = AdminOnlySubOrganizationSerializer
+    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser)
+    authentication_classes = [authentication.TokenAuthentication]
