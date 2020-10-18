@@ -9,6 +9,28 @@ from locations.models import Location
 
 
 class AppRegisterSerializer(RegisterSerializer):
+    """
+    Extends the register serializer to add custom fields. This serializer takes
+    permission groups as to accept one of the following fields:
+        [
+            'organization_admin',
+            'sub_organization_admin',
+            'employee'
+        ]
+    If the user is organization_admin, it checks whether organization info is
+    provided. Same is done for sub_organization_admin and sub_organization.
+    Finally it checks whether the locations provided as inputs are existing and
+    are available to the organization (or suborganization).
+
+    @todo: Validate the following:
+        1. If the user requesting registration is making a new organization
+            admin, then he must be the admin of that organization himself.
+        2. If the user requesting registration is making a new sub_organization
+            admin, then he must be the admin of that sub_organization himself.
+        3. Make sure this call can only be made by admins, organization admins,
+            sub-organization admins
+    """
+
     organization = serializers.CharField(max_length=150, required=False)
     sub_organization = serializers.CharField(
         max_length=150, required=False)

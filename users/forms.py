@@ -7,6 +7,9 @@ from locations.models import Location
 
 
 class AppUserCreationForm(UserCreationForm):
+    """
+    Provides a custom user creation form view for admin site
+    """
 
     class Meta(UserCreationForm):
         model = AppUser
@@ -70,6 +73,9 @@ class AppUserCreationForm(UserCreationForm):
 
 
 class AppUserChangeForm(UserChangeForm):
+    """
+    Provides a custom user update form view for admin site
+    """
 
     class Meta:
         model = AppUser

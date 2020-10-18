@@ -3,6 +3,12 @@ from django.contrib.auth.models import AbstractUser
 
 
 class AppUser(AbstractUser):
+    """
+    Custom user model for our application. The user can be a part of an
+    organization or sub-organization and can have access to locations available
+    in authorized_locations
+    """
+
     # organization with which this sub-organization is associated
     organization = models.ForeignKey(
         'organizations.Organization',
