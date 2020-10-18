@@ -195,7 +195,8 @@ LOGIN_REDIRECT_URL = '/accounts/email/'
 ACCOUNT_EMAIL_CONFIRMATION_HMAC = True
 
 REST_AUTH_REGISTER_PERMISSION_CLASSES = [
-    'rest_framework.permissions.IsAuthenticated']
+    'rest_framework.permissions.IsAuthenticated',
+    'users.permissions.CanRegisterUser']
 
 REST_AUTH_REGISTER_SERIALIZERS = {
     'REGISTER_SERIALIZER': 'users.serializers.AppRegisterSerializer',
