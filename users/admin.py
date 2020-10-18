@@ -6,6 +6,10 @@ from .models import AppUser
 
 
 class AppUserAdmin(UserAdmin):
+    """
+    Provides a custom user view for admin site
+    """
+
     add_form = AppUserCreationForm
     form = AppUserChangeForm
     model = AppUser
@@ -52,13 +56,14 @@ class AppUserAdmin(UserAdmin):
             'Permissions', {
                 'fields': (
                     'groups',
+                    'user_permissions',
                     'authorized_locations',
                 )
             }
         ),
     )
 
-    filter_horizontal = ('groups', 'authorized_locations',)
+    filter_horizontal = ('groups', 'authorized_locations', 'user_permissions')
 
     def clean(self):
         print('clean main')
