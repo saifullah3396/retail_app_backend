@@ -57,21 +57,23 @@ class AppRegisterSerializer(RegisterSerializer):
     def validate_locations(self, location_names):
         locations = []
         for location_name in location_names:
-            location = Location.objects.filter(name=location_name)
-            if not location:
+            try:
+                location = Location.objects.get(name=location_name)
+                locations.append(location)
+            except Location.DoesNotExist:
                 raise ValidationError(
-                    'Location {} does not exist.'.format(location))
-            locations.append(location[0])
+                    'Location {} does not exist.'.format(location_name))
         return locations
 
     def validate_groups(self, group_names):
         groups = []
         for group_name in group_names:
-            group = Group.objects.filter(name=group_name)
-            if not group:
+            try:
+                group = Group.objects.get(name=group_name)
+                groups.append(group)
+            except Group.DoesNotExist:
                 raise ValidationError(
-                    'Group {} does not exist.'.format(group))
-            groups.append(group[0])
+                    'Group {} does not exist.'.format(group_name))
         return groups
 
     def validate(self, data):
@@ -103,6 +105,16 @@ class AppRegisterSerializer(RegisterSerializer):
                         "Please choose the organization with which the user "
                         "associated."
                     )
+
+                # get user requesting for a new registration
+                user = None
+                request = self.context.get("request")
+                if request and hasattr(request, "user"):
+                    user = request.user
+
+                raise ValidationError(
+                    "Please choose the group for this user."
+                )
 
                 # if sub_organization_admin role exists, check for that as well
                 sub_organization = data.get('sub_organization')
