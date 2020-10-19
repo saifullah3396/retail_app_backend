@@ -6,6 +6,7 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from organizations.models import Organization, SubOrganization
 from locations.models import Location
+from .permissions import is_in_group
 
 
 class AppRegisterSerializer(RegisterSerializer):

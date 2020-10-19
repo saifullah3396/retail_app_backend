@@ -1,8 +1,8 @@
 {
-    "username": "user1",
+    "username": "user6",
     "password1": "abcd1234@",
     "password2": "abcd1234@",
-    "email": "user1@gmail.com",
+    "email": "user6@gmail.com",
     "organization": "NUST",
     "groups": ["organization_admin"],
     "locations": ["SMME Building"]
