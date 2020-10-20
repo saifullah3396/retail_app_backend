@@ -84,7 +84,8 @@ class AccountRegistrationTests(APITestCase, URLPatternsTestCase):
 
     def setUp(self):
         # generate test groups
-        groups_list = copy.deepcopy(settings.REGISTER_AVAILABLE_GROUPS)
+        groups_list = copy.deepcopy(
+            list(settings.REGISTRATION_GROUPS_WITH_AUTHORITY.keys()))
         groups_list.append('other_group')
         self.groups = self.createGroups(groups_list)
 
@@ -149,7 +150,7 @@ class AccountRegistrationTests(APITestCase, URLPatternsTestCase):
         self.users, self.tokens = self.createUsers(
             user_names_list, self.groups, self.orgs, self.subOrgs)
 
-    def send_register_post(self, data, token, status_code, debug=False):
+    def send_register_post(self, data, token, status_code, debug=True):
         """
         Sends a post request to url
         """
@@ -159,7 +160,8 @@ class AccountRegistrationTests(APITestCase, URLPatternsTestCase):
             format='json',
             HTTP_AUTHORIZATION='Token {}'.format(token))
         if debug:
-            print(response.status_code == status_code, response.data)
+            if response.status_code != status_code:
+                print(response.data)
         self.assertEqual(response.status_code, status_code)
 
     def test_user_not_authorized(self):
@@ -421,7 +423,7 @@ class AccountRegistrationTests(APITestCase, URLPatternsTestCase):
     def test_sub_org_admin_different_sub_org_admin(self):
         """
         Ensure registration of sub_organization admin by another
-        sub_organization admin works
+        sub_organization admin from different sub_organization does not work
         """
         data = copy.deepcopy(self.data)
         data['groups'] = ['sub_organization_admin']
@@ -433,11 +435,35 @@ class AccountRegistrationTests(APITestCase, URLPatternsTestCase):
 
     def test_sub_org_admin_employee(self):
         """
-        Ensure registration of sub_organization admin by another
-        sub_organization admin works
+        Ensure registration of sub_organization admin by an employee does
+        not work
         """
         data = copy.deepcopy(self.data)
         data['groups'] = ['sub_organization_admin']
+        data['organization'] = 'org_1'
+        data['sub_organization'] = 'sub_1_org_1'
+        data['locations'] = ['location_1_sub_org_1']
+        self.send_register_post(
+            data, self.tokens['employee_user'], status.HTTP_403_FORBIDDEN)
+
+    def test_employee_sub_org_admin(self):
+        """
+        Ensure registration of employee by sub_organization admin works
+        """
+        data = copy.deepcopy(self.data)
+        data['groups'] = ['employee']
+        data['organization'] = 'org_1'
+        data['sub_organization'] = 'sub_1_org_1'
+        data['locations'] = ['location_1_sub_org_1']
+        self.send_register_post(
+            data, self.tokens['sub_org_11_admin_user'], status.HTTP_201_CREATED)
+
+    def test_employee_employee(self):
+        """
+        Ensure registration of employee by another employee does not work
+        """
+        data = copy.deepcopy(self.data)
+        data['groups'] = ['employee']
         data['organization'] = 'org_1'
         data['sub_organization'] = 'sub_1_org_1'
         data['locations'] = ['location_1_sub_org_1']
