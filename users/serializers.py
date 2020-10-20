@@ -1,12 +1,13 @@
 from rest_framework import serializers
+from rest_framework import status, exceptions
 from allauth.account.adapter import get_adapter
 from allauth.account.utils import setup_user_email
 from rest_auth.registration.serializers import RegisterSerializer
 from django.contrib.auth.models import Group
-from django.core.exceptions import ValidationError
 from organizations.models import Organization, SubOrganization
 from locations.models import Location
 from .permissions import is_in_group
+from backend import settings
 
 
 class AppRegisterSerializer(RegisterSerializer):
@@ -22,14 +23,6 @@ class AppRegisterSerializer(RegisterSerializer):
     provided. Same is done for sub_organization_admin and sub_organization.
     Finally it checks whether the locations provided as inputs are existing and
     are available to the organization (or suborganization).
-
-    @todo: Validate the following:
-        1. If the user requesting registration is making a new organization
-            admin, then he must be the admin of that organization himself.
-        2. If the user requesting registration is making a new sub_organization
-            admin, then he must be the admin of that sub_organization himself.
-        3. Make sure this call can only be made by admins, organization admins,
-            sub-organization admins
     """
 
     organization = serializers.CharField(max_length=150, required=False)
@@ -43,16 +36,17 @@ class AppRegisterSerializer(RegisterSerializer):
     def validate_organization(self, organization_name):
         organization = Organization.objects.filter(name=organization_name)
         if not organization:
-            raise ValidationError(
-                'Organization {} does not exist.'.format(organization))
+            raise serializers.ValidationError(
+                'Organization {} does not exist.'.format(organization_name))
         return organization[0]
 
     def validate_sub_organization(self, sub_organization_name):
         sub_organization = SubOrganization.objects.filter(
             name=sub_organization_name)
         if not sub_organization:
-            raise ValidationError(
-                'SubOrganization {} does not exist.'.format(sub_organization))
+            raise serializers.ValidationError(
+                'SubOrganization {} does not exist.'.format(
+                    sub_organization_name))
         return sub_organization[0]
 
     def validate_locations(self, location_names):
@@ -62,7 +56,7 @@ class AppRegisterSerializer(RegisterSerializer):
                 location = Location.objects.get(name=location_name)
                 locations.append(location)
             except Location.DoesNotExist:
-                raise ValidationError(
+                raise serializers.ValidationError(
                     'Location {} does not exist.'.format(location_name))
         return locations
 
@@ -73,7 +67,7 @@ class AppRegisterSerializer(RegisterSerializer):
                 group = Group.objects.get(name=group_name)
                 groups.append(group)
             except Group.DoesNotExist:
-                raise ValidationError(
+                raise serializers.ValidationError(
                     'Group {} does not exist.'.format(group_name))
         return groups
 
@@ -82,55 +76,125 @@ class AppRegisterSerializer(RegisterSerializer):
 
         # any groups are assigned to user?
         if data.get('groups') is None:
-            raise ValidationError(
-                "Please choose the group for this user."
+            raise serializers.ValidationError(
+                {
+                    "groups": "Group to be assigned to this user required."
+                }
             )
         else:
-            group_list = [g.name for g in data.get('groups')]
+            requested_groups = [g.name for g in data.get('groups')]
 
-            # check if any of the following are assigned to user
+            # check if any of the following are to be assigned to user
             # ['organization_admin', 'sub_organization_admin', 'employee']
-            in_groups = {
-                group: group in group_list for group in [
-                    'organization_admin',
-                    'sub_organization_admin',
-                    'employee']
+            available_in_requested = {
+                group: group in requested_groups
+                for group in settings.REGISTER_AVAILABLE_GROUPS
             }
 
-            if any(list(in_groups.values())):
-                # make sure an organization is available for which the role is
-                # for example employee of which organization?
-                organization = data.get('organization')
-                if organization is None:
-                    raise ValidationError(
-                        "Please choose the organization with which the user "
-                        "associated."
-                    )
-
+            # if none of the available group is found in requested groups
+            if not any(list(available_in_requested.values())):
+                raise serializers.ValidationError(
+                    {
+                        "groups": "Can only be assigned one of the following "
+                        "{}".format(settings.REGISTER_AVAILABLE_GROUPS)
+                    }
+                )
+            else:
                 # get user requesting for a new registration
-                user = None
+                request_user = None
                 request = self.context.get("request")
                 if request and hasattr(request, "user"):
-                    user = request.user
+                    request_user = request.user
 
-                raise ValidationError(
-                    "Please choose the group for this user."
-                )
+                if request_user is None:
+                    # raise unauthorized error if user is not found
+                    # most probably this will never get called
+                    raise exceptions.PermissionDenied()
 
-                # if sub_organization_admin role exists, check for that as well
+                # make sure an organization is available for which the group is
+                # for example employee of which organization?
+                organization = data.get('organization')
                 sub_organization = data.get('sub_organization')
-                if in_groups['sub_organization_admin'] \
-                        and sub_organization is None:
-                    raise ValidationError(
-                        "Please choose the sub_organization with which the "
-                        "user associated."
+                if organization is None:
+                    raise serializers.ValidationError(
+                        {
+                            "organization": "Please choose the organization "
+                            "with which the user associated."
+                        }
                     )
+
+                if not request_user.is_staff:
+                    # check if request user is in the same organization as the
+                    # registered user
+                    if request_user.organization != organization:
+                        raise exceptions.PermissionDenied(
+                            "Not authorized to register user for another "
+                            "organization.")
+
+                    # check if request user is the same sub organization as
+                    # registered user
+                    if sub_organization is not None:
+                        if request_user.sub_organization is None:
+                            if request_user.organization != \
+                                    sub_organization.organization:
+                                raise exceptions.PermissionDenied(
+                                    "Requested sub_organization is not a part "
+                                    "of the requested organization.")
+                        else:
+                            if request_user.sub_organization != \
+                                    sub_organization:
+                                raise exceptions.PermissionDenied(
+                                    "Not authorized to register user for "
+                                    "another sub_organization.")
+
+                    # check if the request user is authorized to assign
+                    # organization admin
+                    request_user_in_group = {
+                        group: is_in_group(request_user, group)
+                        for group in settings.REGISTER_AVAILABLE_GROUPS
+                    }
+
+                    if available_in_requested['organization_admin'] and not \
+                            request_user_in_group['organization_admin']:
+                        raise exceptions.PermissionDenied(
+                            "You must be an organization admin to assign "
+                            "another organization admin."
+                        )
+
+                    if available_in_requested['sub_organization_admin']:
+                        if sub_organization is None:
+                            raise serializers.ValidationError(
+                                {
+                                    "sub_organization": "Please choose the "
+                                    "sub_organization with which the user "
+                                    "associated."
+                                }
+                            )
+
+                        if not request_user_in_group['organization_admin'] and \
+                                not request_user_in_group[
+                                    'sub_organization_admin']:
+                            raise exceptions.PermissionDenied(
+                                "You must either be an organization admin or "
+                                "a sub_organization admin to assign "
+                                "another sub_organization admin."
+                            )
+
+                    if available_in_requested['employee']:
+                        if not request_user_in_group['organization_admin'] and \
+                                not request_user_in_group[
+                                    'sub_organization_admin']:
+                            raise exceptions.PermissionDenied(
+                                "You must either be an organization admin or "
+                                "a sub_organization admin to assign "
+                                "another employee."
+                            )
 
                 # make sure we are sent locations for which this user is
                 # authorized to
                 locations = data.get('locations')
                 if locations is None:
-                    raise ValidationError(
+                    raise serializers.ValidationError(
                         "Please choose locations which are to be authorized to "
                         "the user."
                     )
@@ -154,13 +218,13 @@ class AppRegisterSerializer(RegisterSerializer):
 
                     if len(invalid_locations) != 0:
                         if sub_organization is not None:
-                            raise ValidationError(
+                            raise serializers.ValidationError(
                                 "The locations {} are not associated with the "
                                 "sub_organization: {}".format(
                                     invalid_locations, sub_organization.name)
                             )
                         else:
-                            raise ValidationError(
+                            raise serializers.ValidationError(
                                 "The locations {} are not associated with the "
                                 "organization: {}".format(
                                     invalid_locations, organization.name)
