@@ -201,4 +201,8 @@ REST_AUTH_REGISTER_PERMISSION_CLASSES = [
 REST_AUTH_REGISTER_SERIALIZERS = {
     'REGISTER_SERIALIZER': 'users.serializers.AppRegisterSerializer',
 }
+REGISTER_AVAILABLE_GROUPS = [
+    'organization_admin',
+    'sub_organization_admin',
+    'employee']
 ACCOUNT_ADAPTER = 'users.adapter.AppAccountAdapter'
