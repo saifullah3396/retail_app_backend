@@ -13,6 +13,9 @@ class AppUser(AbstractUser):
     # replace id with uuid
     uuid = models.UUIDField(default=uuid.uuid4, unique=True)
 
+    # user authority [0, 1, ... N]. N means highest authority
+    authority = models.IntegerField(default=-1)
+
     # organization with which this sub-organization is associated
     organization = models.ForeignKey(
         'organizations.Organization',
