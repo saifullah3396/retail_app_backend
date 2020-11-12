@@ -1,4 +1,5 @@
 from allauth.account.adapter import DefaultAccountAdapter
+from backend import settings
 
 
 class AppAccountAdapter(DefaultAccountAdapter):
@@ -8,8 +9,16 @@ class AppAccountAdapter(DefaultAccountAdapter):
         data = form.cleaned_data
 
         # set user permission groups
-        for group in data.get('groups'):
-            user.groups.add(group)
+        if data.get('groups') is not None:
+            for group in data.get('groups'):
+                user.groups.add(group)
+
+            user_authority = -1
+            for (group, authority) in \
+                    settings.REGISTRATION_GROUPS_WITH_AUTHORITY.items():
+                user_authority = \
+                    authority if authority > user_authority else user_authority
+            user.authority = user_authority
 
         # add organization to user
         user.organization = data.get('organization')
