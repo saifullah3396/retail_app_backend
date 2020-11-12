@@ -19,10 +19,14 @@ class AppUserAdmin(UserAdmin):
             None, {
                 'classes': ('wide',),
                 'fields': (
+                    'avatar',
                     'username',
                     'email',
+                    'first_name',
+                    'last_name',
                     'password1',
                     'password2',
+                    'authority',
                     'organization',
                     'sub_organization',
                 )
@@ -42,8 +46,12 @@ class AppUserAdmin(UserAdmin):
             None, {
                 'classes': ('wide',),
                 'fields': (
+                    'avatar',
                     'username',
                     'email',
+                    'first_name',
+                    'last_name',
+                    'authority',
                     'is_staff',
                     'is_active',
                     'is_superuser',
@@ -64,10 +72,6 @@ class AppUserAdmin(UserAdmin):
     )
 
     filter_horizontal = ('groups', 'authorized_locations', 'user_permissions')
-
-    def clean(self):
-        print('clean main')
-        print(cleaned_data.get('groups'))
 
 
 admin.site.register(AppUser, AppUserAdmin)
