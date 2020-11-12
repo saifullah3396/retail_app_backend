@@ -170,7 +170,7 @@ REST_FRAMEWORK = {
     ),
 }
 
-MEDIA_ROOT = '/home/sai/project/backend/media/'
+MEDIA_ROOT = '/home/sai/project/retail_app_backend/media/'
 MEDIA_URL = '/media/'
 
 # Email backend
