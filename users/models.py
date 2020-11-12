@@ -79,3 +79,7 @@ class AppUser(AbstractUser):
         blank=True,
         null=True
     )
+
+    # user avatar image
+    avatar = models.ImageField(
+        upload_to='avatars', blank=True, null=True)
