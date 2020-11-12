@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
@@ -8,6 +9,9 @@ class AppUser(AbstractUser):
     organization or sub-organization and can have access to locations available
     in authorized_locations
     """
+
+    # replace id with uuid
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True)
 
     # organization with which this sub-organization is associated
     organization = models.ForeignKey(
