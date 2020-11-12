@@ -13,8 +13,8 @@ pip install virtualenvwrapper
 Setup a new virtual environments root directory and initialize virtualenvwrapper:
 
 ```
-export VENV_HOME=~/.virtual_envs
-mkdir -p $VENV_HOME
+export WORKON_HOME=~/.virtual_envs
+mkdir -p $WORKON_HOME
 source /usr/local/bin/virtualenvwrapper.sh
 ```
 
@@ -74,6 +74,13 @@ Create a new database:
 
 ```
 createdb <database-name>
+```
+
+Create postgis extension needed from django:
+
+```
+psql -d <database-name>
+CREATE EXTENSION postgis;
 ```
 
 Update the postgresql configuration for the new user by adding the following line to `pg_hba.conf` file in `/etc/postgresql/`.
