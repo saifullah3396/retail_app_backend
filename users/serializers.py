@@ -252,3 +252,38 @@ class AppRegisterSerializer(RegisterSerializer):
         cleaned_data['sub_organization'] = self.validated_data.get(
             'sub_organization', None)
         return cleaned_data
+
+
+class JWTSerializer(serializers.Serializer):
+    """
+    Serializer for JWT authentication.
+    """
+    token = serializers.CharField()
+    user = serializers.SerializerMethodField()
+
+    def get_request_user(self, raise_exception=False):
+        # get user requesting for a new registration
+        request_user = None
+        request = self.context.get("request")
+        if request and hasattr(request, "user"):
+            request_user = request.user
+        else:
+            if raise_exception:
+                # raise unauthorized error if user is not found
+                # most probably this will never get called
+                raise exceptions.PermissionDenied()
+        return request_user
+
+    def get_user(self, obj):
+        """
+        Required to allow using custom USER_DETAILS_SERIALIZER in
+        JWTSerializer. Defining it here to avoid circular imports
+        """
+        user = self.get_request_user(raise_exception=True)
+        if user.is_staff:
+            JWTUserDetailsSerializer = AdminUserSerializerAdminAccess
+        else:
+            JWTUserDetailsSerializer = AppUserSerializerAppUserAccess
+        user_data = JWTUserDetailsSerializer(
+            obj['user'], context=self.context).data
+        return user_data
