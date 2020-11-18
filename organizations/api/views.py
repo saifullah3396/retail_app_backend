@@ -5,8 +5,12 @@ from rest_framework.generics import \
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from ..models import Organization, SubOrganization
-from .serializers import AdminOnlyOrganizationSerializer, AdminOnlySubOrganizationSerializer
-from django.contrib.auth.mixins import UserPassesTestMixin
+from .serializers import \
+    OrganizationSerializer, SubOrganizationSerializer
+from ..permissions import (
+    OrganizationsRUDPermissions,
+    SubOrganizationsListCreatePermissions,
+    SubOrganizationsRUDPermissions)
 
 
 class PaginationConfig(pagination.PageNumberPagination):
