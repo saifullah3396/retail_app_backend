@@ -59,19 +59,50 @@ class OrganizationsRUDView(RetrieveUpdateDestroyAPIView):
             return queryset
 
 
+class SubOrganizationsListCreateView(ListCreateAPIView):
+    serializer_class = SubOrganizationSerializer
+    permission_classes = (
+        permissions.IsAuthenticated,
+        SubOrganizationsListCreatePermissions)
+    authentication_classes = [authentication.JSONWebTokenAuthentication]
+    pagination_class = PaginationConfig
+    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
+    ordering_fields = ['id', 'name', 'desc', 'organization']
+    filterset_fields = {
+        'name': ['exact', 'icontains'],
+        'organization': ['exact']
+    }
 
-class OrganizationDetailView(UserPassesTestMixin, RetrieveAPIView):
-    queryset = Organization.objects.all()
-    serializer_class = AdminOnlyOrganizationSerializer
-    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser)
-    authentication_classes = [authentication.TokenAuthentication]
+    def send_user_response(self, request, user):
+        serializer = self.serializer_class(
+            user, context={'request': request})
+        return Response({"user": serializer.data}, status=status.HTTP_200_OK)
 
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            # return all if it is super admin
+            queryset = SubOrganization.objects.all().order_by('name')
+            return queryset
+        else:
+            # else can only be an organization admin according to permissions
+            # on the view. Return all sub-organizations under the users
+            # organization
+            queryset = SubOrganization.objects.filter(
+                organization__id=user.organization.id).order_by('name')
+            return queryset
 
-class SubOrganizationListView(UserPassesTestMixin, ListAPIView):
-    queryset = SubOrganization.objects.all()
-    serializer_class = AdminOnlySubOrganizationSerializer
-    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser)
-    authentication_classes = [authentication.TokenAuthentication]
+    def create(self, request, *args, **kwargs):
+        # check that the user is admin of the organization in which
+        # sub-organization is requested
+        if request.user.is_staff or \
+                request.data['organization'] == \
+                str(request.user.organization.id):
+            return super(SubOrganizationsListCreateView, self).create(
+                request, *args, *kwargs)
+        else:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
 
 
 class SubOrganizationDetailView(UserPassesTestMixin, RetrieveAPIView):
