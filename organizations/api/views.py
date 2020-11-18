@@ -104,9 +104,34 @@ class SubOrganizationsListCreateView(ListCreateAPIView):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
 
+class SubOrganizationsRUDView(RetrieveUpdateDestroyAPIView):
+    serializer_class = SubOrganizationSerializer
+    permission_classes = (
+        permissions.IsAuthenticated,
+        SubOrganizationsRUDPermissions)
+    authentication_classes = [authentication.JSONWebTokenAuthentication]
+    pagination_class = PaginationConfig
+    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
+    ordering_fields = ['id', 'name', 'desc', 'organization']
+    filterset_fields = {
+        'name': ['exact', 'icontains'],
+        'organization': ['exact']
+    }
 
-class SubOrganizationDetailView(UserPassesTestMixin, RetrieveAPIView):
-    queryset = SubOrganization.objects.all()
-    serializer_class = AdminOnlySubOrganizationSerializer
-    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser)
-    authentication_classes = [authentication.TokenAuthentication]
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            # return all if it is super admin
+            queryset = SubOrganization.objects.all().order_by('name')
+            return queryset
+        else:
+            if user.sub_organization is None:
+                # user is organization admin so return all underlying sub-
+                # organizations
+                queryset = SubOrganization.objects.filter(
+                    organization__id=user.organization.id).order_by('name')
+            else:
+                # Return only the associated sub organization
+                queryset = SubOrganization.objects.filter(
+                    id=user.sub_organization.id).order_by('name')
+            return queryset
