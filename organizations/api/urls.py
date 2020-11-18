@@ -1,11 +1,26 @@
 from django.urls import path
-from .views import OrganizationListView, OrganizationDetailView
-from .views import SubOrganizationListView, SubOrganizationDetailView
+from .views import \
+    OrganizationsListCreateView, \
+    OrganizationsRUDView, \
+    SubOrganizationsListCreateView, \
+    SubOrganizationsRUDView
 
 
 urlpatterns = [
-    path('', OrganizationListView.as_view()),
-    path('<pk>', OrganizationDetailView.as_view()),
-    path('sub/', SubOrganizationListView.as_view()),
-    path('sub/<pk>', SubOrganizationDetailView.as_view()),
+    path(
+        '',
+        OrganizationsListCreateView.as_view(),
+        name='organizations_list_create'),
+    path(
+        '<pk>',
+        OrganizationsRUDView.as_view(),
+        name='organizations_rud'),
+    path(
+        'sub/',
+        SubOrganizationsListCreateView.as_view(),
+        name='sub_organizations_list_create'),
+    path(
+        'sub/<pk>',
+        SubOrganizationsRUDView.as_view(),
+        name='sub_organizations_rud'),
 ]
