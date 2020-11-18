@@ -5,11 +5,11 @@ from .serializers import AdminOnlyOrganizationSerializer, AdminOnlySubOrganizati
 from django.contrib.auth.mixins import UserPassesTestMixin
 
 
-class OrganizationListView(ListAPIView):
-    queryset = Organization.objects.all()
-    serializer_class = AdminOnlyOrganizationSerializer
-    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser)
-    authentication_classes = [authentication.TokenAuthentication]
+class PaginationConfig(pagination.PageNumberPagination):
+    page_size = 25
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
 
 
 class OrganizationDetailView(UserPassesTestMixin, RetrieveAPIView):
