@@ -22,8 +22,8 @@ class PaginationConfig(pagination.PageNumberPagination):
 class OrganizationsListCreateView(ListCreateAPIView):
     queryset = Organization.objects.all().order_by('name')
     serializer_class = OrganizationSerializer
-    # permission_classes = (
-    #     permissions.IsAuthenticated, permissions.IsAdminUser)
+    permission_classes = (
+        permissions.IsAuthenticated, permissions.IsAdminUser)
     authentication_classes = [authentication.JSONWebTokenAuthentication]
     pagination_class = PaginationConfig
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
