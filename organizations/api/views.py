@@ -75,6 +75,18 @@ class OrganizationsRUDView(RetrieveUpdateDestroyAPIView):
                     id=user.organization.id).order_by('name')
             return queryset
 
+    def delete(self, request, *args, **kwargs):
+        # update delete response
+        try:
+            organization_name = self.get_object().name
+            resp = super(OrganizationsRUDView, self).delete(
+                request, *args, **kwargs)
+            return Response(data={
+                "msg": "Organization {} deleted successfully.".format(
+                    organization_name)}, status=status.HTTP_200_OK)
+        except Organization.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
 
 class SubOrganizationsListCreateView(ListCreateAPIView, DestroyAPIView):
     serializer_class = SubOrganizationSerializer
@@ -131,6 +143,7 @@ class SubOrganizationsListCreateView(ListCreateAPIView, DestroyAPIView):
         else:
             return Response(status=status.HTTP_403_FORBIDDEN)
 
+
 class SubOrganizationsRUDView(RetrieveUpdateDestroyAPIView):
     serializer_class = SubOrganizationSerializer
     permission_classes = (
@@ -162,3 +175,15 @@ class SubOrganizationsRUDView(RetrieveUpdateDestroyAPIView):
                 queryset = SubOrganization.objects.filter(
                     id=user.sub_organization.id).order_by('name')
             return queryset
+
+    def delete(self, request, *args, **kwargs):
+        # update delete response
+        try:
+            sub_organization_name = self.get_object().name
+            resp = super(SubOrganizationsRUDView, self).delete(
+                request, *args, **kwargs)
+            return Response(data={
+                "msg": "Sub-organization {} deleted successfully.".format(
+                    sub_organization_name)}, status=status.HTTP_200_OK)
+        except SubOrganization.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
