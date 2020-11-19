@@ -1,7 +1,8 @@
 from rest_framework import permissions, pagination, filters, status
 from rest_framework_jwt import authentication
 from rest_framework.generics import \
-    GenericAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
+    GenericAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView, \
+    DestroyAPIView
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from ..models import Organization, SubOrganization
@@ -19,7 +20,7 @@ class PaginationConfig(pagination.PageNumberPagination):
     max_page_size = 100
 
 
-class OrganizationsListCreateView(ListCreateAPIView):
+class OrganizationsListCreateView(ListCreateAPIView, DestroyAPIView):
     queryset = Organization.objects.all().order_by('name')
     serializer_class = OrganizationSerializer
     permission_classes = (
@@ -31,6 +32,18 @@ class OrganizationsListCreateView(ListCreateAPIView):
     filterset_fields = {
         'name': ['exact', 'icontains'],
     }
+
+    def get_queryset(self):
+        id_list = self.request.query_params.getlist('id')
+        if id_list:
+            return Organization.objects.filter(id__in=id_list).order_by('name')
+        return Organization.objects.all().order_by('name')
+
+    def delete(self, request, *args, **kwargs):
+        self.get_queryset().delete()
+        return Response(data={
+            "msg": "Organizations deleted successfully."},
+            status=status.HTTP_200_OK)
 
 
 class OrganizationsRUDView(RetrieveUpdateDestroyAPIView):
@@ -63,7 +76,7 @@ class OrganizationsRUDView(RetrieveUpdateDestroyAPIView):
             return queryset
 
 
-class SubOrganizationsListCreateView(ListCreateAPIView):
+class SubOrganizationsListCreateView(ListCreateAPIView, DestroyAPIView):
     serializer_class = SubOrganizationSerializer
     permission_classes = (
         permissions.IsAuthenticated,
@@ -107,6 +120,16 @@ class SubOrganizationsListCreateView(ListCreateAPIView):
         else:
             return Response(status=status.HTTP_403_FORBIDDEN)
 
+    def delete(self, request, *args, **kwargs):
+        if request.user.is_staff or \
+                request.data['organization'] == \
+                str(request.user.organization.id):
+            self.get_queryset().delete()
+            return Response(data={
+                "msg": "Organizations deleted successfully."},
+                status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_403_FORBIDDEN)
 
 class SubOrganizationsRUDView(RetrieveUpdateDestroyAPIView):
     serializer_class = SubOrganizationSerializer
