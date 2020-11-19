@@ -517,7 +517,7 @@ class OrganizationTests(TestsBase):
                         # remains for other test cases
                         'args': [self.orgs['org_3'].id],
                         'user': 'staff_user',
-                        'status': status.HTTP_204_NO_CONTENT
+                        'status': status.HTTP_200_OK
                     },
                 ]
             },
@@ -551,7 +551,7 @@ class OrganizationTests(TestsBase):
                     {   # delete sub-org by id, okay for staff
                         'args': [self.sub_orgs['sub_2_org_2'].id],
                         'user': 'staff_user',
-                        'status': status.HTTP_204_NO_CONTENT
+                        'status': status.HTTP_200_OK
                     },
                     {   # duplicate delete sub-org by id, bad request
                         'args': [self.sub_orgs['sub_2_org_2'].id],
@@ -562,10 +562,46 @@ class OrganizationTests(TestsBase):
                         # which this sub-org exists
                         'args': [self.sub_orgs['sub_1_org_2'].id],
                         'user': 'org_2_admin_user',
-                        'status': status.HTTP_204_NO_CONTENT
+                        'status': status.HTTP_200_OK
                     },
                 ]
-            }
+            },
+        ]
+
+        test_delete_multiple = [
+            {
+                'test_name': 'delete_multiple_sub_organizations_by_id',
+                'type': 'delete',
+                'path_name': 'sub_organizations_list_create',
+                'request': [
+                    {   # delete org by id, forbidden for org admin itself
+                        'data': {
+                            "id": [
+                                self.sub_orgs['sub_1_org_2'].id,
+                                self.sub_orgs['sub_2_org_2'].id]
+                        },
+                        'user': 'staff_user',
+                        'status': status.HTTP_200_OK
+                    },
+                ]
+            },
+            {
+                'test_name': 'delete_multiple_organizations_by_id',
+                'type': 'delete',
+                'path_name': 'organizations_list_create',
+                'request': [
+                    {   # delete org by id, forbidden for org admin itself
+                        'data': {
+                            "id": [
+                                self.orgs['org_1'].id,
+                                self.orgs['org_2'].id,
+                                self.orgs['org_3'].id]
+                        },
+                        'user': 'staff_user',
+                        'status': status.HTTP_200_OK
+                    },
+                ]
+            },
         ]
 
         self.test_sets = [
@@ -573,7 +609,8 @@ class OrganizationTests(TestsBase):
             test_retrieve_all,
             test_create_all,
             test_update_all,
-            test_delete_all
+            test_delete_all,
+            test_delete_multiple
         ]
 
     def run_single_test(self, config):
