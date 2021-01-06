@@ -49,7 +49,7 @@ sudo apt install postgresql postgresql-contrib
 Install PostGis for Postgresql
 
 ```
-sudo apt install postgresql-10-postgis-2.4
+sudo apt install postgresql-<available-version>-postgis-2.4
 ```
 
 Login to base postgresql user:
