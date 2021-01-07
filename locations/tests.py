@@ -42,13 +42,38 @@ class LocationTests(TestsBase):
 
     paths_user = [
         {
-            'name': 'floors_user',
+            'name': 'floors_admin',
             'args': None
         },
         {
-            'name': 'blocks_user',
+            'name': 'blocks_admin',
             'args': None
         }]
+
+    def setUp(self):
+        super(LocationTests, self).setUp()
+        test_get_all = [
+            {
+                'test_name': 'get_locations_list',
+                'type': 'get',
+                'path_name': 'organizations_ruds',
+                'request': [
+
+                         {   # get org by id, okay for staff
+                        'args': [self.orgs['org_1'].id],
+                        'user': 'staff_user',
+                        'status': status.HTTP_200_OK
+                    },
+                    {   # get org by id, okay for org admin itself
+                        'args': [self.orgs['org_1'].id],
+                        'user': 'org_1_admin_user',
+                        'status': status.HTTP_200_OK
+                    },
+
+                ]
+            }
+        ]
+
 
     def get_unauth(self, path_name, args=None):
         """

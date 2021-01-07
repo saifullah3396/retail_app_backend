@@ -1,0 +1,8 @@
+--2021-01-07 12:31:40--  https://dl.pstmn.io/download/latest/linux64
+Resolving dl.pstmn.io (dl.pstmn.io)... 13.225.25.45, 13.225.25.22, 13.225.25.12, ...
+Connecting to dl.pstmn.io (dl.pstmn.io)|13.225.25.45|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 111994751 (107M) [application/gzip]
+Saving to: ‘postman.tar.gz’
+
+postman.tar.gz                                     11%[===========>                                                                                               ]  12.21M  27.0 B/s    eta 32h 13m

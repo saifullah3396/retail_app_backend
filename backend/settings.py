@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.gis',
     'django_filters',
+    'django_extensions',
 
     # The following apps are required for rest registration
     'django.contrib.sites',

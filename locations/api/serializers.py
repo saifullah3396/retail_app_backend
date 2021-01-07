@@ -8,6 +8,11 @@ class LocationSerializerAdminAccess(serializers.ModelSerializer):
         fields = ('id', 'name', 'organization', 'sub_organization')
 
 
+class LocationSerializer(serializers.ModelSerializer):
+   class Meta:
+        model = Location
+        fields = ('id', 'name', 'organization', 'sub_organization')
+
 class FloorSerializerAdminAccess(serializers.ModelSerializer):
     class Meta:
         model = Floor
