@@ -103,7 +103,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': 'retail-app',
-        'USER': 'sai',
+        'USER': 'awais',
     }
 }
 
