@@ -1,20 +1,35 @@
+from rest_framework import permissions
+from rest_framework_jwt import authentication
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from ..models import Location, Floor, Block
-from .serializers import LocationSerializer, FloorSerializer, BlockSerializer
+from .serializers import \
+    (
+        LocationSerializerAdminAccess,
+        FloorSerializerAdminAccess,
+        BlockSerializerAdminAccess,
+        LocationDetailsSerializerAppUserAccess
+    )
+from .filters import HasLocationAuthorizationFilter
 
 
-class LocationListView(ListAPIView):
+class AdminLocationListView(ListAPIView):
     queryset = Location.objects.all()
-    serializer_class = LocationSerializer
+    serializer_class = LocationSerializerAdminAccess
+    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser)
+    authentication_classes = [authentication.JSONWebTokenAuthentication]
 
 
-class LocationDetailView(RetrieveAPIView):
+class AdminLocationDetailView(RetrieveAPIView):
     queryset = Location.objects.all()
-    serializer_class = LocationSerializer
+    serializer_class = LocationSerializerAdminAccess
+    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser)
+    authentication_classes = [authentication.JSONWebTokenAuthentication]
 
 
-class FloorListView(ListAPIView):
-    serializer_class = FloorSerializer
+class AdminFloorListView(ListAPIView):
+    serializer_class = FloorSerializerAdminAccess
+    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser)
+    authentication_classes = [authentication.JSONWebTokenAuthentication]
 
     def get_queryset(self):
         queryset = Floor.objects.all()
@@ -26,8 +41,10 @@ class FloorListView(ListAPIView):
         return queryset
 
 
-class FloorDetailView(RetrieveAPIView):
-    serializer_class = FloorSerializer
+class AdminFloorDetailView(RetrieveAPIView):
+    serializer_class = FloorSerializerAdminAccess
+    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser)
+    authentication_classes = [authentication.JSONWebTokenAuthentication]
 
     def get_queryset(self):
         queryset = Floor.objects.all()
@@ -39,8 +56,10 @@ class FloorDetailView(RetrieveAPIView):
         return queryset
 
 
-class BlockListView(ListAPIView):
-    serializer_class = BlockSerializer
+class AdminBlockListView(ListAPIView):
+    serializer_class = BlockSerializerAdminAccess
+    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser)
+    authentication_classes = [authentication.JSONWebTokenAuthentication]
 
     def get_queryset(self):
         queryset = Block.objects.all()
@@ -56,6 +75,16 @@ class BlockListView(ListAPIView):
         return queryset
 
 
-class BlockDetailView(RetrieveAPIView):
+class AdminBlockDetailView(RetrieveAPIView):
     queryset = Block.objects.all()
-    serializer_class = BlockSerializer
+    serializer_class = BlockSerializerAdminAccess
+    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser)
+    authentication_classes = [authentication.JSONWebTokenAuthentication]
+
+
+class LocationDetailsAppUserAccess(RetrieveAPIView):
+    queryset = Location.objects.all()
+    serializer_class = LocationDetailsSerializerAppUserAccess
+    permission_classes = (permissions.IsAuthenticated,)
+    authentication_classes = [authentication.JSONWebTokenAuthentication]
+    filter_backends = [HasLocationAuthorizationFilter]

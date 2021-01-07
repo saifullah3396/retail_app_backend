@@ -11,9 +11,6 @@ class Location(models.Model):
     # location name
     name = models.CharField(max_length=120, default="Unknown", unique=True)
 
-    # location description
-    desc = models.TextField(blank=True)
-
     # organization with which this location is associated
     organization = models.ForeignKey(
         'organizations.Organization',
@@ -55,7 +52,8 @@ class Block(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     # block name
-    name = models.CharField(default='Main', max_length=24, blank=True)
+    name = models.CharField(
+        default='Main', max_length=150, blank=True, unique=True)
 
     # add image field for block floor map
     floor_map = models.ImageField(
