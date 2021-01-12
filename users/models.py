@@ -32,7 +32,7 @@ class AppUserManager(UserManager):
 
         user.is_staff = True
         user.is_admin = True
-        is_superuser == True
+
         user.save(using=self._db)
 
         address = EmailAddress.objects.create(user=user)
