@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import AdminLocationListView, AdminLocationDetailView, \
     AdminFloorListView, AdminFloorDetailView, AdminBlockListView, \
-    AdminBlockDetailView, LocationDetailsAppUserAccess
+    AdminBlockDetailView, LocationDetailsAppUserAccess,OrganizationsRUDView
 
 urlpatterns = [
     # admin views
@@ -25,4 +25,9 @@ urlpatterns = [
         '<pk>',
         LocationDetailsAppUserAccess.as_view(),
         name='locations_detail_app_user_access'),
+
+        path(
+        's/<pk>',
+        OrganizationsRUDView.as_view(),
+        name='organizations_ruds'),
 ]
