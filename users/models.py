@@ -32,6 +32,7 @@ class AppUserManager(UserManager):
 
         user.is_staff = True
         user.is_admin = True
+        user.is_superadmin = True
 
         user.save(using=self._db)
 
