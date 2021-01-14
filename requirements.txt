@@ -6,3 +6,5 @@ django-rest-auth
 djangorestframework
 sqlparse==0.4.1
 pillow
+django-filters
+djangorestframework-jwt
