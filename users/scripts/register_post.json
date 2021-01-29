@@ -1,0 +1,7 @@
+{
+    "username": "user1",
+    "password1": "abcd1234@",
+    "password2": "abcd1234@",
+    "email": "user1@gmail.com",
+    "groups": ["test_group"]
+}
