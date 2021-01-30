@@ -18,7 +18,8 @@ class Location(models.Model):
     )
 
     def __str__(self):
-        return self.name
+        return "Location={}, Organization={}".format(
+            self.name, self.organization.name)
 
 
 class Floor(models.Model):
@@ -35,7 +36,7 @@ class Floor(models.Model):
     )
 
     def __str__(self):
-        return "Floor #{} ({})".format(self.number, str(self.location))
+        return "Floor={}, {}".format(self.number, str(self.location))
 
 
 class Block(models.Model):
@@ -60,4 +61,4 @@ class Block(models.Model):
     )
 
     def __str__(self):
-        return "{}, {}".format(self.name, str(self.floor))
+        return "Block={}, {}".format(self.name, str(self.floor))
