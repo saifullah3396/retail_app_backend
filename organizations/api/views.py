@@ -1,19 +1,13 @@
 from django.contrib.auth.models import Group
-from rest_framework import \
-    mixins, permissions, pagination, filters, status, exceptions
+from rest_framework import *
+from rest_framework import filters
 from rest_framework_jwt import authentication
-from rest_framework.generics import (
-    GenericAPIView,
-    ListCreateAPIView,
-    RetrieveUpdateDestroyAPIView,
-    DestroyAPIView
-)
+from rest_framework.generics import *
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from ..models import Organization
 from ..permissions import *
 from .serializers import OrganizationSerializer
-from backend.permissions import HasGroupPermission
 from common.utils import *
 
 
