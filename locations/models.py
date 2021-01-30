@@ -17,15 +17,6 @@ class Location(models.Model):
         on_delete=models.CASCADE,
     )
 
-    # sub-organization with which this location is associated. Sub-organization
-    # can be null
-    sub_organization = models.ForeignKey(
-        'organizations.SubOrganization',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
-    )
-
     def __str__(self):
         return self.name
 
