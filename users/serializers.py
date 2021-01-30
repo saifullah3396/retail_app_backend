@@ -4,7 +4,7 @@ from allauth.account.adapter import get_adapter
 from allauth.account.utils import setup_user_email
 from rest_auth.registration.serializers import RegisterSerializer
 from django.contrib.auth.models import Group
-from organizations.models import Organization, SubOrganization
+from organizations.models import Organization
 from locations.models import Location
 from backend.permissions import is_in_group
 from backend import settings
@@ -19,18 +19,14 @@ class AppRegisterSerializer(RegisterSerializer):
     permission groups as to accept one of the following fields:
         [
             'organization_admin',
-            'sub_organization_admin',
             'employee'
         ]
     If the user is organization_admin, it checks whether organization info is
-    provided. Same is done for sub_organization_admin and sub_organization.
-    Finally it checks whether the locations provided as inputs are existing and
-    are available to the organization (or suborganization).
+    provided. Finally it checks whether the locations provided as inputs are
+    existing and are available to the organization.
     """
 
     organization = serializers.CharField(max_length=150, required=False)
-    sub_organization = serializers.CharField(
-        max_length=150, required=False)
     locations = serializers.ListField(
         child=serializers.CharField(max_length=150), required=False)
     groups = serializers.ListField(
@@ -42,15 +38,6 @@ class AppRegisterSerializer(RegisterSerializer):
             raise serializers.ValidationError(
                 'Organization {} does not exist.'.format(organization_name))
         return organization[0]
-
-    def validate_sub_organization(self, sub_organization_name):
-        sub_organization = SubOrganization.objects.filter(
-            name=sub_organization_name)
-        if not sub_organization:
-            raise serializers.ValidationError(
-                'SubOrganization {} does not exist.'.format(
-                    sub_organization_name))
-        return sub_organization[0]
 
     def validate_locations(self, location_names):
         locations = []
@@ -108,46 +95,21 @@ class AppRegisterSerializer(RegisterSerializer):
                     }
                 )
 
-            # if sub_organization group is assigned then sub_organization must
-            # exist
-            sub_organization = data.get('sub_organization')
-            if 'sub_organization_admin' in requested_groups:
-                if sub_organization is None:
-                    raise serializers.ValidationError(
-                        {
-                            "sub_organization": "Please choose the "
-                            "sub_organization with which the user "
-                            "is associated."
-                        }
-                    )
-
             if not request_user.is_staff:
                 # check if request user is in the same organization as the
-                # registered user
+                # registered user or if it is in the parent organization
                 if request_user.organization != organization:
-                    raise exceptions.PermissionDenied(
-                        "Not authorized to register user for another "
-                        "organization.")
+                    request_user_in_parent = False
+                    parent_organization = organization.parent
+                    while parent_organization is not None:
+                        if request_user.organization == parent_organization:
+                            request_user_in_parent = True
+                        parent_organization = parent_organization.parent
 
-                # check if request user is the same sub organization as
-                # registered user
-                if sub_organization is not None:
-                    if request_user.sub_organization is None:
-                        # if request user has no sub organization then the
-                        # parent of this organization must match with request
-                        # user organization
-                        if request_user.organization != \
-                                sub_organization.organization:
-                            raise exceptions.PermissionDenied(
-                                "Requested sub_organization is not a part "
-                                "of the requested organization.")
-                    else:
-                        # see if the sub organizations match
-                        if request_user.sub_organization != \
-                                sub_organization:
-                            raise exceptions.PermissionDenied(
-                                "Not authorized to register user for "
-                                "another sub_organization.")
+                    if not request_user_in_parent:
+                        raise exceptions.PermissionDenied(
+                            "Not authorized to register user for another "
+                            "organization.")
 
                 # check if the request user is authorized to assign user group
                 # first find request user authority

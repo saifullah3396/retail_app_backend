@@ -2,11 +2,11 @@ from rest_framework import serializers
 from ..models import AppUser
 from django.contrib.auth.models import AbstractUser
 from organizations.api.serializers import \
-    OrganizationSerializer, SubOrganizationSerializer
+    OrganizationSerializer
 from locations.models import Location
-from organizations.models import Organization, SubOrganization
+from organizations.models import Organization
 from organizations.api.serializers import \
-    OrganizationSerializer, SubOrganizationSerializer
+    OrganizationSerializer
 from locations.api.serializers import \
     LocationSerializerAppUserAccess, LocationSerializerAdminAccess
 from backend import settings
@@ -23,13 +23,6 @@ class AdminUserSerializerAdminAccess(serializers.ModelSerializer):
         organizations = Organization.objects.all()
         return \
             OrganizationSerializer(organizations, many=True).data
-
-    def get_sub_organizations(self, app_user):
-        # return all locations as authorized in super user
-        sub_organizations = SubOrganization.objects.all()
-        return \
-            SubOrganizationSerializer(
-                sub_organizations, many=True).data
 
     def get_authorized_locations(self, app_user):
         # return all locations as authorized in super user
@@ -58,7 +51,6 @@ class AdminUserSerializerAdminAccess(serializers.ModelSerializer):
 
 class AppUserSerializerAdminAccess(serializers.ModelSerializer):
     organization = OrganizationSerializer()
-    sub_organization = SubOrganizationSerializer()
     authorized_locations = LocationSerializerAppUserAccess(
         many=True, read_only=True)
     group = serializers.SerializerMethodField()
@@ -86,7 +78,6 @@ class AppUserSerializerAdminAccess(serializers.ModelSerializer):
 
 class AppUserSerializerAppUserAccess(serializers.ModelSerializer):
     organization = OrganizationSerializer()
-    sub_organization = SubOrganizationSerializer()
     authorized_locations = LocationSerializerAppUserAccess(
         many=True, read_only=True)
     group = serializers.SerializerMethodField()

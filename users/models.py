@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, UserManager
 from allauth.account.models import EmailAddress
 from backend import settings
-from locations.models import Location
+# from locations.models import Location
 
 
 class AppUserManager(UserManager):
@@ -28,11 +28,11 @@ class AppUserManager(UserManager):
         user.authority = settings.SUPERUSER_AUTHORITY
 
         # by default super user will have access to all available locations
-        user.authorized_locations.set(Location.objects.all())
+        # user.authorized_locations.set(Location.objects.all())
 
         user.is_staff = True
         user.is_admin = True
-        user.is_superadmin = True
+        user.is_superuser = True
 
         user.save(using=self._db)
 
@@ -66,19 +66,10 @@ class AppUser(AbstractUser):
         blank=True
     )
 
-    # organization with which this sub-organization is associated
-    sub_organization = models.ForeignKey(
-        'organizations.SubOrganization',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
-    )
-
     # authorized locations
     authorized_locations = models.ManyToManyField(
         'locations.Location',
-        blank=True,
-        null=True
+        blank=True
     )
 
     # user avatar image
