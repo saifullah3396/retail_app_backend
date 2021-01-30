@@ -22,7 +22,9 @@ class Command(BaseCommand):
         }
         """
 
-        raise NotImplementedError()
+        raise NotImplementedError(
+            "This command must be implemented by a command of same name "
+            "in other applications.")
 
     def handle(self, *args, **options):
         """

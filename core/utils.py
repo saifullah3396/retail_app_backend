@@ -1,5 +1,5 @@
 from django.contrib.auth.models import Group
-from common.permissions import UserGroups
+from core.permissions import UserGroups
 from rest_framework import exceptions
 
 

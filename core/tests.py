@@ -4,10 +4,12 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import Group
 from backend import settings
+from core.permissions import UserGroups
 from users.models import AppUser
 from organizations.models import Organization
 from locations.models import Location, Floor, Block
 from rest_framework_jwt.settings import api_settings
+from django.core.management import call_command
 
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
@@ -190,7 +192,7 @@ class TestsBase(APITestCase, URLPatternsTestCase):
         """
         # generate test groups
         groups_list = [
-            e.name for e in settings.UserGroups]
+            e.name for e in UserGroups]
         groups_list.append('OTHER_GROUP')
         self.groups = self.create_groups(groups_list)
 
@@ -247,43 +249,43 @@ class TestsBase(APITestCase, URLPatternsTestCase):
         users_dict = {
             'staff_user': 'staff',
             'org_1_admin_user': {
-                'group': settings.UserGroups.ORGANIZATION_ADMIN_GROUP.name,
+                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
                 'organization': 'org_1',
             },
             'org_2_admin_user': {
-                'group': settings.UserGroups.ORGANIZATION_ADMIN_GROUP.name,
+                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
                 'organization': 'org_2',
             },
             'org_3_admin_user': {
-                'group': settings.UserGroups.ORGANIZATION_ADMIN_GROUP.name,
+                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
                 'organization': 'org_3',
             },
             'sub_org_11_admin_user': {
-                'group': settings.UserGroups.ORGANIZATION_ADMIN_GROUP.name,
+                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
                 'organization': 'sub_1_org_1',
             },
             'sub_org_12_admin_user': {
-                'group': settings.UserGroups.ORGANIZATION_ADMIN_GROUP.name,
+                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
                 'organization': 'sub_1_org_2',
             },
             'sub_org_21_admin_user': {
-                'group': settings.UserGroups.ORGANIZATION_ADMIN_GROUP.name,
+                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
                 'organization': 'sub_2_org_1',
             },
             'sub_org_22_admin_user': {
-                'group': settings.UserGroups.ORGANIZATION_ADMIN_GROUP.name,
+                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
                 'organization': 'sub_2_org_2',
             },
             'sub_org_13_admin_user': {
-                'group': settings.UserGroups.ORGANIZATION_ADMIN_GROUP.name,
+                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
                 'organization': 'sub_1_org_3',
             },
             'sub_org_23_admin_user': {
-                'group': settings.UserGroups.ORGANIZATION_ADMIN_GROUP.name,
+                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
                 'organization': 'sub_2_org_2',
             },
             'employee_user': {
-                'group': settings.UserGroups.EMPLOYEE_GROUP.name,
+                'group': UserGroups.EMPLOYEE_GROUP.name,
                 'organization': 'sub_1_org_1',
             },
             'other_user': {
@@ -294,6 +296,8 @@ class TestsBase(APITestCase, URLPatternsTestCase):
         }
         self.users, self.tokens = self.create_users(
             users_dict, self.groups, self.orgs)
+
+        call_command('setup_apps')
 
     def call_api(
             self,
