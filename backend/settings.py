@@ -61,7 +61,7 @@ INSTALLED_APPS = [
     'organizations',
     'locations',
     'cameras',
-    'users'
+    'users',
 ]
 
 MIDDLEWARE = [
@@ -211,8 +211,7 @@ REST_AUTH_SERIALIZERS = {
         'users.serializers.JWTSerializer',
 }
 REGISTRATION_GROUPS_WITH_AUTHORITY = {
-    'organization_admin': 2,
-    'sub_organization_admin': 1,
+    'organization_admin': 1,
     'employee': 0}
 SUPERUSER_AUTHORITY = 10
 ACCOUNT_ADAPTER = 'users.adapter.AppAccountAdapter'
