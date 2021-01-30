@@ -1,6 +1,6 @@
 # permissions.py
 from django.contrib.auth.models import Group
-from common.permissions import UserGroups, AppDjangoModelPermissions
+from core.permissions import UserGroups, AppDjangoModelPermissions
 from rest_framework import permissions
 from .models import AppUser
 

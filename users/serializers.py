@@ -6,9 +6,9 @@ from rest_auth.registration.serializers import RegisterSerializer
 from django.contrib.auth.models import Group
 from organizations.models import Organization
 from locations.models import Location
-from common.utils import is_in_group
+from core.utils import is_in_group
 from backend import settings
-from common.utils import get_user_from_serializer
+from core.utils import get_user_from_serializer
 from .api.serializers import \
     AdminUserSerializerAdminAccess, AppUserSerializerAppUserAccess
 
