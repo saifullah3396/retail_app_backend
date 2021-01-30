@@ -1,5 +1,20 @@
 from django.contrib.auth.models import Group
-from backend.settings import UserGroups
+from common.permissions import UserGroups
+from rest_framework import exceptions
+
+
+def get_user_from_serializer(serializer, raise_exception=False):
+    # get user requesting for a new registration
+    request_user = None
+    request = serializer.context.get("request")
+    if request and hasattr(request, "user"):
+        request_user = request.user
+    else:
+        if raise_exception:
+            # raise unauthorized error if user is not found
+            # most probably this will never get called
+            raise exceptions.PermissionDenied()
+    return request_user
 
 
 def is_in_group(user, group_name):
