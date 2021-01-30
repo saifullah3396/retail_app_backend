@@ -10,7 +10,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
-from enum import Enum
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -250,8 +249,3 @@ JWT_AUTH = {
     'JWT_AUTH_COOKIE': None,
 
 }
-
-
-class UserGroups(Enum):
-    ORGANIZATION_ADMIN_GROUP = 1
-    EMPLOYEE_GROUP = 2
