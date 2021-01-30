@@ -1,36 +1,33 @@
+"""
+Defines the model of an organization
+"""
+
 import uuid
 from django.db import models
+from mptt.models import MPTTModel, TreeForeignKey
 
 
-class Organization(models.Model):
-    # generate unique uuid for each organization
+class Organization(MPTTModel):
+    """
+    A heirarchical tree based model of an organization
+    """
+
+    """Unique uuid for each organization."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    # organization name
-    name = models.CharField(max_length=120, default="Unknown", unique=True)
+    """Unique organization name."""
+    name = models.CharField(max_length=125, default="Unknown", unique=True)
 
-    # organization description
+    """Description of the organization."""
     desc = models.TextField(blank=True)
 
-    def __str__(self):
-        return self.name
-
-
-class SubOrganization(models.Model):
-    # generate unique uuid for each sub-organization
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
-    # sub-organization name
-    name = models.CharField(max_length=120, default="Unknown", unique=True)
-
-    # sub-organization description
-    desc = models.TextField(blank=True)
-
-    # organization with which this sub-organization is associated
-    organization = models.ForeignKey(
-        'organizations.Organization',
-        on_delete=models.CASCADE,
-    )
+    """Parent organization if any exists."""
+    parent = TreeForeignKey('self', on_delete=models.CASCADE,
+                            null=True, blank=True, related_name='children')
 
     def __str__(self):
-        return self.name
+        """
+        String serializer of the model
+        """
+        return "Name = {}, Parent = {}".format(
+            self.name, self.parent.name if self.parent else None)
