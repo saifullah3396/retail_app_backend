@@ -14,7 +14,7 @@
     "prettier.useTabs": false,
     "files.trimTrailingWhitespace": true,
     "editor.rulers": [80],
-    "python.pythonPath": "/home/sai/.virtual_envs/django-backend/bin/python3",
+    "python.pythonPath": "/home/sai/.virtual_envs/django-backend/bin/python",
     "python.linting.pylintEnabled": false,
     "python.linting.pycodestyleEnabled": true,
     "python.linting.enabled": true,
