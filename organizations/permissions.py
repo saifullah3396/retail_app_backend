@@ -1,47 +1,46 @@
-# permissions.py
-from django.contrib.auth.models import Group
+import copy
 from rest_framework import permissions
-from backend.permissions import HasGroupPermission
+from backend.settings import UserGroups
+from .models import Organization
+
+USER_GROUP_PERMISSIONS = {
+    UserGroups.ORGANIZATION_ADMIN_GROUP.name: {
+        Organization: ['add', 'change', 'view', 'delete'],
+    },
+    UserGroups.EMPLOYEE_GROUP.name: {
+        Organization: ['view'],
+    },
+}
 
 
-class OrganizationsRUDPermissions(HasGroupPermission):
-    """
-    Ensure user has access to sub organizations
-    """
-    required_groups_mapping = {
-        'GET': ['organization_admin'],
-        'PUT': ['organization_admin'],
-        'PATCH': ['organization_admin'],
-        'DELETE': [],
-    }
+class AppDjangoModelPermissions(permissions.DjangoModelPermissions):
 
-    def has_permission(self, request, view):
-        return super().has_permission(request, view)
+    def _queryset(self, view):
+        assert hasattr(view, 'get_queryset') \
+            or getattr(view, 'queryset', None) is not None, (
+            'Cannot apply {} on a view that does not set '
+            '`.queryset` or have a `.get_queryset()` method.'
+        ).format(self.__class__.__name__)
 
-
-class SubOrganizationsListCreatePermissions(HasGroupPermission):
-    """
-    Ensure user has access to sub organizations
-    """
-    required_groups_mapping = {
-        'GET': ['organization_admin'],
-        'POST': ['organization_admin'],
-    }
-
-    def has_permission(self, request, view):
-        return super().has_permission(request, view)
+        queryset = getattr(view, 'queryset', None)
+        if queryset is None:
+            queryset = view.get_queryset()
+            assert queryset is not None, (
+                'The value of {0}.queryset and {0}.get_queryset() is None.'.format(
+                    view.__class__.__name__)
+            )
+        return queryset
 
 
-class SubOrganizationsRUDPermissions(HasGroupPermission):
-    """
-    Ensure user has access to sub organizations
-    """
-    required_groups_mapping = {
-        'GET': ['organization_admin', 'sub_organization_admin'],
-        'PUT': ['organization_admin', 'sub_organization_admin'],
-        'PATCH': ['organization_admin', 'sub_organization_admin'],
-        'DELETE': ['organization_admin'],
-    }
+class OrganizationListCreateDestroyPermission(AppDjangoModelPermissions):
 
-    def has_permission(self, request, view):
-        return super().has_permission(request, view)
+    def __init__(self):
+        self.perms_map = copy.deepcopy(self.perms_map)
+        self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
+
+
+class OrganizationRetrieveUpdateDestroyPermission(AppDjangoModelPermissions):
+
+    def __init__(self):
+        self.perms_map = copy.deepcopy(self.perms_map)
+        self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
