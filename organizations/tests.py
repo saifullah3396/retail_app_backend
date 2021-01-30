@@ -1,5 +1,6 @@
 import copy
 from django.urls import include, path, reverse
+from django.core.management import call_command
 from rest_framework import status
 from backend.tests import TestsBase
 
@@ -15,7 +16,8 @@ class OrganizationTests(TestsBase):
 
     def setUp(self):
         super(OrganizationTests, self).setUp()
-        test_get_all = [
+        call_command('create_groups')
+        test_get = [
             {
                 'test_name': 'get_organizations_list',
                 'type': 'get',
@@ -29,16 +31,21 @@ class OrganizationTests(TestsBase):
                     {    # get org list by org admin
                         'args': None,
                         'user': 'org_1_admin_user',
-                        'status': status.HTTP_403_FORBIDDEN
+                        'status': status.HTTP_200_OK
                     },
                     {   # get org list by sub-org admin
                         'args': None,
                         'user': 'sub_org_11_admin_user',
-                        'status': status.HTTP_403_FORBIDDEN
+                        'status': status.HTTP_200_OK
                     },
                     {   # get org list by another org admin
                         'args': None,
                         'user': 'org_2_admin_user',
+                        'status': status.HTTP_200_OK
+                    },
+                    {   # get org list by org admin
+                        'args': None,
+                        'user': 'employee_user',
                         'status': status.HTTP_403_FORBIDDEN
                     },
                     {   # get org list by org admin
@@ -47,38 +54,64 @@ class OrganizationTests(TestsBase):
                         'status': status.HTTP_403_FORBIDDEN
                     }
                 ]
-            },
+            }
+        ]
+
+        test_get_multiple = [
             {
-                'test_name': 'get_sub_organization_list',
+                'test_name': 'get_organizations_list_multiple',
                 'type': 'get',
-                'path_name': 'sub_organizations_list_create',
+                'path_name': 'organizations_list_create',
                 'request': [
-                    {   # get sub-org list by staff, should return all sub-orgs
+                    {   # get org list by staff
                         'args': None,
+                        'data': {
+                            "id": [
+                                self.orgs['sub_1_org_2'].id,
+                                self.orgs['sub_2_org_2'].id]
+                        },
                         'user': 'staff_user',
                         'status': status.HTTP_200_OK
                     },
-                    {
-                        # get sub-org list by org-admin,
-                        # should return sub-orgs under org
+                    {   # get sub-orgs of different org (2) by org admin (1),
+                        # forbidden
                         'args': None,
+                        'data': {
+                            "id": [
+                                self.orgs['sub_1_org_2'].id,
+                                self.orgs['sub_2_org_2'].id]
+                        },
                         'user': 'org_1_admin_user',
-                        'status': status.HTTP_200_OK
+                        'status': status.HTTP_403_FORBIDDEN
                     },
-                    {   # get org list by sub-org admin, no access
+                    {   # get sub-orgs of different org (2) by sub-org
+                        # admin (1), forbidden
                         'args': None,
+                        'data': {
+                            "id": [
+                                self.orgs['sub_1_org_2'].id,
+                                self.orgs['sub_2_org_2'].id]
+                        },
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_403_FORBIDDEN
                     },
-                    {
-                        # get sub-org list by org-admin,
-                        # should return sub-orgs under org
+                    {   # get sub-orgs of org (2) by org admin (2), should work
                         'args': None,
+                        'data': {
+                            "id": [
+                                self.orgs['sub_1_org_2'].id,
+                                self.orgs['sub_2_org_2'].id]
+                        },
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_200_OK
                     },
-                    {   # get sub-org list by random user, no access
+                    {   # get org list of orgs by some random user
                         'args': None,
+                        'data': {
+                            "id": [
+                                self.orgs['sub_1_org_2'].id,
+                                self.orgs['sub_2_org_2'].id]
+                        },
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN
                     }
@@ -86,9 +119,9 @@ class OrganizationTests(TestsBase):
             }
         ]
 
-        test_create_all = [
+        test_create = [
             {
-                'test_name': 'create_organization',
+                'test_name': 'create_top_level_organizations',
                 'type': 'post',
                 'path_name': 'organizations_list_create',
                 'request': [
@@ -112,6 +145,7 @@ class OrganizationTests(TestsBase):
                         'data': {
                             'name': 'My Organization1',
                             'desc': 'No description',
+                            'parent': None
                         },
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_403_FORBIDDEN
@@ -120,6 +154,7 @@ class OrganizationTests(TestsBase):
                         'data': {
                             'name': 'My Organization2',
                             'desc': 'No description',
+                            'parent': None
                         },
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_403_FORBIDDEN
@@ -128,6 +163,7 @@ class OrganizationTests(TestsBase):
                         'data': {
                             'name': 'My Organization3',
                             'desc': 'No description',
+                            'parent': None
                         },
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_403_FORBIDDEN
@@ -143,15 +179,15 @@ class OrganizationTests(TestsBase):
                 ]
             },
             {
-                'test_name': 'create_sub_organization',
+                'test_name': 'create_lower_level_organizations',
                 'type': 'post',
-                'path_name': 'sub_organizations_list_create',
+                'path_name': 'organizations_list_create',
                 'request': [
-                    {   # create sub-org, okay for staff
+                    {   # create sub-org under org_1, okay for staff
                         'data': {
                             'name': 'sub_org_10_in_org_1',
                             'desc': 'No description',
-                            'organization': self.orgs['org_1'].id
+                            'parent': self.orgs['org_1'].id
                         },
                         'user': 'staff_user',
                         'status': status.HTTP_201_CREATED
@@ -160,16 +196,17 @@ class OrganizationTests(TestsBase):
                         'data': {
                             'name': 'sub_org_10_in_org_1',
                             'desc': 'No description',
-                            'organization': self.orgs['org_1'].id
+                            'parent': self.orgs['org_1'].id
                         },
                         'user': 'staff_user',
                         'status': status.HTTP_400_BAD_REQUEST
                     },
-                    {   # create sub-org, okay for org admin if org matches
+                    {   # create sub-org under org_1, okay for org admin if
+                        # org is within descendents of admin organization
                         'data': {
                             'name': 'sub_org_11_in_org_1',
                             'desc': 'No description',
-                            'organization': self.orgs['org_1'].id
+                            'parent': self.orgs['org_1'].id
                         },
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_201_CREATED
@@ -178,16 +215,17 @@ class OrganizationTests(TestsBase):
                         'data': {
                             'name': 'sub_org_11_in_org_1',
                             'desc': 'No description',
-                            'organization': self.orgs['org_1'].id
+                            'parent': self.orgs['org_1'].id
                         },
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_400_BAD_REQUEST
                     },
-                    {   # create sub-org by sub-org admin, forbidden
+                    {   # create sub-org by sub-org admin with a higher level
+                        # organization, forbidden
                         'data': {
                             'name': 'sub_org_12_in_org_1',
                             'desc': 'No description',
-                            'organization': self.orgs['org_1'].id
+                            'parent': self.orgs['org_1'].id
                         },
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_403_FORBIDDEN
@@ -197,7 +235,7 @@ class OrganizationTests(TestsBase):
                         'data': {
                             'name': 'sub_org_13_in_org_1',
                             'desc': 'No description',
-                            'organization': self.orgs['org_1'].id
+                            'parent': self.orgs['org_1'].id
                         },
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_403_FORBIDDEN
@@ -206,7 +244,7 @@ class OrganizationTests(TestsBase):
                         'data': {
                             'name': 'sub_org_14_in_org_2',
                             'desc': 'No description',
-                            'organization': self.orgs['org_2'].id
+                            'parent': self.orgs['org_2'].id
                         },
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_201_CREATED
@@ -215,7 +253,7 @@ class OrganizationTests(TestsBase):
                         'data': {
                             'name': 'sub_org_15_in_org_1',
                             'desc': 'No description',
-                            'organization': self.orgs['org_1'].id
+                            'parent': self.orgs['org_1'].id
                         },
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN
@@ -224,7 +262,63 @@ class OrganizationTests(TestsBase):
             }
         ]
 
-        test_retrieve_all = [
+        test_delete_multiple = [
+            {
+                'test_name': 'delete_multiple_organizations',
+                'type': 'delete',
+                'path_name': 'organizations_list_create',
+                'request': [
+                    {   # delete orgs by id, forbidden for organization admin
+                        'data': {
+                            "id": [
+                                self.orgs['org_1'].id,
+                                self.orgs['org_2'].id,
+                                self.orgs['org_3'].id]
+                        },
+                        'user': 'org_1_admin_user',
+                        'status': status.HTTP_403_FORBIDDEN
+                    },
+                    {   # delete sub-orgs by id, okay for organization admin
+                        'data': {
+                            "id": [
+                                self.orgs['sub_3_org_2'].id]
+                        },
+                        'user': 'org_2_admin_user',
+                        'status': status.HTTP_200_OK
+                    },
+                    {   # delete sub-orgs by id, forbidden for other
+                        # organization admin
+                        'data': {
+                            "id": [
+                                self.orgs['sub_2_org_1'].id]
+                        },
+                        'user': 'org_2_admin_user',
+                        'status': status.HTTP_403_FORBIDDEN
+                    },
+                    {   # delete sub-org by id, okay for staff
+                        'args': None,
+                        'data': {
+                            "id": [
+                                self.orgs['sub_1_org_2'].id]
+                        },
+                        'user': 'staff_user',
+                        'status': status.HTTP_200_OK
+                    },
+                    {   # delete org by id, okay for staff
+                        'data': {
+                            "id": [
+                                self.orgs['org_1'].id,
+                                self.orgs['org_2'].id,
+                                self.orgs['org_3'].id]
+                        },
+                        'user': 'staff_user',
+                        'status': status.HTTP_200_OK
+                    },
+                ]
+            }
+        ]
+
+        test_retrieve = [
             {
                 'test_name': 'get_organization_by_id',
                 'type': 'get',
@@ -243,12 +337,17 @@ class OrganizationTests(TestsBase):
                     {   # get org by id, forbidden for sub-org
                         'args': [self.orgs['org_1'].id],
                         'user': 'sub_org_11_admin_user',
-                        'status': status.HTTP_403_FORBIDDEN
+                        'status': status.HTTP_404_NOT_FOUND
                     },
                     {   # get org by id, should return null for other org-admin
                         'args': [self.orgs['org_1'].id],
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
+                    },
+                    {   # get org by id, forbidden for random user
+                        'args': [self.orgs['org_1'].id],
+                        'user': 'other_user',
+                        'status': status.HTTP_403_FORBIDDEN
                     },
                     {   # get org by id, forbidden for random user
                         'args': [self.orgs['org_1'].id],
@@ -260,59 +359,69 @@ class OrganizationTests(TestsBase):
             {
                 'test_name': 'get_sub_organization_by_id',
                 'type': 'get',
-                'path_name': 'sub_organizations_rud',
+                'path_name': 'organizations_rud',
                 'request': [
                     {   # get sub-org by id, okay for staff
-                        'args': [self.sub_orgs['sub_1_org_1'].id],
+                        'args': [self.orgs['sub_1_org_1'].id],
                         'user': 'staff_user',
                         'status': status.HTTP_200_OK
                     },
                     {   # get sub-org by id, okay for org admin itself under
                         # which this sub-org exists
-                        'args': [self.sub_orgs['sub_1_org_1'].id],
+                        'args': [self.orgs['sub_1_org_1'].id],
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_200_OK
                     },
                     {   # get sub-org by id, okay for sub-org admin itself
-                        'args': [self.sub_orgs['sub_1_org_1'].id],
+                        'args': [self.orgs['sub_1_org_1'].id],
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_200_OK
                     },
                     {   # get sub-org by id, okay for sub-org admin itself
-                        'args': [self.sub_orgs['sub_1_org_2'].id],
+                        'args': [self.orgs['sub_1_org_2'].id],
                         'user': 'sub_org_12_admin_user',
                         'status': status.HTTP_200_OK
                     },
                     {   # get sub-org by id, okay for sub-org admin itself
-                        'args': [self.sub_orgs['sub_2_org_1'].id],
+                        'args': [self.orgs['sub_2_org_1'].id],
                         'user': 'sub_org_21_admin_user',
                         'status': status.HTTP_200_OK
                     },
                     {   # get sub-org by id, okay for sub-org admin itself
-                        'args': [self.sub_orgs['sub_2_org_2'].id],
+                        'args': [self.orgs['sub_2_org_2'].id],
                         'user': 'sub_org_22_admin_user',
                         'status': status.HTTP_200_OK
                     },
                     {   # get sub-org by id, should return null for other
                         # org-admin under which this sub-org does not exist
-                        'args': [self.sub_orgs['sub_1_org_1'].id],
+                        'args': [self.orgs['sub_1_org_1'].id],
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
                     {   # get sub-org by id, should return null for other
                         # sub-org admin to which this sub-org does not exist
-                        'args': [self.sub_orgs['sub_1_org_1'].id],
+                        'args': [self.orgs['sub_1_org_1'].id],
                         'user': 'sub_org_12_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
                     {   # get sub-org by id, should return null for other
                         # sub-org admin to which this sub-org does not exist
-                        'args': [self.sub_orgs['sub_1_org_1'].id],
+                        'args': [self.orgs['sub_1_org_1'].id],
                         'user': 'sub_org_21_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
+                    {   # get employees own organization info, okay
+                        'args': [self.orgs['sub_1_org_1'].id],
+                        'user': 'employee_user',
+                        'status': status.HTTP_200_OK
+                    },
+                    {   # use employees to get other organization info, bad
+                        'args': [self.orgs['sub_1_org_2'].id],
+                        'user': 'employee_user',
+                        'status': status.HTTP_404_NOT_FOUND
+                    },
                     {   # get sub-org by id, forbidden for random user
-                        'args': [self.sub_orgs['sub_1_org_1'].id],
+                        'args': [self.orgs['sub_1_org_1'].id],
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN
                     }
@@ -320,7 +429,7 @@ class OrganizationTests(TestsBase):
             }
         ]
 
-        test_update_all = [
+        test_update = [
             {
                 'test_name': 'update_organization_by_id',
                 'type': 'patch',
@@ -344,14 +453,14 @@ class OrganizationTests(TestsBase):
                         },
                         'status': status.HTTP_200_OK
                     },
-                    {   # update org by id, forbidden for sub-org
+                    {   # update org by id, sub-org admin has no access to it
                         'args': [self.orgs['org_1'].id],
                         'user': 'sub_org_11_admin_user',
                         'data': {
                             'name': 'org_1_updated',
                             'desc': 'org_1_desc_updated',
                         },
-                        'status': status.HTTP_403_FORBIDDEN
+                        'status': status.HTTP_404_NOT_FOUND
                     },
                     {   # update org by id, should return null for other
                         # org-admin
@@ -377,10 +486,10 @@ class OrganizationTests(TestsBase):
             {
                 'test_name': 'update_sub_organization_by_id',
                 'type': 'patch',
-                'path_name': 'sub_organizations_rud',
+                'path_name': 'organizations_rud',
                 'request': [
                     {   # update sub-org by id, okay for staff
-                        'args': [self.sub_orgs['sub_1_org_1'].id],
+                        'args': [self.orgs['sub_1_org_1'].id],
                         'user': 'staff_user',
                         'data': {
                             'name': 'sub_1_org_1_updated',
@@ -390,7 +499,7 @@ class OrganizationTests(TestsBase):
                     },
                     {   # update sub-org by id, okay for org admin itself under
                         # which this sub-org exists
-                        'args': [self.sub_orgs['sub_1_org_1'].id],
+                        'args': [self.orgs['sub_1_org_1'].id],
                         'user': 'org_1_admin_user',
                         'data': {
                             'name': 'sub_1_org_1_updated',
@@ -399,7 +508,7 @@ class OrganizationTests(TestsBase):
                         'status': status.HTTP_200_OK
                     },
                     {   # update sub-org by id, okay for sub-org admin itself
-                        'args': [self.sub_orgs['sub_1_org_1'].id],
+                        'args': [self.orgs['sub_1_org_1'].id],
                         'user': 'sub_org_11_admin_user',
                         'data': {
                             'name': 'sub_1_org_1_updated',
@@ -409,7 +518,7 @@ class OrganizationTests(TestsBase):
                     },
                     {   # update sub-org by id, okay for sub-org admin itself,
                         # but bad duplicate name
-                        'args': [self.sub_orgs['sub_1_org_2'].id],
+                        'args': [self.orgs['sub_1_org_2'].id],
                         'user': 'sub_org_12_admin_user',
                         'data': {
                             'name': 'sub_1_org_1_updated',  # duplicate name here
@@ -418,7 +527,7 @@ class OrganizationTests(TestsBase):
                         'status': status.HTTP_400_BAD_REQUEST
                     },
                     {   # update sub-org by id, okay for sub-org admin itself
-                        'args': [self.sub_orgs['sub_1_org_2'].id],
+                        'args': [self.orgs['sub_1_org_2'].id],
                         'user': 'sub_org_12_admin_user',
                         'data': {
                             'name': 'sub_1_org_2_updated',
@@ -427,7 +536,7 @@ class OrganizationTests(TestsBase):
                         'status': status.HTTP_200_OK
                     },
                     {   # update sub-org by id, okay for sub-org admin itself
-                        'args': [self.sub_orgs['sub_2_org_1'].id],
+                        'args': [self.orgs['sub_2_org_1'].id],
                         'user': 'sub_org_21_admin_user',
                         'data': {
                             'name': 'sub_2_org_1_updated',
@@ -436,7 +545,7 @@ class OrganizationTests(TestsBase):
                         'status': status.HTTP_200_OK
                     },
                     {   # update sub-org by id, okay for sub-org admin itself
-                        'args': [self.sub_orgs['sub_2_org_2'].id],
+                        'args': [self.orgs['sub_2_org_2'].id],
                         'user': 'sub_org_22_admin_user',
                         'data': {
                             'name': 'sub_2_org_2_updated',
@@ -446,7 +555,7 @@ class OrganizationTests(TestsBase):
                     },
                     {   # update sub-org by id, should return null for other
                         # org-admin under which this sub-org does not exist
-                        'args': [self.sub_orgs['sub_1_org_1'].id],
+                        'args': [self.orgs['sub_1_org_1'].id],
                         'user': 'org_2_admin_user',
                         'data': {
                             'name': 'sub_1_org_1_updated',
@@ -456,7 +565,7 @@ class OrganizationTests(TestsBase):
                     },
                     {   # update sub-org by id, should return null for other
                         # sub-org admin to which this sub-org does not exist
-                        'args': [self.sub_orgs['sub_1_org_1'].id],
+                        'args': [self.orgs['sub_1_org_1'].id],
                         'user': 'sub_org_12_admin_user',
                         'data': {
                             'name': 'sub_1_org_1_updated',
@@ -466,7 +575,7 @@ class OrganizationTests(TestsBase):
                     },
                     {   # update sub-org by id, should return null for other
                         # sub-org admin to which this sub-org does not exist
-                        'args': [self.sub_orgs['sub_1_org_1'].id],
+                        'args': [self.orgs['sub_1_org_1'].id],
                         'user': 'sub_org_21_admin_user',
                         'data': {
                             'name': 'sub_1_org_1_updated',
@@ -475,19 +584,37 @@ class OrganizationTests(TestsBase):
                         'status': status.HTTP_404_NOT_FOUND
                     },
                     {   # update sub-org by id, forbidden for random user
-                        'args': [self.sub_orgs['sub_1_org_1'].id],
+                        'args': [self.orgs['sub_1_org_1'].id],
                         'user': 'other_user',
                         'data': {
                             'name': 'sub_1_org_1_updated',
                             'desc': 'sub_1_org_1_desc_updated',
                         },
                         'status': status.HTTP_403_FORBIDDEN
-                    }
+                    },
+                    {   # update employee's organization by employee, forbidden
+                        'args': [self.orgs['sub_1_org_1'].id],
+                        'user': 'employee_user',
+                        'data': {
+                            'name': 'sub_1_org_1_updated',
+                            'desc': 'sub_1_org_1_desc_updated',
+                        },
+                        'status': status.HTTP_403_FORBIDDEN
+                    },
+                    {   # use employees to update organization info, forbidden
+                        'args': [self.orgs['sub_1_org_2'].id],
+                        'user': 'employee_user',
+                        'data': {
+                            'name': 'sub_1_org_1_updated',
+                            'desc': 'sub_1_org_1_desc_updated',
+                        },
+                        'status': status.HTTP_403_FORBIDDEN
+                    },
                 ]
             }
         ]
 
-        test_delete_all = [
+        test_delete = [
             {
                 'test_name': 'delete_organization_by_id',
                 'type': 'delete',
@@ -496,17 +623,17 @@ class OrganizationTests(TestsBase):
                     {   # delete org by id, forbidden for org admin itself
                         'args': [self.orgs['org_3'].id],
                         'user': 'org_3_admin_user',
-                        'status': status.HTTP_403_FORBIDDEN
+                        'status': status.HTTP_404_NOT_FOUND
                     },
                     {   # delete org by id, forbidden for sub-org
                         'args': [self.orgs['org_3'].id],
                         'user': 'sub_org_13_admin_user',
-                        'status': status.HTTP_403_FORBIDDEN
+                        'status': status.HTTP_404_NOT_FOUND
                     },
                     {   # delete org by id by other org admin, forbidden
                         'args': [self.orgs['org_3'].id],
                         'user': 'org_1_admin_user',
-                        'status': status.HTTP_403_FORBIDDEN
+                        'status': status.HTTP_404_NOT_FOUND
                     },
                     {   # delete org by id, forbidden for random user
                         'args': [self.orgs['org_3'].id],
@@ -524,80 +651,45 @@ class OrganizationTests(TestsBase):
             {
                 'test_name': 'delete_sub_organization_by_id',
                 'type': 'delete',
-                'path_name': 'sub_organizations_rud',
+                'path_name': 'organizations_rud',
                 'request': [
-                    {   # delete sub-org by id, forbidden for sub-org admin
-                        'args': [self.sub_orgs['sub_1_org_1'].id],
+                    {   # delete sub-org by id, should not be found for
+                        # sub-org admin
+                        'args': [self.orgs['sub_1_org_1'].id],
                         'user': 'sub_org_11_admin_user',
-                        'status': status.HTTP_403_FORBIDDEN
+                        'status': status.HTTP_404_NOT_FOUND
                     },
                     {   # delete sub-org by id, should return null for other
                         # org-admin under which this sub-org does not exist
-                        'args': [self.sub_orgs['sub_1_org_1'].id],
+                        'args': [self.orgs['sub_1_org_1'].id],
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
                     {   # delete sub-org by id by sub-org admin,
-                        # should be forbidden
-                        'args': [self.sub_orgs['sub_1_org_1'].id],
+                        # should be not found
+                        'args': [self.orgs['sub_1_org_1'].id],
                         'user': 'sub_org_21_admin_user',
-                        'status': status.HTTP_403_FORBIDDEN
+                        'status': status.HTTP_404_NOT_FOUND
                     },
                     {   # delete sub-org by id, forbidden for random user
-                        'args': [self.sub_orgs['sub_1_org_1'].id],
+                        'args': [self.orgs['sub_1_org_1'].id],
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN
                     },
                     {   # delete sub-org by id, okay for staff
-                        'args': [self.sub_orgs['sub_2_org_2'].id],
+                        'args': [self.orgs['sub_2_org_2'].id],
                         'user': 'staff_user',
                         'status': status.HTTP_200_OK
                     },
                     {   # duplicate delete sub-org by id, bad request
-                        'args': [self.sub_orgs['sub_2_org_2'].id],
+                        'args': [self.orgs['sub_2_org_2'].id],
                         'user': 'staff_user',
                         'status': status.HTTP_404_NOT_FOUND  # already deleted
                     },
                     {   # delete sub-org by id, okay for org admin itself under
                         # which this sub-org exists
-                        'args': [self.sub_orgs['sub_1_org_2'].id],
+                        'args': [self.orgs['sub_1_org_2'].id],
                         'user': 'org_2_admin_user',
-                        'status': status.HTTP_200_OK
-                    },
-                ]
-            },
-        ]
-
-        test_delete_multiple = [
-            {
-                'test_name': 'delete_multiple_sub_organizations_by_id',
-                'type': 'delete',
-                'path_name': 'sub_organizations_list_create',
-                'request': [
-                    {   # delete org by id, forbidden for org admin itself
-                        'data': {
-                            "id": [
-                                self.sub_orgs['sub_1_org_2'].id,
-                                self.sub_orgs['sub_2_org_2'].id]
-                        },
-                        'user': 'staff_user',
-                        'status': status.HTTP_200_OK
-                    },
-                ]
-            },
-            {
-                'test_name': 'delete_multiple_organizations_by_id',
-                'type': 'delete',
-                'path_name': 'organizations_list_create',
-                'request': [
-                    {   # delete org by id, forbidden for org admin itself
-                        'data': {
-                            "id": [
-                                self.orgs['org_1'].id,
-                                self.orgs['org_2'].id,
-                                self.orgs['org_3'].id]
-                        },
-                        'user': 'staff_user',
                         'status': status.HTTP_200_OK
                     },
                 ]
@@ -605,12 +697,13 @@ class OrganizationTests(TestsBase):
         ]
 
         self.test_sets = [
-            test_get_all,
-            test_retrieve_all,
-            test_create_all,
-            test_update_all,
-            test_delete_all,
-            test_delete_multiple
+            test_get,
+            test_get_multiple,
+            test_create,
+            test_retrieve,
+            test_update,
+            test_delete,
+            test_delete_multiple,
         ]
 
     def run_single_test(self, config):
