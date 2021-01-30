@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
+from enum import Enum
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -161,7 +162,7 @@ REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,
     # or allow read-only access for unauthenticated users.
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+        'rest_framework.permissions.DjangoModelPermissions'
     ],
     # 'DEFAULT_RENDERER_CLASSES': [
     #     'rest_framework.renderers.JSONRenderer',
@@ -249,3 +250,8 @@ JWT_AUTH = {
     'JWT_AUTH_COOKIE': None,
 
 }
+
+
+class UserGroups(Enum):
+    ORGANIZATION_ADMIN_GROUP = 1
+    EMPLOYEE_GROUP = 2
