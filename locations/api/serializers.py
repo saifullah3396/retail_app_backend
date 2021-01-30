@@ -2,78 +2,60 @@ from rest_framework import serializers
 from ..models import Location, Floor, Block
 
 
-class LocationSerializerAdminAccess(serializers.ModelSerializer):
+class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
-        fields = ('id', 'name', 'organization', 'sub_organization')
+        fields = '__all__'
 
 
-class FloorSerializerAdminAccess(serializers.ModelSerializer):
+class FloorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Floor
-        fields = ('id', 'number', 'location')
+        fields = '__all__'
 
 
-class BlockSerializerAdminAccess(serializers.ModelSerializer):
-    floor = FloorSerializerAdminAccess()
-    floor_map_url = serializers.SerializerMethodField()
-
+class BlockSerializer(serializers.ModelSerializer):
     class Meta:
         model = Block
-        fields = ('id', 'name', 'coordinate_frame', 'floor', 'floor_map_url')
-
-    def get_floor_map_url(self, block):
-        request = self.context.get('request')
-        if block.floor_map and hasattr(block.floor_map, 'url'):
-            floor_map_url = block.floor_map.url
-            return request.build_absolute_uri(floor_map_url)
-        else:
-            None
+        fields = '__all__'
 
 
-class LocationSerializerAppUserAccess(serializers.ModelSerializer):
-    class Meta:
-        model = Location
-        fields = ('id', 'name', 'organization', 'sub_organization')
-
-
-class BlockDetailsSerializerAppUserAccess(serializers.ModelSerializer):
+class BlockDetailSerializer(BlockSerializer):
     class Meta:
         model = Block
-        fields = ('id', 'name', 'floor_map', 'coordinate_frame', 'floor')
+        fields = '__all__'
 
 
-class FloorDetailsSerializerAppUserAccess(serializers.ModelSerializer):
+class FloorDetailSerializer(serializers.ModelSerializer):
     blocks = serializers.SerializerMethodField()
 
     def get_blocks(self, floor):
         # return all blocks in this floor
         blocks = Blocks.objects.filter(floor=floor)
         return \
-            BlockDetailsSerializerAppUserAccess(blocks, many=True).data
+            BlockDetailsSerializer(blocks, many=True).data
 
     class Meta:
         model = Floor
         fields = ('id', 'number', 'location', 'blocks')
 
 
-class LocationDetailsSerializerAppUserAccess(serializers.ModelSerializer):
+class LocationDetailSerializer(serializers.ModelSerializer):
     floors = serializers.SerializerMethodField()
 
     def get_floors(self, location):
         # return all floors in this location
-        print("GeTTING FLOORS", location.id)
         floors = Floor.objects.filter(location__id=location.id)
         return \
-            FloorDetailsSerializerAppUserAccess(floors, many=True).data
+            FloorDetailsSerializer(floors, many=True).data
 
     class Meta:
         model = Location
-        fields = ('id', 'name', 'organization', 'sub_organization', 'floors')
+        fields = ('id', 'name', 'organization', 'floors')
 
     def to_representation(self, location):
         data = \
             super(
-                LocationDetailsSerializerAppUserAccess,
+                LocationDetailsSerializer,
                 self).to_representation(location)
         return {'location': data}
