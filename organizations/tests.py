@@ -2,7 +2,7 @@ import copy
 from django.urls import include, path, reverse
 from django.core.management import call_command
 from rest_framework import status
-from backend.tests import TestsBase
+from common.tests import TestsBase
 
 
 class OrganizationTests(TestsBase):

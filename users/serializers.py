@@ -6,9 +6,9 @@ from rest_auth.registration.serializers import RegisterSerializer
 from django.contrib.auth.models import Group
 from organizations.models import Organization
 from locations.models import Location
-from backend.permissions import is_in_group
+from common.utils import is_in_group
 from backend import settings
-from backend.utils import get_request_user
+from common.utils import get_user_from_serializer
 from .api.serializers import \
     AdminUserSerializerAdminAccess, AppUserSerializerAppUserAccess
 
@@ -180,7 +180,7 @@ class AppRegisterSerializer(RegisterSerializer):
 
         # get the user requesting this registration and raise an exception
         # if none is found
-        request_user = get_request_user(self, raise_exception=True)
+        request_user = get_user_from_serializer(self, raise_exception=True)
         if data.get('groups') is not None:
             self.validate_organization_user(
                 data=data, request_user=request_user)
@@ -218,7 +218,7 @@ class JWTSerializer(serializers.Serializer):
         Required to allow using custom USER_DETAILS_SERIALIZER in
         JWTSerializer. Defining it here to avoid circular imports
         """
-        user = get_request_user(self, raise_exception=True)
+        user = get_user_from_serializer(self, raise_exception=True)
         if user.is_staff:
             JWTUserDetailsSerializer = AdminUserSerializerAdminAccess
         else:

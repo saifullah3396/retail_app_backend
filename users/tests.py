@@ -2,7 +2,7 @@ import copy
 from django.urls import include, path, reverse
 from rest_framework.authtoken.models import Token
 from rest_framework import status
-from backend.tests import TestsBase
+from common.tests import TestsBase
 
 
 class AccountRegistrationTests(TestsBase):
