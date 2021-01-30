@@ -1,5 +1,5 @@
 import copy
-from common.permissions import UserGroups, AppDjangoModelPermissions
+from core.permissions import UserGroups, AppDjangoModelPermissions
 from .models import Organization
 
 USER_GROUP_PERMISSIONS = {

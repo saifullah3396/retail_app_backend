@@ -1,8 +1,8 @@
-from backend.management.commands import create_groups
+from core.management.commands.create_groups_base import Command
 from organizations.permissions import USER_GROUP_PERMISSIONS
 
 
-class Command(create_groups.Command):
+class Command(Command):
     """
     A command to generate organization related groups and their permissions
     """

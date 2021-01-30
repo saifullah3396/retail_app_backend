@@ -1,8 +1,7 @@
 import copy
 from django.urls import include, path, reverse
-from django.core.management import call_command
 from rest_framework import status
-from common.tests import TestsBase
+from core.tests import TestsBase
 
 
 class OrganizationTests(TestsBase):
@@ -16,7 +15,6 @@ class OrganizationTests(TestsBase):
 
     def setUp(self):
         super(OrganizationTests, self).setUp()
-        call_command('create_groups')
         test_get = [
             {
                 'test_name': 'get_organizations_list',
