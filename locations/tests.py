@@ -717,12 +717,17 @@ class LocationTests(TestsBase):
                 if 'data' in request:
                     data = request['data']
 
+                response_check = None
+                if 'response_check' in request:
+                    response_check = request['response_check']
+
                 response = self.call_api(
                     url,
                     data,
                     self.tokens[request['user']],
                     request['status'],
-                    config['type'])
+                    config['type'],
+                    response_check=response_check)
 
     def test_all_sets(self):
         for test_set in self.test_sets:
