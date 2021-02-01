@@ -314,6 +314,7 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             token,
             status_code,
             api_type,
+            response_check=None,
             debug=True,
             make_assert=True):
 
@@ -351,5 +352,7 @@ class TestsBase(APITestCase, URLPatternsTestCase):
         if debug:
             if response.status_code != status_code:
                 print('response:', response.data)
+        if response_check:
+            response_check(self, response.data)
         self.assertEqual(response.status_code, status_code)
         return response
