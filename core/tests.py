@@ -217,14 +217,45 @@ class TestsBase(APITestCase, URLPatternsTestCase):
         self.orgs.update(self.create_sub_orgs(sub_orgs_dict, self.orgs))
 
         # generate test locations
-        locations_dict = {
+        self.org_1_locations = {
             'location_1_org_1': 'org_1',
-            'location_1_sub_org_1': 'sub_1_org_1',
             'location_2_org_1': 'org_1',
-            'location_1_org_2': 'org_2',
-            'location_2_org_2': 'org_2'
+            'location_3_org_1': 'org_1',
+            'location_4_org_1': 'org_1',
+            'location_5_org_1': 'org_1',
         }
-        self.locations = self.create_locations(locations_dict, self.orgs)
+
+        self.sub_1_org_1_locations = {
+            'location_1_sub_1_org_1': 'sub_1_org_1',
+            'location_2_sub_1_org_1': 'sub_1_org_1',
+            'location_3_sub_1_org_1': 'sub_1_org_1',
+            'location_4_sub_1_org_1': 'sub_1_org_1',
+        }
+
+        self.org_2_locations = {
+            'location_1_org_2': 'org_2',
+            'location_2_org_2': 'org_2',
+            'location_3_org_2': 'org_2',
+        }
+
+        self.sub_1_org_2_locations = {
+            'location_1_sub_1_org_2': 'sub_1_org_2',
+            'location_2_sub_1_org_2': 'sub_1_org_2',
+        }
+
+        self.org_3_locations = {
+            'location_1_org_3': 'org_3',
+            'location_2_org_3': 'org_3',
+        }
+
+        self.locations_dict = {
+            **self.org_1_locations,
+            **self.sub_1_org_1_locations,
+            **self.org_2_locations,
+            **self.sub_1_org_2_locations,
+            **self.org_3_locations,
+        }
+        self.locations = self.create_locations(self.locations_dict, self.orgs)
 
         # generate test floors
         floors_dict = {
@@ -303,7 +334,7 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             },
         }
         self.users, self.tokens = self.create_users(
-             self.users_dict, self.groups, self.orgs, self.locations)
+            self.users_dict, self.groups, self.orgs, self.locations)
 
         call_command('setup_apps')
 
