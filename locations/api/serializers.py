@@ -31,13 +31,33 @@ class FloorDetailSerializer(serializers.ModelSerializer):
 
     def get_blocks(self, floor):
         # return all blocks in this floor
-        blocks = Blocks.objects.filter(floor=floor)
+        blocks = Block.objects.filter(floor=floor)
         return \
-            BlockDetailsSerializer(blocks, many=True).data
+            BlockDetailSerializer(blocks, many=True).data
 
     class Meta:
         model = Floor
         fields = ('id', 'number', 'location', 'blocks')
+
+
+class BlockInLocationDetailSerializer(BlockSerializer):
+    class Meta:
+        model = Block
+        fields = ('id', 'name', 'floor_map', 'coordinate_frame')
+
+
+class FloorInLocationDetailSerializer(serializers.ModelSerializer):
+    blocks = serializers.SerializerMethodField()
+
+    def get_blocks(self, floor):
+        # return all blocks in this floor
+        blocks = Block.objects.filter(floor=floor)
+        return \
+            BlockInLocationDetailSerializer(blocks, many=True).data
+
+    class Meta:
+        model = Floor
+        fields = ('id', 'number', 'blocks')
 
 
 class LocationDetailSerializer(serializers.ModelSerializer):
@@ -47,7 +67,7 @@ class LocationDetailSerializer(serializers.ModelSerializer):
         # return all floors in this location
         floors = Floor.objects.filter(location__id=location.id)
         return \
-            FloorDetailsSerializer(floors, many=True).data
+            FloorInLocationDetailSerializer(floors, many=True).data
 
     class Meta:
         model = Location
@@ -56,6 +76,6 @@ class LocationDetailSerializer(serializers.ModelSerializer):
     def to_representation(self, location):
         data = \
             super(
-                LocationDetailsSerializer,
+                LocationDetailSerializer,
                 self).to_representation(location)
         return {'location': data}
