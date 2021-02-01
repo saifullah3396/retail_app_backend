@@ -19,32 +19,59 @@ class LocationTests(TestsBase):
             {
                 'test_name': 'get_locations_list',
                 'type': 'get',
-                'path_name': 'locations_list_create',
+                'path_name': 'locations_list_create_delete',
                 'request': [
                     {   # get locations list by staff
                         'args': None,
                         'user': 'staff_user',
-                        'status': status.HTTP_200_OK
+                        'status': status.HTTP_200_OK,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(
+                                len(data['results']), len(self.locations_dict))
+                        )
                     },
                     {    # get locations list by org admin
                         'args': None,
                         'user': 'org_1_admin_user',
-                        'status': status.HTTP_200_OK
+                        'status': status.HTTP_200_OK,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(
+                                len(data['results']),
+                                len(self.org_1_locations) +
+                                len(self.sub_1_org_1_locations))
+                        )
                     },
                     {   # get locations list by sub-org admin
                         'args': None,
                         'user': 'sub_org_11_admin_user',
-                        'status': status.HTTP_200_OK
+                        'status': status.HTTP_200_OK,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(
+                                len(data['results']),
+                                len(self.sub_1_org_1_locations))
+                        )
                     },
                     {   # get locations list by another org admin
                         'args': None,
                         'user': 'org_2_admin_user',
-                        'status': status.HTTP_200_OK
+                        'status': status.HTTP_200_OK,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(
+                                len(data['results']),
+                                len(self.org_2_locations) +
+                                len(self.sub_1_org_2_locations))
+                        )
                     },
                     {   # get locations list by employee, okay
                         'args': None,
                         'user': 'employee_user',
-                        'status': status.HTTP_200_OK
+                        'status': status.HTTP_200_OK,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(
+                                len(data['results']),
+                                len(self.users_dict['employee_user']
+                                    ['authorized_locations']))
+                        )
                     },
                     {   # get locations list by random user, forbidden
                         'args': None,
@@ -59,56 +86,130 @@ class LocationTests(TestsBase):
             {
                 'test_name': 'get_locations_list_multiple',
                 'type': 'get',
-                'path_name': 'locations_list_create',
+                'path_name': 'locations_list_create_delete',
                 'request': [
-                    {   # get org list by staff
+                    {   # get locations list by staff
+                        'test_name': 'test_get_locations_list_by_ids_by_staff',
                         'args': None,
                         'data': {
-                            "id": [
-                                self.orgs['sub_1_org_2'].id,
-                                self.orgs['sub_2_org_2'].id]
+                            'id': [
+                                self.locations['location_1_org_1'].id,
+                                self.locations['location_2_org_1'].id,
+                                self.locations['location_1_org_2'].id]
                         },
                         'user': 'staff_user',
-                        'status': status.HTTP_200_OK
+                        'status': status.HTTP_200_OK,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(len(data['results']), 3)
+                        )
                     },
-                    {   # get sub-orgs of different org (2) by org admin (1),
+                    {   # get locations of different org (1) by org admin (2),
                         # forbidden
+                        'test_name':
+                            'test_get_org_1_locations_by_id_by_org_2_admin',
                         'args': None,
                         'data': {
-                            "id": [
-                                self.orgs['sub_1_org_2'].id,
-                                self.orgs['sub_2_org_2'].id]
-                        },
-                        'user': 'org_1_admin_user',
-                        'status': status.HTTP_403_FORBIDDEN
-                    },
-                    {   # get sub-orgs of different org (2) by sub-org
-                        # admin (1), forbidden
-                        'args': None,
-                        'data': {
-                            "id": [
-                                self.orgs['sub_1_org_2'].id,
-                                self.orgs['sub_2_org_2'].id]
-                        },
-                        'user': 'sub_org_11_admin_user',
-                        'status': status.HTTP_403_FORBIDDEN
-                    },
-                    {   # get sub-orgs of org (2) by org admin (2), should work
-                        'args': None,
-                        'data': {
-                            "id": [
-                                self.orgs['sub_1_org_2'].id,
-                                self.orgs['sub_2_org_2'].id]
+                            'id': [
+                                self.locations['location_1_org_1'].id,
+                                self.locations['location_2_org_1'].id]
                         },
                         'user': 'org_2_admin_user',
-                        'status': status.HTTP_200_OK
+                        'status': status.HTTP_404_NOT_FOUND
                     },
-                    {   # get org list of orgs by some random user
+                    {   # get locations of different org (2) by sub-org
+                        # admin (1), forbidden
+                        'test_name':
+                            'test_get_org_2_locations_by_id_by_sub_org_1_admin',
                         'args': None,
                         'data': {
-                            "id": [
-                                self.orgs['sub_1_org_2'].id,
-                                self.orgs['sub_2_org_2'].id]
+                            'id': [
+                                self.locations['location_1_org_2'].id,
+                                self.locations['location_2_org_2'].id]
+                        },
+                        'user': 'sub_org_11_admin_user',
+                        'status': status.HTTP_404_NOT_FOUND
+                    },
+                    {   # get locations of same org (1) by sub-org
+                        # admin (1), forbidden
+                        'test_name':
+                            'test_get_org_1_locations_by_id_by_sub_org_1_admin',
+                        'args': None,
+                        'data': {
+                            'id': [
+                                self.locations['location_1_org_1'].id,
+                                self.locations['location_1_org_2'].id]
+                        },
+                        'user': 'sub_org_11_admin_user',
+                        'status': status.HTTP_404_NOT_FOUND
+                    },
+                    {   # get locations of same org (1) by sub-org
+                        # admin (1), okay
+                        'test_name':
+                            'test_get_sub_org_1_locations_by_id_by_sub_org_1_admin',
+                        'args': None,
+                        'data': {
+                            'id': [
+                                self.locations['location_1_sub_1_org_1'].id,
+                                self.locations['location_2_sub_1_org_1'].id]
+                        },
+                        'user': 'sub_org_11_admin_user',
+                        'status': status.HTTP_200_OK,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(len(data['results']), 2)
+                        )
+                    },
+                    {   # get locations of org (1) by org admin (1),
+                        # should work
+                        'test_name':
+                            'test_get_org_1_locations_by_id_by_org_1_admin',
+                        'args': None,
+                        'data': {
+                            'id': [
+                                self.locations['location_1_org_1'].id,
+                                self.locations['location_2_org_1'].id]
+                        },
+                        'user': 'org_1_admin_user',
+                        'status': status.HTTP_200_OK,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(len(data['results']), 2)
+                        )
+                    },
+                    {   # get authorized locations list of locations by
+                        # employee
+                        'test_name':
+                            'test_get_auth_locations_by_sub_org_1_employee',
+                        'args': None,
+                        'data': {
+                            'id': [
+                                self.locations['location_1_sub_1_org_1'].id,
+                                self.locations['location_2_sub_1_org_1'].id]
+                        },
+                        'user': 'employee_user',
+                        'status': status.HTTP_200_OK,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(len(data['results']), 2)
+                        )
+                    },
+                    {   # get unauthorized locations list of locations by
+                        # employee
+                        'test_name':
+                            'test_get_unauth_locations_by_sub_org_1_employee',
+                        'args': None,
+                        'data': {
+                            'id': [
+                                self.locations['location_1_org_1'].id,
+                                self.locations['location_2_org_1'].id]
+                        },
+                        'user': 'employee_user',
+                        'status': status.HTTP_404_NOT_FOUND
+                    },
+                    {   # get locations list of locations by some random user
+                        'test_name': 'test_get_locations_by_other_user',
+                        'args': None,
+                        'data': {
+                            'id': [
+                                self.locations['location_1_org_1'].id,
+                                self.locations['location_2_org_1'].id]
                         },
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN
@@ -119,139 +220,101 @@ class LocationTests(TestsBase):
 
         test_create = [
             {
-                'test_name': 'create_top_level_locations',
+                'test_name': 'create_locations',
                 'type': 'post',
-                'path_name': 'locations_list_create',
+                'path_name': 'locations_list_create_delete',
                 'request': [
-                    {   # create org, okay for staff
+                    {   # create location, okay for staff
+                        'test_name': 'create_location_by_staff',
                         'data': {
                             'name': 'My location',
-                            'desc': 'No description',
+                            'organization': self.orgs['org_1'].id
                         },
                         'user': 'staff_user',
-                        'status': status.HTTP_201_CREATED
+                        'status': status.HTTP_201_CREATED,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(data['name'], 'My location')
+                        )
                     },
                     {   # duplicate create by staff, bad
+                        'test_name': 'create_dup_location_by_staff',
                         'data': {
                             'name': 'My location',
-                            'desc': 'No description',
+                            'organization': self.orgs['org_1'].id
                         },
                         'user': 'staff_user',
                         'status': status.HTTP_400_BAD_REQUEST
                     },
-                    {   # create org by org-admin, forbidden
+                    {   # create location by org-admin, okay
+                        'test_name': 'create_location_org_admin_1_in_org_1',
                         'data': {
-                            'name': 'My location1',
-                            'desc': 'No description',
-                            'parent': None
+                            'name': 'My location 1',
+                            'organization': self.orgs['org_1'].id
                         },
                         'user': 'org_1_admin_user',
-                        'status': status.HTTP_403_FORBIDDEN
+                        'status': status.HTTP_201_CREATED,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(data['name'], 'My location 1')
+                        )
                     },
-                    {   # create org by sub-org-admin, forbidden
+                    {   # create location by org-admin in lower tree, okay
+                        'test_name': 'create_location_org_admin_1_in_sub_1_org_1',
                         'data': {
-                            'name': 'My location2',
-                            'desc': 'No description',
-                            'parent': None
+                            'name': 'My location 2',
+                            'organization': self.orgs['sub_1_org_1'].id
+                        },
+                        'user': 'org_1_admin_user',
+                        'status': status.HTTP_201_CREATED,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(data['name'], 'My location 2')
+                        )
+                    },
+                    {   # create location by org-admin in other organization,
+                        # bad
+                        'test_name': 'create_location_org_admin_1_in_org_2',
+                        'data': {
+                            'name': 'My location 3',
+                            'organization': self.orgs['org_2'].id
+                        },
+                        'user': 'org_1_admin_user',
+                        'status': status.HTTP_400_BAD_REQUEST
+                    },
+                    {   # create location by org-admin in other organization
+                        # lower tree, bad
+                        'test_name': 'create_location_org_admin_1_in_sub_1_org_2',
+                        'data': {
+                            'name': 'My location 4',
+                            'organization': self.orgs['sub_1_org_2'].id
+                        },
+                        'user': 'org_1_admin_user',
+                        'status': status.HTTP_400_BAD_REQUEST
+                    },
+                    {   # create location by sub-org-admin in upper tree, bad
+                        'test_name': 'create_location_sub_org_admin_1_in_org_1',
+                        'data': {
+                            'name': 'My location 5',
+                            'organization': self.orgs['org_1'].id
                         },
                         'user': 'sub_org_11_admin_user',
-                        'status': status.HTTP_403_FORBIDDEN
-                    },
-                    {   # create org by another org-admin, forbidden
-                        'data': {
-                            'name': 'My location3',
-                            'desc': 'No description',
-                            'parent': None
-                        },
-                        'user': 'org_2_admin_user',
-                        'status': status.HTTP_403_FORBIDDEN
-                    },
-                    {   # create org by random user, forbidden
-                        'data': {
-                            'name': 'My location4',
-                            'desc': 'No description',
-                        },
-                        'user': 'other_user',
-                        'status': status.HTTP_403_FORBIDDEN
-                    },
-                ]
-            },
-            {
-                'test_name': 'create_lower_level_locations',
-                'type': 'post',
-                'path_name': 'locations_list_create',
-                'request': [
-                    {   # create sub-org under org_1, okay for staff
-                        'data': {
-                            'name': 'sub_org_10_in_org_1',
-                            'desc': 'No description',
-                            'parent': self.orgs['org_1'].id
-                        },
-                        'user': 'staff_user',
-                        'status': status.HTTP_201_CREATED
-                    },
-                    {   # duplicate create by staff, bad
-                        'data': {
-                            'name': 'sub_org_10_in_org_1',
-                            'desc': 'No description',
-                            'parent': self.orgs['org_1'].id
-                        },
-                        'user': 'staff_user',
                         'status': status.HTTP_400_BAD_REQUEST
                     },
-                    {   # create sub-org under org_1, okay for org admin if
-                        # org is within descendents of admin location
+                    {   # create location by sub-org-admin in own tree, bad
+                        'test_name': 'create_location_sub_org_admin_1_in_sub_1_org_1',
                         'data': {
-                            'name': 'sub_org_11_in_org_1',
-                            'desc': 'No description',
-                            'parent': self.orgs['org_1'].id
-                        },
-                        'user': 'org_1_admin_user',
-                        'status': status.HTTP_201_CREATED
-                    },
-                    {   # duplicate create by org-admin, bad
-                        'data': {
-                            'name': 'sub_org_11_in_org_1',
-                            'desc': 'No description',
-                            'parent': self.orgs['org_1'].id
-                        },
-                        'user': 'org_1_admin_user',
-                        'status': status.HTTP_400_BAD_REQUEST
-                    },
-                    {   # create sub-org by sub-org admin with a higher level
-                        # location, forbidden
-                        'data': {
-                            'name': 'sub_org_12_in_org_1',
-                            'desc': 'No description',
-                            'parent': self.orgs['org_1'].id
+                            'name': 'My location 6',
+                            'organization': self.orgs['sub_1_org_1'].id
                         },
                         'user': 'sub_org_11_admin_user',
-                        'status': status.HTTP_403_FORBIDDEN
+                        'status': status.HTTP_201_CREATED,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(data['name'], 'My location 6')
+                        )
                     },
-                    {   # create sub-org by another admin,
-                        # forbidden if org doesn't match
+                    {   # create location by random user, forbidden
+                        'test_name': 'create_location_other_user',
                         'data': {
-                            'name': 'sub_org_13_in_org_1',
+                            'name': 'My location 7',
                             'desc': 'No description',
-                            'parent': self.orgs['org_1'].id
-                        },
-                        'user': 'org_2_admin_user',
-                        'status': status.HTTP_403_FORBIDDEN
-                    },
-                    {   # create sub-org by another admin, org matches, okay
-                        'data': {
-                            'name': 'sub_org_14_in_org_2',
-                            'desc': 'No description',
-                            'parent': self.orgs['org_2'].id
-                        },
-                        'user': 'org_2_admin_user',
-                        'status': status.HTTP_201_CREATED
-                    },
-                    {   # create sub-org by random user, forbidden
-                        'data': {
-                            'name': 'sub_org_15_in_org_1',
-                            'desc': 'No description',
-                            'parent': self.orgs['org_1'].id
                         },
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN
@@ -264,53 +327,110 @@ class LocationTests(TestsBase):
             {
                 'test_name': 'delete_multiple_locations',
                 'type': 'delete',
-                'path_name': 'locations_list_create',
+                'path_name': 'locations_list_create_delete',
                 'request': [
-                    {   # delete orgs by id, forbidden for location admin
+                    {   # delete location, okay for staff
+                        'test_name': 'delete_location_by_staff',
                         'data': {
-                            "id": [
-                                self.orgs['org_1'].id,
-                                self.orgs['org_2'].id,
-                                self.orgs['org_3'].id]
+                            'id': [
+                                self.locations['location_1_org_1'].id,
+                                self.locations['location_2_org_1'].id]
+                        },
+                        'user': 'staff_user',
+                        'status': status.HTTP_200_OK
+                    },
+                    {   # duplicate delete by staff, bad
+                        'test_name': 'delete_dup_location_by_staff',
+                        'data': {
+                            'id': [
+                                self.locations['location_1_org_1'].id,
+                                self.locations['location_2_org_1'].id]
+                        },
+                        'user': 'staff_user',
+                        'status': status.HTTP_404_NOT_FOUND
+                    },
+                    {   # delete location by org-admin, okay
+                        'test_name': 'delete_location_org_admin_2_in_org_2',
+                        'data': {
+                            'id': [
+                                self.locations['location_1_org_2'].id,
+                                self.locations['location_2_org_2'].id]
+                        },
+                        'user': 'org_2_admin_user',
+                        'status': status.HTTP_200_OK
+                    },
+                    {   # delete location by org-admin in lower tree, okay
+                        'test_name': 'delete_location_org_admin_1_in_sub_1_org_1',
+                        'data': {
+                            'id': [
+                                self.locations['location_1_sub_1_org_1'].id]
                         },
                         'user': 'org_1_admin_user',
+                        'status': status.HTTP_200_OK
+                    },
+                    {   # delete location by org-admin in other organization,
+                        # bad
+                        'test_name': 'delete_location_org_admin_1_in_org_2',
+                        'data': {
+                            'id': [
+                                self.locations['location_3_org_2'].id]
+                        },
+                        'user': 'org_1_admin_user',
+                        'status': status.HTTP_404_NOT_FOUND
+                    },
+                    {   # delete location by org-admin in other organization
+                        # lower tree, bad
+                        'test_name': 'delete_location_org_admin_1_in_sub_1_org_2',
+                        'data': {
+                            'id': [
+                                self.locations['location_1_sub_1_org_2'].id]
+                        },
+                        'user': 'org_1_admin_user',
+                        'status': status.HTTP_404_NOT_FOUND
+                    },
+                    {   # delete location by sub-org-admin in upper tree, bad
+                        'test_name': 'delete_location_sub_org_admin_1_in_org_1',
+                        'data': {
+                            'id': [
+                                self.locations['location_4_org_1'].id,
+                                self.locations['location_5_org_1'].id
+                            ]
+                        },
+                        'user': 'sub_org_11_admin_user',
+                        'status': status.HTTP_404_NOT_FOUND
+                    },
+                    {   # delete location by sub-org-admin in own tree, okay
+                        'test_name': 'delete_location_sub_org_admin_1_in_sub_1_org_1',
+                        'data': {
+                            'id': [
+                                self.locations['location_3_sub_1_org_1'].id,
+                                self.locations['location_4_sub_1_org_1'].id
+                            ]
+                        },
+                        'user': 'sub_org_11_admin_user',
+                        'status': status.HTTP_200_OK
+                    },
+                    {   # delete location by employee user, forbidden
+                        'test_name': 'delete_location_other_user',
+                        'data': {
+                            'id': [
+                                self.locations['location_3_sub_1_org_1'].id,
+                                self.locations['location_4_sub_1_org_1'].id
+                            ]
+                        },
+                        'user': 'employee_user',
                         'status': status.HTTP_403_FORBIDDEN
                     },
-                    {   # delete sub-orgs by id, okay for location admin
+                    {   # delete location by random user, forbidden
+                        'test_name': 'delete_location_other_user',
                         'data': {
-                            "id": [
-                                self.orgs['sub_3_org_2'].id]
+                            'id': [
+                                self.locations['location_1_org_1'].id,
+                                self.locations['location_2_org_2'].id
+                            ]
                         },
-                        'user': 'org_2_admin_user',
-                        'status': status.HTTP_200_OK
-                    },
-                    {   # delete sub-orgs by id, forbidden for other
-                        # location admin
-                        'data': {
-                            "id": [
-                                self.orgs['sub_2_org_1'].id]
-                        },
-                        'user': 'org_2_admin_user',
+                        'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN
-                    },
-                    {   # delete sub-org by id, okay for staff
-                        'args': None,
-                        'data': {
-                            "id": [
-                                self.orgs['sub_1_org_2'].id]
-                        },
-                        'user': 'staff_user',
-                        'status': status.HTTP_200_OK
-                    },
-                    {   # delete org by id, okay for staff
-                        'data': {
-                            "id": [
-                                self.orgs['org_1'].id,
-                                self.orgs['org_2'].id,
-                                self.orgs['org_3'].id]
-                        },
-                        'user': 'staff_user',
-                        'status': status.HTTP_200_OK
                     },
                 ]
             }
@@ -322,36 +442,46 @@ class LocationTests(TestsBase):
                 'type': 'get',
                 'path_name': 'locations_rud',
                 'request': [
-                    {   # get org by id, okay for staff
-                        'args': [self.orgs['org_1'].id],
+                    {   # get location by id, okay for staff
+                        'test_name': 'get_location_1_org_1_by_staff',
+                        'args': [self.locations['location_1_org_1'].id],
                         'user': 'staff_user',
-                        'status': status.HTTP_200_OK
+                        'status': status.HTTP_200_OK,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(
+                                data['location']['id'],
+                                str(self.locations['location_1_org_1'].id))
+                        )
                     },
-                    {   # get org by id, okay for org admin itself
-                        'args': [self.orgs['org_1'].id],
+                    {   # get location by id, okay for org admin itself
+                        'test_name': 'get_location_1_org_1_by_org_1_admin',
+                        'args': [self.locations['location_1_org_1'].id],
                         'user': 'org_1_admin_user',
-                        'status': status.HTTP_200_OK
+                        'status': status.HTTP_200_OK,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(
+                                data['location']['id'],
+                                str(self.locations['location_1_org_1'].id))
+                        )
                     },
-                    {   # get org by id, forbidden for sub-org
-                        'args': [self.orgs['org_1'].id],
+                    {   # get location of org, forbidden for sub-org admin
+                        'test_name': 'get_location_1_org_1_by_sub_org_1_admin',
+                        'args': [self.locations['location_1_org_1'].id],
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
-                    {   # get org by id, should return null for other org-admin
-                        'args': [self.orgs['org_1'].id],
+                    {   # get location, bad for other org-admin
+                        'test_name': 'get_location_1_org_1_by_org_2_admin',
+                        'args': [self.locations['location_1_org_1'].id],
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
-                    {   # get org by id, forbidden for random user
-                        'args': [self.orgs['org_1'].id],
+                    {   # get location by id, forbidden for random user
+                        'test_name': 'get_location_1_org_1_by_other_user',
+                        'args': [self.locations['location_1_org_1'].id],
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN
                     },
-                    {   # get org by id, forbidden for random user
-                        'args': [self.orgs['org_1'].id],
-                        'user': 'other_user',
-                        'status': status.HTTP_403_FORBIDDEN
-                    }
                 ]
             },
             {
@@ -359,67 +489,77 @@ class LocationTests(TestsBase):
                 'type': 'get',
                 'path_name': 'locations_rud',
                 'request': [
-                    {   # get sub-org by id, okay for staff
-                        'args': [self.orgs['sub_1_org_1'].id],
+                    {   # get sub-org location by id, okay for staff
+                        'test_name': 'get_location_1_sub_1_org_1_by_staff',
+                        'args': [self.locations['location_1_sub_1_org_1'].id],
                         'user': 'staff_user',
-                        'status': status.HTTP_200_OK
+                        'status': status.HTTP_200_OK,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(
+                                data['location']['id'],
+                                str(
+                                    self.locations['location_1_sub_1_org_1'].id))
+                        )
                     },
-                    {   # get sub-org by id, okay for org admin itself under
-                        # which this sub-org exists
-                        'args': [self.orgs['sub_1_org_1'].id],
+                    {   # get sub-org location by id, okay for org admin itself
+                        # under which this sub-org exists
+                        'test_name': 'get_location_1_sub_1_org_1_by_org_1_admin',
+                        'args': [self.locations['location_1_sub_1_org_1'].id],
                         'user': 'org_1_admin_user',
-                        'status': status.HTTP_200_OK
+                        'status': status.HTTP_200_OK,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(
+                                data['location']['id'],
+                                str(
+                                    self.locations['location_1_sub_1_org_1'].id))
+                        )
                     },
-                    {   # get sub-org by id, okay for sub-org admin itself
-                        'args': [self.orgs['sub_1_org_1'].id],
+                    {   # get sub-org location by id, okay for sub-org admin itself
+                        'test_name': 'get_location_1_sub_1_org_1_by_sub_1_org_1_admin',
+                        'args': [self.locations['location_1_sub_1_org_1'].id],
                         'user': 'sub_org_11_admin_user',
-                        'status': status.HTTP_200_OK
+                        'status': status.HTTP_200_OK,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(
+                                data['location']['id'],
+                                str(
+                                    self.locations['location_1_sub_1_org_1'].id))
+                        )
                     },
-                    {   # get sub-org by id, okay for sub-org admin itself
-                        'args': [self.orgs['sub_1_org_2'].id],
-                        'user': 'sub_org_12_admin_user',
-                        'status': status.HTTP_200_OK
-                    },
-                    {   # get sub-org by id, okay for sub-org admin itself
-                        'args': [self.orgs['sub_2_org_1'].id],
-                        'user': 'sub_org_21_admin_user',
-                        'status': status.HTTP_200_OK
-                    },
-                    {   # get sub-org by id, okay for sub-org admin itself
-                        'args': [self.orgs['sub_2_org_2'].id],
-                        'user': 'sub_org_22_admin_user',
-                        'status': status.HTTP_200_OK
-                    },
-                    {   # get sub-org by id, should return null for other
+                    {   # get sub-org location by id, bad for other
                         # org-admin under which this sub-org does not exist
-                        'args': [self.orgs['sub_1_org_1'].id],
+                        'test_name': 'get_location_1_sub_1_org_1_by_org_2_admin',
+                        'args': [self.locations['location_1_sub_1_org_1'].id],
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
-                    {   # get sub-org by id, should return null for other
+                    {   # get sub-org location by id, bad for other
                         # sub-org admin to which this sub-org does not exist
-                        'args': [self.orgs['sub_1_org_1'].id],
+                        'test_name': 'get_location_1_sub_1_org_1_by_sub_1_org_2_admin',
+                        'args': [self.locations['location_1_sub_1_org_1'].id],
                         'user': 'sub_org_12_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
-                    {   # get sub-org by id, should return null for other
-                        # sub-org admin to which this sub-org does not exist
-                        'args': [self.orgs['sub_1_org_1'].id],
-                        'user': 'sub_org_21_admin_user',
-                        'status': status.HTTP_404_NOT_FOUND
-                    },
-                    {   # get employees own location info, okay
-                        'args': [self.orgs['sub_1_org_1'].id],
+                    {   # get employees auth location info, okay
+                        'test_name': 'get_location_1_sub_1_org_1_by_employee',
+                        'args': [self.locations['location_1_sub_1_org_1'].id],
                         'user': 'employee_user',
-                        'status': status.HTTP_200_OK
+                        'status': status.HTTP_200_OK,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(
+                                data['location']['id'],
+                                str(self.locations['location_1_sub_1_org_1'].id))
+                        )
                     },
-                    {   # use employees to get other location info, bad
-                        'args': [self.orgs['sub_1_org_2'].id],
+                    {   # get employees unauth location info, bad
+                        'test_name': 'get_location_1_sub_1_org_1_by_employee',
+                        'args': [self.locations['location_1_sub_1_org_2'].id],
                         'user': 'employee_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
                     {   # get sub-org by id, forbidden for random user
-                        'args': [self.orgs['sub_1_org_1'].id],
+                        'test_name': 'get_location_1_sub_1_org_1_by_other_user',
+                        'args': [self.locations['location_1_sub_1_org_1'].id],
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN
                     }
@@ -433,49 +573,69 @@ class LocationTests(TestsBase):
                 'type': 'patch',
                 'path_name': 'locations_rud',
                 'request': [
-                    {   # update org by id, okay for staff
-                        'args': [self.orgs['org_1'].id],
+                    {
+                        # update location 1 org 1 by staff, okay
+                        'test_name': 'update_location_1_org_1_by_staff',
+                        'args': [self.locations['location_1_org_1'].id],
                         'user': 'staff_user',
                         'data': {
-                            'name': 'org_1_updated',
-                            'desc': 'org_1_desc_updated',
+                            'name': 'location_1_org_1_updated',
                         },
-                        'status': status.HTTP_200_OK
+                        'status': status.HTTP_200_OK,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(
+                                data['location']['name'],
+                                'location_1_org_1_updated')
+                        )
                     },
-                    {   # update org by id, okay for org admin itself
-                        'args': [self.orgs['org_1'].id],
+                    {   # update location_1_org_1 by id by org_1 admin, okay
+                        'test_name': 'update_location_1_org_1_by_org_1_admin',
+                        'args': [self.locations['location_1_org_1'].id],
                         'user': 'org_1_admin_user',
                         'data': {
-                            'name': 'org_1_updated',
-                            'desc': 'org_1_desc_updated',
+                            'name': 'location_1_org_1_updated',
                         },
-                        'status': status.HTTP_200_OK
+                        'status': status.HTTP_200_OK,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(
+                                data['location']['name'],
+                                'location_1_org_1_updated')
+                        )
                     },
-                    {   # update org by id, sub-org admin has no access to it
-                        'args': [self.orgs['org_1'].id],
+                    {   # update location in higher level organization,
+                        # no access
+                        'test_name': 'update_location_1_org_1_by_sub_1_org_1_admin',
+                        'args': [self.locations['location_1_org_1'].id],
                         'user': 'sub_org_11_admin_user',
                         'data': {
-                            'name': 'org_1_updated',
-                            'desc': 'org_1_desc_updated',
+                            'name': 'location_1_org_1_updated',
                         },
                         'status': status.HTTP_404_NOT_FOUND
                     },
-                    {   # update org by id, should return null for other
-                        # org-admin
-                        'args': [self.orgs['org_1'].id],
+                    {   # update location of different org, bad
+                        'test_name': 'update_location_1_org_1_by_org_2_admin',
+                        'args': [self.locations['location_1_org_1'].id],
                         'user': 'org_2_admin_user',
                         'data': {
-                            'name': 'org_1_updated',
-                            'desc': 'org_1_desc_updated',
+                            'name': 'location_1_org_1_updated',
                         },
                         'status': status.HTTP_404_NOT_FOUND
                     },
-                    {   # update org by id, forbidden for random user
-                        'args': [self.orgs['org_1'].id],
+                    {   # update location in org by id, forbidden for employee
+                        'test_name': 'update_location_1_sub_1_org_1_by_sub_org_1_employee',
+                        'args': [self.locations['location_1_sub_1_org_1'].id],
+                        'user': 'employee_user',
+                        'data': {
+                            'name': 'location_1_sub_1_org_1_updated',
+                        },
+                        'status': status.HTTP_403_FORBIDDEN
+                    },
+                    {   # update location by id, forbidden for random user
+                        'test_name': 'update_location_1_sub_1_org_1_by_other_user',
+                        'args': [self.locations['location_1_sub_1_org_1'].id],
                         'user': 'other_user',
                         'data': {
-                            'name': 'org_1_updated',
-                            'desc': 'org_1_desc_updated',
+                            'name': 'location_1_sub_1_org_1_updated',
                         },
                         'status': status.HTTP_403_FORBIDDEN
                     }
@@ -486,128 +646,58 @@ class LocationTests(TestsBase):
                 'type': 'patch',
                 'path_name': 'locations_rud',
                 'request': [
-                    {   # update sub-org by id, okay for staff
-                        'args': [self.orgs['sub_1_org_1'].id],
+                    {   # update sub-org location by id, okay for staff
+                        'test_name': 'update_location_1_sub_1_org_1_by_staff_user',
+                        'args': [self.locations['location_1_sub_1_org_1'].id],
                         'user': 'staff_user',
                         'data': {
-                            'name': 'sub_1_org_1_updated',
-                            'desc': 'sub_1_org_1_desc_updated',
+                            'name': 'location_1_sub_1_org_1_updated',
                         },
-                        'status': status.HTTP_200_OK
+                        'status': status.HTTP_200_OK,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(
+                                data['location']['name'],
+                                'location_1_sub_1_org_1_updated')
+                        )
                     },
                     {   # update sub-org by id, okay for org admin itself under
                         # which this sub-org exists
-                        'args': [self.orgs['sub_1_org_1'].id],
+                        'test_name': 'update_location_1_sub_1_org_1_by_org_1_admin',
+                        'args': [self.locations['location_1_sub_1_org_1'].id],
                         'user': 'org_1_admin_user',
                         'data': {
-                            'name': 'sub_1_org_1_updated',
-                            'desc': 'sub_1_org_1_desc_updated',
+                            'name': 'location_1_sub_1_org_1_updated',
                         },
-                        'status': status.HTTP_200_OK
+                        'status': status.HTTP_200_OK,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(
+                                data['location']['name'],
+                                'location_1_sub_1_org_1_updated')
+                        )
                     },
-                    {   # update sub-org by id, okay for sub-org admin itself
-                        'args': [self.orgs['sub_1_org_1'].id],
+                    {   # update sub-org location by id, okay for sub-org admin itself
+                        'test_name': 'update_location_1_sub_1_org_1_by_sub_1_org_1_admin',
+                        'args': [self.locations['location_1_sub_1_org_1'].id],
                         'user': 'sub_org_11_admin_user',
                         'data': {
-                            'name': 'sub_1_org_1_updated',
-                            'desc': 'sub_1_org_1_desc_updated',
+                            'name': 'location_1_sub_1_org_1_updated',
                         },
-                        'status': status.HTTP_200_OK
+                        'status': status.HTTP_200_OK,
+                        'response_check': lambda test, data: (
+                            test.assertEqual(
+                                data['location']['name'],
+                                'location_1_sub_1_org_1_updated')
+                        )
                     },
-                    {   # update sub-org by id, okay for sub-org admin itself,
-                        # but bad duplicate name
-                        'args': [self.orgs['sub_1_org_2'].id],
+                    {   # test for bad duplicate name
+                        'test_name': 'update_location_1_sub_1_org_2_by_sub_1_org_2_admin',
+                        'args': [self.locations['location_1_sub_1_org_2'].id],
                         'user': 'sub_org_12_admin_user',
                         'data': {
-                            'name': 'sub_1_org_1_updated',  # duplicate name here
-                            'desc': 'sub_1_org_1_desc_updated',
+                            'name': 'location_1_sub_1_org_1_updated',
                         },
                         'status': status.HTTP_400_BAD_REQUEST
-                    },
-                    {   # update sub-org by id, okay for sub-org admin itself
-                        'args': [self.orgs['sub_1_org_2'].id],
-                        'user': 'sub_org_12_admin_user',
-                        'data': {
-                            'name': 'sub_1_org_2_updated',
-                            'desc': 'sub_1_org_2_desc_updated',
-                        },
-                        'status': status.HTTP_200_OK
-                    },
-                    {   # update sub-org by id, okay for sub-org admin itself
-                        'args': [self.orgs['sub_2_org_1'].id],
-                        'user': 'sub_org_21_admin_user',
-                        'data': {
-                            'name': 'sub_2_org_1_updated',
-                            'desc': 'sub_2_org_1_desc_updated',
-                        },
-                        'status': status.HTTP_200_OK
-                    },
-                    {   # update sub-org by id, okay for sub-org admin itself
-                        'args': [self.orgs['sub_2_org_2'].id],
-                        'user': 'sub_org_22_admin_user',
-                        'data': {
-                            'name': 'sub_2_org_2_updated',
-                            'desc': 'sub_2_org_2_desc_updated',
-                        },
-                        'status': status.HTTP_200_OK
-                    },
-                    {   # update sub-org by id, should return null for other
-                        # org-admin under which this sub-org does not exist
-                        'args': [self.orgs['sub_1_org_1'].id],
-                        'user': 'org_2_admin_user',
-                        'data': {
-                            'name': 'sub_1_org_1_updated',
-                            'desc': 'sub_1_org_1_desc_updated',
-                        },
-                        'status': status.HTTP_404_NOT_FOUND
-                    },
-                    {   # update sub-org by id, should return null for other
-                        # sub-org admin to which this sub-org does not exist
-                        'args': [self.orgs['sub_1_org_1'].id],
-                        'user': 'sub_org_12_admin_user',
-                        'data': {
-                            'name': 'sub_1_org_1_updated',
-                            'desc': 'sub_1_org_1_desc_updated',
-                        },
-                        'status': status.HTTP_404_NOT_FOUND
-                    },
-                    {   # update sub-org by id, should return null for other
-                        # sub-org admin to which this sub-org does not exist
-                        'args': [self.orgs['sub_1_org_1'].id],
-                        'user': 'sub_org_21_admin_user',
-                        'data': {
-                            'name': 'sub_1_org_1_updated',
-                            'desc': 'sub_1_org_1_desc_updated',
-                        },
-                        'status': status.HTTP_404_NOT_FOUND
-                    },
-                    {   # update sub-org by id, forbidden for random user
-                        'args': [self.orgs['sub_1_org_1'].id],
-                        'user': 'other_user',
-                        'data': {
-                            'name': 'sub_1_org_1_updated',
-                            'desc': 'sub_1_org_1_desc_updated',
-                        },
-                        'status': status.HTTP_403_FORBIDDEN
-                    },
-                    {   # update employee's location by employee, forbidden
-                        'args': [self.orgs['sub_1_org_1'].id],
-                        'user': 'employee_user',
-                        'data': {
-                            'name': 'sub_1_org_1_updated',
-                            'desc': 'sub_1_org_1_desc_updated',
-                        },
-                        'status': status.HTTP_403_FORBIDDEN
-                    },
-                    {   # use employees to update location info, forbidden
-                        'args': [self.orgs['sub_1_org_2'].id],
-                        'user': 'employee_user',
-                        'data': {
-                            'name': 'sub_1_org_1_updated',
-                            'desc': 'sub_1_org_1_desc_updated',
-                        },
-                        'status': status.HTTP_403_FORBIDDEN
-                    },
+                    }
                 ]
             }
         ]
@@ -615,93 +705,85 @@ class LocationTests(TestsBase):
         test_delete = [
             {
                 'test_name': 'delete_location_by_id',
-                'type': 'delete',
+                'type': 'patch',
                 'path_name': 'locations_rud',
                 'request': [
-                    {   # delete org by id, forbidden for org admin itself
-                        'args': [self.orgs['org_3'].id],
-                        'user': 'org_3_admin_user',
-                        'status': status.HTTP_404_NOT_FOUND
-                    },
-                    {   # delete org by id, forbidden for sub-org
-                        'args': [self.orgs['org_3'].id],
-                        'user': 'sub_org_13_admin_user',
-                        'status': status.HTTP_404_NOT_FOUND
-                    },
-                    {   # delete org by id by other org admin, forbidden
-                        'args': [self.orgs['org_3'].id],
-                        'user': 'org_1_admin_user',
-                        'status': status.HTTP_404_NOT_FOUND
-                    },
-                    {   # delete org by id, forbidden for random user
-                        'args': [self.orgs['org_3'].id],
-                        'user': 'other_user',
-                        'status': status.HTTP_403_FORBIDDEN
-                    },
-                    {   # delete org by id, okay for staff -> at the end so org
-                        # remains for other test cases
-                        'args': [self.orgs['org_3'].id],
+                    {
+                        # delete location 1 org 1 by staff, okay
+                        'test_name': 'delete_location_1_org_1_by_staff',
+                        'args': [self.locations['location_1_org_1'].id],
                         'user': 'staff_user',
                         'status': status.HTTP_200_OK
                     },
+                    {   # delete location_2_org_1 by id by org_1 admin, okay
+                        'test_name': 'delete_location_2_org_1_by_org_1_admin',
+                        'args': [self.locations['location_2_org_1'].id],
+                        'user': 'org_1_admin_user',
+                        'status': status.HTTP_200_OK
+                    },
+                    {   # delete location in higher level organization,
+                        # no access
+                        'test_name': 'delete_location_1_org_2_by_sub_1_org_2_admin',
+                        'args': [self.locations['location_1_org_2'].id],
+                        'user': 'sub_org_12_admin_user',
+                        'status': status.HTTP_404_NOT_FOUND
+                    },
+                    {   # delete location of different org, bad
+                        'test_name': 'delete_location_1_org_1_by_org_2_admin',
+                        'args': [self.locations['location_3_org_1'].id],
+                        'user': 'org_2_admin_user',
+                        'status': status.HTTP_404_NOT_FOUND
+                    },
+                    {   # delete location in org by id, forbidden for employee
+                        'test_name': 'delete_location_1_sub_1_org_1_by_sub_org_1_employee',
+                        'args': [self.locations['location_1_sub_1_org_1'].id],
+                        'user': 'employee_user',
+                        'status': status.HTTP_403_FORBIDDEN
+                    },
+                    {   # delete location by id, forbidden for random user
+                        'test_name': 'delete_location_1_sub_1_org_1_by_other_user',
+                        'args': [self.locations['location_1_sub_1_org_1'].id],
+                        'user': 'other_user',
+                        'status': status.HTTP_403_FORBIDDEN
+                    }
                 ]
             },
             {
                 'test_name': 'delete_sub_location_by_id',
-                'type': 'delete',
+                'type': 'patch',
                 'path_name': 'locations_rud',
                 'request': [
-                    {   # delete sub-org by id, should not be found for
-                        # sub-org admin
-                        'args': [self.orgs['sub_1_org_1'].id],
-                        'user': 'sub_org_11_admin_user',
-                        'status': status.HTTP_404_NOT_FOUND
-                    },
-                    {   # delete sub-org by id, should return null for other
-                        # org-admin under which this sub-org does not exist
-                        'args': [self.orgs['sub_1_org_1'].id],
-                        'user': 'org_2_admin_user',
-                        'status': status.HTTP_404_NOT_FOUND
-                    },
-                    {   # delete sub-org by id by sub-org admin,
-                        # should be not found
-                        'args': [self.orgs['sub_1_org_1'].id],
-                        'user': 'sub_org_21_admin_user',
-                        'status': status.HTTP_404_NOT_FOUND
-                    },
-                    {   # delete sub-org by id, forbidden for random user
-                        'args': [self.orgs['sub_1_org_1'].id],
-                        'user': 'other_user',
-                        'status': status.HTTP_403_FORBIDDEN
-                    },
-                    {   # delete sub-org by id, okay for staff
-                        'args': [self.orgs['sub_2_org_2'].id],
+                    {   # delete sub-org location by id, okay for staff
+                        'test_name': 'delete_location_1_sub_1_org_1_by_staff_user',
+                        'args': [self.locations['location_1_sub_1_org_1'].id],
                         'user': 'staff_user',
                         'status': status.HTTP_200_OK
-                    },
-                    {   # duplicate delete sub-org by id, bad request
-                        'args': [self.orgs['sub_2_org_2'].id],
-                        'user': 'staff_user',
-                        'status': status.HTTP_404_NOT_FOUND  # already deleted
                     },
                     {   # delete sub-org by id, okay for org admin itself under
                         # which this sub-org exists
-                        'args': [self.orgs['sub_1_org_2'].id],
-                        'user': 'org_2_admin_user',
+                        'test_name': 'delete_location_2_sub_1_org_1_by_org_1_admin',
+                        'args': [self.locations['location_2_sub_1_org_1'].id],
+                        'user': 'org_1_admin_user',
+                        'status': status.HTTP_200_OK
+                    },
+                    {   # delete sub-org location by id, okay for sub-org admin itself
+                        'test_name': 'delete_location_3_sub_1_org_1_by_sub_1_org_1_admin',
+                        'args': [self.locations['location_3_sub_1_org_1'].id],
+                        'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_200_OK
                     },
                 ]
-            },
+            }
         ]
 
         self.test_sets = [
             test_get,
-            # test_get_multiple,
-            # test_create,
-            # test_retrieve,
-            # test_update,
-            # test_delete,
-            # test_delete_multiple,
+            test_get_multiple,
+            test_create,
+            test_retrieve,
+            test_update,
+            test_delete,
+            test_delete_multiple,
         ]
 
     def run_single_test(self, config):
