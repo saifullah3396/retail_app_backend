@@ -261,7 +261,7 @@ class AccountRegistrationTests(TestsBase):
         data['groups'] = ['sub_organization_admin']
         data['organization'] = 'org_1'
         data['sub_organization'] = 'sub_1_org_1'
-        data['locations'] = ['location_1_sub_org_1']
+        data['locations'] = ['location_1_sub_1_org_1']
         self.post(
             data, self.tokens['org_1_admin_user'], status.HTTP_201_CREATED)
 
@@ -276,7 +276,7 @@ class AccountRegistrationTests(TestsBase):
         data['groups'] = ['sub_organization_admin']
         data['organization'] = 'org_1'
         data['sub_organization'] = 'sub_1_org_1'
-        data['locations'] = ['location_1_sub_org_1']
+        data['locations'] = ['location_1_sub_1_org_1']
         self.post(
             data, self.tokens['sub_org_11_admin_user'], status.HTTP_201_CREATED)
 
@@ -289,7 +289,7 @@ class AccountRegistrationTests(TestsBase):
         data['groups'] = ['sub_organization_admin']
         data['organization'] = 'org_1'
         data['sub_organization'] = 'sub_1_org_1'
-        data['locations'] = ['location_1_sub_org_1']
+        data['locations'] = ['location_1_sub_1_org_1']
         self.post(
             data, self.tokens['sub_org_12_admin_user'], status.HTTP_403_FORBIDDEN)
 
@@ -302,7 +302,7 @@ class AccountRegistrationTests(TestsBase):
         data['groups'] = ['sub_organization_admin']
         data['organization'] = 'org_1'
         data['sub_organization'] = 'sub_1_org_1'
-        data['locations'] = ['location_1_sub_org_1']
+        data['locations'] = ['location_1_sub_1_org_1']
         self.post(
             data, self.tokens['employee_user'], status.HTTP_403_FORBIDDEN)
 
@@ -314,7 +314,7 @@ class AccountRegistrationTests(TestsBase):
         data['groups'] = ['employee']
         data['organization'] = 'org_1'
         data['sub_organization'] = 'sub_1_org_1'
-        data['locations'] = ['location_1_sub_org_1']
+        data['locations'] = ['location_1_sub_1_org_1']
         self.post(
             data, self.tokens['sub_org_11_admin_user'], status.HTTP_201_CREATED)
 
@@ -326,6 +326,6 @@ class AccountRegistrationTests(TestsBase):
         data['groups'] = ['employee']
         data['organization'] = 'org_1'
         data['sub_organization'] = 'sub_1_org_1'
-        data['locations'] = ['location_1_sub_org_1']
+        data['locations'] = ['location_1_sub_1_org_1']
         self.post(
             data, self.tokens['employee_user'], status.HTTP_403_FORBIDDEN)
