@@ -133,7 +133,7 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             blocks[block_name].save()
         return blocks
 
-    def create_users(self, users_dict, groups, orgs):
+    def create_users(self, users_dict, groups, orgs, locations):
         """
         Creates new users in the test database according to input
         users dictionary mapping users to groups, sub-organizations and
@@ -173,6 +173,10 @@ class TestsBase(APITestCase, URLPatternsTestCase):
                     email='{}@test.com'.format(user_name),
                     password='abcd1234@',
                     organization=orgs.get(user_data.get('organization')))
+                if 'authorized_locations' in user_data:
+                    for location_name in user_data.get('authorized_locations'):
+                        location = locations.get(location_name)
+                        users[user_name].authorized_locations.add(location)
                 groups[user_data['group']].user_set.add(
                     users[user_name])
                 groups[user_data['group']].save()
@@ -246,7 +250,7 @@ class TestsBase(APITestCase, URLPatternsTestCase):
 
         self.blocks = self.create_blocks(blocks_dict, self.floors)
 
-        users_dict = {
+        self.users_dict = {
             'staff_user': 'staff',
             'org_1_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
@@ -287,6 +291,10 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             'employee_user': {
                 'group': UserGroups.EMPLOYEE_GROUP.name,
                 'organization': 'sub_1_org_1',
+                'authorized_locations': [
+                    'location_1_sub_1_org_1',
+                    'location_2_sub_1_org_1'
+                ]
             },
             'other_user': {
                 'group': 'OTHER_GROUP',
@@ -295,7 +303,7 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             },
         }
         self.users, self.tokens = self.create_users(
-            users_dict, self.groups, self.orgs)
+             self.users_dict, self.groups, self.orgs, self.locations)
 
         call_command('setup_apps')
 
