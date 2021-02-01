@@ -7,7 +7,7 @@ USER_GROUP_PERMISSIONS = {
         Location: ['add', 'change', 'view', 'delete'],
     },
     UserGroups.EMPLOYEE_GROUP.name: {
-        Location: ['change', 'view'],
+        Location: ['view'],
     },
 }
 
