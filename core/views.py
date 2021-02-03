@@ -130,6 +130,15 @@ class CoreListCreateDestroyView(
         self._perform_create_by_group_fn = \
             self._define_perform_create_by_group_fn()
 
+    def _define_perform_create_by_group_fn(self):
+        """
+        Returns a dictionary mapping user group to perform_create function
+        that will be called if the request user is in that user group.
+
+        To be implemented by the child class.
+        """
+        raise NotImplementedError()
+
     def _get_queryset_by_staff(self):
         """
         Returns the get queryset for staff users.
