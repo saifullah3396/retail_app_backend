@@ -21,8 +21,9 @@ class Command(BaseCommand):
     def create_groups(self, app_config):
         """
         Calls the create_groups command from the specific application. Each
-        call generates app specific groups (or gets them if they already exist)
-        along with app specific permissions on those groups.
+        call generates the user groups defined in core/permissions.py (or gets
+        them if they already exist) along with app specific permissions on
+        those groups.
         """
         if module_has_submodule(
                 app_config.module, "management.commands.create_groups"):
