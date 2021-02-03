@@ -59,10 +59,5 @@ class Command(BaseCommand):
                         # find permission object and add to group
                         perm = Permission.objects.get(codename=codename)
                         group.permissions.add(perm)
-                        self.stdout.write(
-                            "Adding "
-                            + codename
-                            + " to group "
-                            + group.__str__())
                     except Permission.DoesNotExist:
                         self.stdout.write(codename + " not found")
