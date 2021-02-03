@@ -1,117 +1,144 @@
+from core.utils import *
+from core.views import *
 from django.contrib.auth.models import Group
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import *
 from rest_framework import filters, pagination
-from rest_framework_jwt import authentication
 from rest_framework.generics import *
 from rest_framework.response import Response
-from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework_jwt import authentication
+
 from ..models import Organization
 from ..permissions import *
 from .serializers import OrganizationSerializer
-from core.utils import *
 
 
-class PaginationConfig(pagination.PageNumberPagination):
-    page_size = 25
-    page_size_query_param = 'page_size'
-    max_page_size = 100
+class OrganizationsListCreateDestroyView(CoreListCreateDestroyView):
+    """
+    Defines the organizations list-create-destroy view.
+    """
 
-
-class OrganizationsListCreateDestroyView(ListCreateAPIView, DestroyAPIView):
-    queryset = Organization.objects.none()  # Added for model permissions
+    queryset = Organization.objects.none()
     serializer_class = OrganizationSerializer
     permission_classes = (OrganizationListCreateDestroyPermission,)
-    pagination_class = PaginationConfig
-    filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
-    ordering_fields = ['id', 'name', 'desc']
-    filterset_fields = {
-        'name': ['exact', 'icontains'],
-    }
-    method_to_tree_map = {
+
+    # Define the mapping from request type to query that returns the
+    # organizations tree that is used in the requests. For example, in DELETE
+    # requests, organization does not include itself while in GET it does
+    organizations_tree_wrt_request = {
         'GET': lambda organization: organization.get_descendants(
             include_self=True),
         'DELETE': lambda organization: organization.get_descendants()
     }
 
-    def get_queryset(self):
-        return self._get_queryset().order_by('name')
+    def _define_get_queryset_by_group_fn(self):
+        """
+        Returns a dictionary mapping user group to get_queryset function
+        that will be called if the request user is in that user group.
+        """
+        return {
+            UserGroups.ORGANIZATION_ADMIN_GROUP:
+                self._get_organization_admin_queryset
+        }
 
-    def _get_queryset(self):
-        user = self.request.user
-        if self.request.method == "GET":
-            id_list = self.request.query_params.getlist('id')
-        else:
-            id_list = self.request.data.get('id')
+    def _define_perform_create_by_group_fn(self):
+        """
+        Returns a dictionary mapping user group to perform_create function
+        that will be called if the request user is in that user group.
+        """
+        return {
+            UserGroups.ORGANIZATION_ADMIN_GROUP:
+                self._perform_create_by_organization_admin
+        }
 
-        if user.is_staff:
-            # return complete list if request user is a staff
-            if id_list:
-                return Organization.objects.filter(id__in=id_list)
-            return Organization.objects.all()
-        else:
-            if is_organization_admin(user):
-                organizations_tree = \
-                    self.method_to_tree_map[self.request.method](
-                        user.organization)
+    def _get_model(self):
+        """
+        Returns the get queryset for staff users.
+        """
 
-                # get the organization tree of the user if its an admin
-                if id_list:
-                    ids_in_tree = organizations_tree.filter(id__in=id_list)
+        return Organization
 
-                    # make sure all the given ids are inside the user
-                    # descendents, otherwise return permission denied
-                    if len(ids_in_tree) != len(id_list):
-                        raise exceptions.PermissionDenied()
-                    else:
-                        return ids_in_tree
+    def _get_organizations_tree(self, organization):
+        """
+        Returns the organizations descendents tree given the request type and
+        organzation.
+        """
+        return self.organizations_tree_wrt_request[self.request.method](
+            organization)
 
-                return organizations_tree
-            else:  # any other group cannot access lists
-                raise exceptions.PermissionDenied()
+    def _filter_organizations_by_id_list(self, organizations, id_list):
+        """
+        Filters the organizations by id list. If all ids in the list do not
+        match, a not found exception is raised.
+        """
+        filtered_organizations = filter_queryset_by_id_list(
+            organizations, id_list)
 
-    def perform_create(self, serializer):
-        if self.request.user.is_staff:
-            # okay to create anything for staff
-            return \
-                super(OrganizationsListCreateDestroyView, self).perform_create(
-                    serializer)
-        else:
-            # an organization cannot be created by any user other than
-            # super admin without a parent id
-            if 'parent' not in self.request.data:
-                raise exceptions.PermissionDenied()
+        # make sure all the given ids are inside filtered locations,
+        # otherwise raise a validation error
+        if len(filtered_organizations) != len(id_list):
+            raise exceptions.NotFound(
+                {
+                    'id': 'The following requested ids are invalid: {}'.format(
+                        exclude_queryset_by_id_list(
+                            organizations, id_list).values_list(
+                            'id', flat=True))
+                })
+        return filtered_organizations
 
-            # see if the parent of requested organization is within descendents
-            # of the current user. Current user can only be organization admin
-            # as defined by group permissions so this should work
-            descendents = self.request.user.organization.get_descendants(
-                include_self=True)
-            if not descendents.filter(id=self.request.data['parent']):
-                raise exceptions.PermissionDenied()
+    def _get_organization_admin_queryset(self):
+        """
+        For an organization admin, all the organizations below the user
+        organization are returned. In case a list of ids is provided, the
+        organizations tree is filtered further by ids.
+        """
+        id_list = self._get_id_list()
+        organizations_tree = self._get_organizations_tree(
+            self.request.user.organization)
 
-            return \
-                super(OrganizationsListCreateDestroyView, self).perform_create(
-                    serializer)
+        # get the organization tree of the user if its an admin
+        if id_list:
+            return self._filter_organizations_by_id_list(
+                organizations_tree, id_list
+            )
+        return organizations_tree
 
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_queryset()
-        self.perform_destroy(instance)
-        return Response(data={
-            "msg": "Object(s) deleted successfully."},
-            status=status.HTTP_200_OK)
+    def _perform_create_by_organization_admin(self, serializer):
+        """
+        Creates a new organization, given the request is valid for an
+        organization admin. This functions validates two things; the new
+        organization must have a parent, and the parent must be within the
+        descendents of the organization of this admin.
+        """
+
+        # an organization cannot be created without a parent id
+        if 'parent' not in self.request.data:
+            raise exceptions.PermissionDenied()
+
+        # see if the parent of requested organization is within descendents
+        # of the current user.
+        descendents = self.request.user.organization.get_descendants(
+            include_self=True)
+        if not descendents.filter(id=self.request.data.get('parent', None)):
+            raise exceptions.PermissionDenied()
+
+        # create organization in db
+        serializer.save()
 
 
-class OrganizationsRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+class OrganizationsRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
+    """
+    Defines the organizations retrieve-update-destroy view.
+    """
+
     queryset = Organization.objects.none()  # Added for model permissions
     serializer_class = OrganizationSerializer
     permission_classes = (OrganizationRetrieveUpdateDestroyPermission,)
-    pagination_class = PaginationConfig
-    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
-    ordering_fields = ['id', 'name', 'desc']
-    filterset_fields = {
-        'name': ['exact', 'icontains'],
-    }
-    method_to_tree_map = {
+
+    # Define the mapping from request type to query that returns the
+    # organizations tree that is used in the requests. For example, in DELETE
+    # requests, organization does not include itself while in GET it does
+    organizations_tree_wrt_request = {
         'GET': lambda organization: organization.get_descendants(
             include_self=True),
         'POST': lambda organization: organization.get_descendants(
@@ -121,29 +148,42 @@ class OrganizationsRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
         'DELETE': lambda organization: organization.get_descendants()
     }
 
-    def get_queryset(self):
-        return self._get_queryset().order_by('name')
+    def _define_get_queryset_by_group_fn(self):
+        """
+        Returns a dictionary mapping user group to get_queryset function
+        that will be called if the request user is in that user group.
+        """
 
-    def _get_queryset(self):
-        user = self.request.user
-        if user.is_staff:
-            # return complete list if request user is a staff
-            return Organization.objects.all()
-        else:
-            if is_organization_admin(user):
-                organizations_tree = \
-                    self.method_to_tree_map[self.request.method](
-                        user.organization)
-                return organizations_tree
-            else:
-                # any other group can only access object if its in the same
-                # organization
-                return Organization.objects.filter(
-                    id=user.organization.id)
+        return {
+            UserGroups.ORGANIZATION_ADMIN_GROUP:
+                self._get_organization_admin_queryset,
+            UserGroups.EMPLOYEE_GROUP:
+                self._get_employee_queryset,
+        }
 
-    def destroy(self, request, *args, **kwargs):
-        resp = super(OrganizationsRetrieveUpdateDestroyView, self).destroy(
-            request, *args, **kwargs)
-        return Response(data={
-            "msg": "Object(s) deleted successfully."},
-            status=status.HTTP_200_OK)
+    def _get_model(self):
+        """
+        Returns the get queryset for staff users.
+        """
+        return Organization
+
+    def _get_organizations_tree(self, organization):
+        """
+        Returns the organizations descendents tree given the request type and
+        organzation.
+        """
+        return self.organizations_tree_wrt_request[self.request.method](
+            organization)
+
+    def _get_organization_admin_queryset(self):
+        """
+        Returns the get_queryset for organization admin user group
+        """
+        return self._get_organizations_tree(self.request.user.organization)
+
+    def _get_employee_queryset(self):
+        """
+        Returns the get_queryset for employee user group
+        """
+        return self._get_model().objects.filter(
+            id=self.request.user.organization.id)
