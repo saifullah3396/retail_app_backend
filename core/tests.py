@@ -1,19 +1,21 @@
-import copy
-from rest_framework.test import APITestCase, URLPatternsTestCase
-from rest_framework import status
-from rest_framework.authtoken.models import Token
+"""
+Defines the base functionality for unit tests generation for our applications.
+"""
+
 from django.contrib.auth.models import Group
-from backend import settings
-from core.permissions import UserGroups
-from users.models import AppUser
-from organizations.models import Organization
-from locations.models import Location, Floor, Block
-from rest_framework_jwt.settings import api_settings
 from django.core.management import call_command
 from django.urls import include, path, reverse
+from locations.models import Block, Floor, Location
+from organizations.models import Organization
+from rest_framework.authtoken.models import Token
+from rest_framework.test import APITestCase, URLPatternsTestCase
+from rest_framework_jwt.settings import api_settings
+from users.models import AppUser
 
-jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
-jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+from .permissions import UserGroups
+
+JWT_PAYLOAD_HANDLER = api_settings.JWT_PAYLOAD_HANDLER
+JWT_ENCODE_HANDLER = api_settings.JWT_ENCODE_HANDLER
 JWT_AUTH = True
 
 
@@ -184,8 +186,8 @@ class TestsBase(APITestCase, URLPatternsTestCase):
 
             users[user_name].save()
             if JWT_AUTH:
-                payload = jwt_payload_handler(users[user_name])
-                tokens[user_name] = jwt_encode_handler(payload)
+                payload = JWT_PAYLOAD_HANDLER(users[user_name])
+                tokens[user_name] = JWT_ENCODE_HANDLER(payload)
             else:
                 tokens[user_name] = Token.objects.create(user=users[user_name])
                 tokens[user_name].save()
