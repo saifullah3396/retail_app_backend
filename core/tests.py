@@ -324,6 +324,10 @@ class TestsBase(APITestCase, URLPatternsTestCase):
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
                 'organization': 'org_3',
             },
+            'org_4_admin_user': {
+                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
+                'organization': 'org_4_for_deletion',
+            },
             'sub_org_11_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
                 'organization': 'sub_1_org_1',
@@ -346,7 +350,11 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             },
             'sub_org_23_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'sub_2_org_2',
+                'organization': 'sub_2_org_3',
+            },
+            'sub_org_14_admin_user': {
+                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
+                'organization': 'sub_1_org_4',
             },
             'employee_user': {
                 'group': UserGroups.EMPLOYEE_GROUP.name,
