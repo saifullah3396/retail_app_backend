@@ -1,4 +1,9 @@
+"""
+Defines the serializers used in the organizations api.
+"""
+
 from rest_framework import serializers
+
 from ..models import Organization
 
 
