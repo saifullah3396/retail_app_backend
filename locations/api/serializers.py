@@ -72,10 +72,3 @@ class LocationDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
         fields = ('id', 'name', 'organization', 'floors')
-
-    def to_representation(self, location):
-        data = \
-            super(
-                LocationDetailSerializer,
-                self).to_representation(location)
-        return {'location': data}
