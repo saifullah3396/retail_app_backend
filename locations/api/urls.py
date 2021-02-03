@@ -1,6 +1,10 @@
-from django.urls import path
-from .views import *
+"""
+Defines the urls for the views defined in the locations api.
+"""
 
+from django.urls import path
+
+from .views import *
 
 urlpatterns = [
     path(
@@ -10,5 +14,5 @@ urlpatterns = [
     path(
         '<pk>',
         LocationsRetrieveUpdateDestroyView.as_view(),
-        name='locations_rud'),
+        name='locations_retrieve_update_delete'),
 ]

@@ -1,5 +1,10 @@
+"""
+Defines the serializers used in the locations api.
+"""
+
 from rest_framework import serializers
-from ..models import Location, Floor, Block
+
+from ..models import Block, Floor, Location
 
 
 class LocationSerializer(serializers.ModelSerializer):

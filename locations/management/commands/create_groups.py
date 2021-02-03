@@ -1,3 +1,8 @@
+"""
+Implements the create_groups_base to generate user groups in the application
+and their related permissions.
+"""
+
 from core.management.commands.create_groups_base import Command
 from locations.permissions import USER_GROUP_PERMISSIONS
 
