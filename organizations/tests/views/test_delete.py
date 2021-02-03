@@ -1,0 +1,131 @@
+"""
+Defines the unit tests for organizations applications.
+"""
+import copy
+
+from core.tests import TestsBase
+from django.urls import include, path, reverse
+from rest_framework import status
+
+
+class OrganizationDeleteTests(TestsBase):
+    """
+    Defines unit tests for delete api for the organizations application.
+    """
+
+    """Define the api url patterns used in this test unit."""
+    api_urlpatterns = [
+        path('organizations/', include('organizations.api.urls')),
+    ]
+
+    """Define the the complete url pattern used in this test unit."""
+    urlpatterns = [
+        path('api/v1/', include(api_urlpatterns)),
+    ]
+
+    def setUp(self):
+        """
+        Sets up the test cases.
+        """
+        super(OrganizationDeleteTests, self).setUp()
+        self.test = [
+            {
+                'test_name': 'delete_organization_by_id',
+                'type': 'delete',
+                'path_name': 'organizations_retrieve_update_delete',
+                'request': [
+                    {   # delete org by id, forbidden for org admin itself
+                        'test_name': 'delete_org_4_by_id_by_org_4_admin',
+                        'args': [self.orgs['org_4_for_deletion'].id],
+                        'user': 'org_4_admin_user',
+                        'status': status.HTTP_404_NOT_FOUND
+                    },
+                    {   # delete org by id, forbidden for sub-org
+                        'test_name': 'delete_org_4_by_id_by_sub_1_org_4_admin',
+                        'args': [self.orgs['org_4_for_deletion'].id],
+                        'user': 'sub_org_14_admin_user',
+                        'status': status.HTTP_404_NOT_FOUND
+                    },
+                    {   # delete org by id by other org admin, forbidden
+                        'test_name': 'delete_org_4_by_id_by_org_1_admin',
+                        'args': [self.orgs['org_4_for_deletion'].id],
+                        'user': 'org_1_admin_user',
+                        'status': status.HTTP_404_NOT_FOUND
+                    },
+                    {   # delete org by id, forbidden for random user
+                        'test_name': 'delete_org_4_by_id_by_other_user',
+                        'args': [self.orgs['org_4_for_deletion'].id],
+                        'user': 'other_user',
+                        'status': status.HTTP_403_FORBIDDEN
+                    },
+                    {   # delete org by id, okay for staff -> at the end so org
+                        # remains for other test cases
+                        'test_name': 'delete_org_4_by_id_by_staff',
+                        'args': [self.orgs['org_4_for_deletion'].id],
+                        'user': 'staff_user',
+                        'status': status.HTTP_200_OK
+                    },
+                ]
+            },
+            {
+                'test_name': 'delete_sub_organization_by_id',
+                'type': 'delete',
+                'path_name': 'organizations_retrieve_update_delete',
+                'request': [
+                    {   # delete sub-org by id, should not be found for
+                        # sub-org admin
+                        'test_name': 'delete_sub_5_org_1_by_id_by_sub_1_org_1_admin',
+                        'args': [self.orgs['sub_5_org_1_for_deletion'].id],
+                        'user': 'sub_org_11_admin_user',
+                        'status': status.HTTP_404_NOT_FOUND
+                    },
+                    {   # delete sub-org by id, should return null for other
+                        # org-admin under which this sub-org does not exist
+                        'test_name': 'delete_sub_5_org_1_by_id_by_org_2_admin',
+                        'args': [self.orgs['sub_5_org_1_for_deletion'].id],
+                        'user': 'org_2_admin_user',
+                        'status': status.HTTP_404_NOT_FOUND
+                    },
+                    {   # delete sub-org by id by sub-org admin,
+                        # should be not found
+                        'test_name': 'delete_sub_5_org_1_by_id_by_sub_2_org_1_admin',
+                        'args': [self.orgs['sub_5_org_1_for_deletion'].id],
+                        'user': 'sub_org_21_admin_user',
+                        'status': status.HTTP_404_NOT_FOUND
+                    },
+                    {   # delete sub-org by id, forbidden for random user
+                        'test_name': 'delete_sub_5_org_1_by_id_by_other_user',
+                        'args': [self.orgs['sub_5_org_1_for_deletion'].id],
+                        'user': 'other_user',
+                        'status': status.HTTP_403_FORBIDDEN
+                    },
+                    {   # delete sub-org by id, okay for staff
+                        'test_name': 'delete_sub_5_org_1_by_staff',
+                        'args': [self.orgs['sub_5_org_1_for_deletion'].id],
+                        'user': 'staff_user',
+                        'status': status.HTTP_200_OK
+                    },
+                    {   # duplicate delete sub-org by id, bad request
+                        'test_name': 'delete_sub_5_org_1_by_staff',
+                        'args': [self.orgs['sub_5_org_1_for_deletion'].id],
+                        'user': 'staff_user',
+                        'status': status.HTTP_404_NOT_FOUND  # already deleted
+                    },
+                    {   # delete sub-org by id, okay for org admin itself under
+                        # which this sub-org exists
+                        'test_name': 'delete_sub_5_org_2_by_org_2_admin',
+                        'args': [self.orgs['sub_5_org_2_for_deletion'].id],
+                        'user': 'org_2_admin_user',
+                        'status': status.HTTP_200_OK
+                    },
+                ]
+            },
+        ]
+
+    def test_(self):
+        """
+        The single test function that runs all the test cases defined in
+        the self.test.
+        """
+        for test_config in self.test:
+            self.run_single_test(test_config)
