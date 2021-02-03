@@ -1,5 +1,5 @@
 """
-Defines the unit tests for organizations applications.
+Defines the unit tests related to 'retrieve' api requests for this application.
 """
 import copy
 
@@ -8,9 +8,10 @@ from django.urls import include, path, reverse
 from rest_framework import status
 
 
-class OrganizationGetTests(TestsBase):
+class OrganizationRetrieveTests(TestsBase):
     """
-    Defines unit tests for get api for the organizations application.
+    Defines unit tests for 'retrieve' api requests for views defined
+    at 'organizations/' url.
     """
 
     """Define the api url patterns used in this test unit."""
@@ -27,7 +28,7 @@ class OrganizationGetTests(TestsBase):
         """
         Sets up the test cases.
         """
-        super(OrganizationGetTests, self).setUp()
+        super(OrganizationRetrieveTests, self).setUp()
         self.test = [
             {
                 'test_name': 'get_organization_by_id',

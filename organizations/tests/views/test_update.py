@@ -1,5 +1,5 @@
 """
-Defines the unit tests for organizations applications.
+Defines the unit tests related to 'update' api requests for this application.
 """
 import copy
 
@@ -10,7 +10,8 @@ from rest_framework import status
 
 class OrganizationUpdateTests(TestsBase):
     """
-    Defines unit tests for update api for the organizations application.
+    Defines unit tests for 'update' api requests for views defined
+    at 'organizations/' url.
     """
 
     """Define the api url patterns used in this test unit."""

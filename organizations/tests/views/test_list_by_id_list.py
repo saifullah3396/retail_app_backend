@@ -1,5 +1,6 @@
 """
-Defines the unit tests for organizations applications.
+Defines the unit tests related to 'list-by-id-list' api requests for this
+application.
 """
 import copy
 
@@ -8,9 +9,10 @@ from django.urls import include, path, reverse
 from rest_framework import status
 
 
-class OrganizationListMultipleTests(TestsBase):
+class OrganizationListByIdListTests(TestsBase):
     """
-    Defines unit tests for list-multiple api for the organizations application.
+    Defines unit tests for 'list-by-id-list' api requests for views defined
+    at 'organizations/' url.
     """
 
     """Define the api url patterns used in this test unit."""
@@ -27,7 +29,7 @@ class OrganizationListMultipleTests(TestsBase):
         """
         Sets up the test cases.
         """
-        super(OrganizationListMultipleTests, self).setUp()
+        super(OrganizationListByIdListTests, self).setUp()
         self.test = [
             {
                 'test_name': 'get_organizations_list_multiple',

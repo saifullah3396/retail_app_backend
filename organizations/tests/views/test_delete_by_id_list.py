@@ -1,5 +1,6 @@
 """
-Defines the unit tests for organizations applications.
+Defines the unit tests related to 'delete-by-id-list' api requests for this
+application.
 """
 import copy
 
@@ -8,10 +9,10 @@ from django.urls import include, path, reverse
 from rest_framework import status
 
 
-class OrganizationDeleteMultipleTests(TestsBase):
+class OrganizationDeleteByIdListTests(TestsBase):
     """
-    Defines unit tests for delete-multiple api for the organizations
-    application.
+    Defines unit tests for 'delete-by-id-list' api requests for views defined
+    at 'organizations/' url.
     """
 
     """Define the api url patterns used in this test unit."""
@@ -28,7 +29,7 @@ class OrganizationDeleteMultipleTests(TestsBase):
         """
         Sets up the test cases.
         """
-        super(OrganizationDeleteMultipleTests, self).setUp()
+        super(OrganizationDeleteByIdListTests, self).setUp()
         self.test = [
             {
                 'test_name': 'delete_multiple_organizations',
