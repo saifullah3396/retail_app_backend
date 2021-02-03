@@ -1,5 +1,11 @@
-from django.core.management import BaseCommand
+"""
+Defines the base command that is used in setup_apps.py to generate user groups
+used in our applications along with all permissions as defined in any of our
+application related to those user groups
+"""
+
 from django.contrib.auth.models import Group, Permission
+from django.core.management import BaseCommand
 
 
 class Command(BaseCommand):
