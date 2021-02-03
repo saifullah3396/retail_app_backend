@@ -1,5 +1,5 @@
 """
-Defines the permissions used in the organizations application.
+Defines the permissions used in this application.
 """
 
 import copy
