@@ -10,6 +10,7 @@ from organizations.models import Organization
 from locations.models import Location, Floor, Block
 from rest_framework_jwt.settings import api_settings
 from django.core.management import call_command
+from django.urls import include, path, reverse
 
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
@@ -337,6 +338,31 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             self.users_dict, self.groups, self.orgs, self.locations)
 
         call_command('setup_apps')
+
+    def run_single_test(self, config):
+        path_name = config['path_name']
+        for request in config['request']:
+            with self.subTest(request=request, test_name=config['test_name']):
+                if 'args' in request:
+                    url = reverse(path_name, args=request['args'])
+                else:
+                    url = reverse(path_name)
+
+                data = None
+                if 'data' in request:
+                    data = request['data']
+
+                response_check = None
+                if 'response_check' in request:
+                    response_check = request['response_check']
+
+                response = self.call_api(
+                    url,
+                    data,
+                    self.tokens[request['user']],
+                    request['status'],
+                    config['type'],
+                    response_check=response_check)
 
     def call_api(
             self,

@@ -704,26 +704,6 @@ class OrganizationTests(TestsBase):
             test_delete_multiple,
         ]
 
-    def run_single_test(self, config):
-        path_name = config['path_name']
-        for request in config['request']:
-            with self.subTest(request=request, test_name=config['test_name']):
-                if 'args' in request:
-                    url = reverse(path_name, args=request['args'])
-                else:
-                    url = reverse(path_name)
-
-                data = None
-                if 'data' in request:
-                    data = request['data']
-
-                response = self.call_api(
-                    url,
-                    data,
-                    self.tokens[request['user']],
-                    request['status'],
-                    config['type'])
-
     def test_all_sets(self):
         for test_set in self.test_sets:
             for test_config in test_set:
