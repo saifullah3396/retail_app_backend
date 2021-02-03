@@ -1,20 +1,28 @@
 from django.contrib.auth.models import Group
-from rest_framework import *
-from rest_framework import filters, pagination
-from rest_framework_jwt import authentication
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, pagination, status
 from rest_framework.generics import *
 from rest_framework.response import Response
-from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework_jwt import authentication
+
 from core.utils import *
 
 
 class PaginationConfig(pagination.PageNumberPagination):
+    """
+    Defines the base pagination configuration for our applications
+    """
     page_size = 25
     page_size_query_param = 'page_size'
     max_page_size = 100
 
 
 class CoreListCreateDestroyView(ListCreateAPIView, DestroyAPIView):
+    """
+    Defines the base list-create-destroy view that will be extended by our
+    applications for model specific list-create-destroy views.
+    """
+
     pagination_class = PaginationConfig
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
     ordering_fields = ['id', 'name', 'desc']
@@ -101,6 +109,11 @@ class CoreListCreateDestroyView(ListCreateAPIView, DestroyAPIView):
 
 
 class CoreRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+    """
+    Defines the base retrieve-update-destroy view that will be extended by our
+    applications for model specific retrieve-update-destroy views.
+    """
+
     pagination_class = PaginationConfig
     filter_backends = [filters.OrderingFilter, filters.SearchFilter]
     ordering_fields = ['id', 'name', 'desc']
