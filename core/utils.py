@@ -1,9 +1,19 @@
+"""
+Defines the common utility functions used in our applications.
+"""
+
 from django.contrib.auth.models import Group
-from core.permissions import UserGroups
 from rest_framework import exceptions
+
+from core.permissions import UserGroups
 
 
 def get_user_from_serializer(serializer, raise_exception=False):
+    """
+    Returns the user from serializer context. Raises permission denied error
+    if user is not found.
+    """
+
     # get user requesting for a new registration
     request_user = None
     request = serializer.context.get("request")
@@ -30,8 +40,28 @@ def is_in_group(user, group_name):
 
 
 def is_organization_admin(user):
+    """
+    Returns true if the user is in ORGANIZATION_ADMIN_GROUP user group.
+    """
     return is_in_group(user, UserGroups.ORGANIZATION_ADMIN_GROUP.name)
 
 
 def is_employee(user):
+    """
+    Returns true if the user is in EMPLOYEE_GROUP user group.
+    """
     return is_in_group(user, UserGroups.EMPLOYEE_GROUP.name)
+
+
+def filter_queryset_by_id_list(query_set, id_list):
+    """
+    Filters a queryset by th given list of ids
+    """
+    return query_set.filter(id__in=id_list)
+
+
+def exclude_queryset_by_id_list(query_set, id_list):
+    """
+    Filters a queryset by excluding the given list of ids
+    """
+    return query_set.exclude(id__in=id_list)
