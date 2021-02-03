@@ -147,7 +147,7 @@ class TestsBase(APITestCase, URLPatternsTestCase):
                 'user_1': {
                     'group': 'group_1',
                     'organization': 'org_1',
-                    'sub_organization': 'sub_org_1'
+                    'sub_organization': 'sub_org_1',
                 },
                 ...
                 'user_2': {
@@ -161,6 +161,17 @@ class TestsBase(APITestCase, URLPatternsTestCase):
                     'sub_organization': 'sub_org_n'
                 },
             }
+
+        For employees, authorized_locations must be provided like this:
+        'employee_user': {
+                    'group': 'employee',
+                    'organization': 'org_1',
+                    'sub_organization': 'sub_org_1',
+                    'authorized_locations': [
+                        'location_1_sub_1_org_1',
+                        'location_2_sub_1_org_1'
+                    ]
+                },
         """
         users = {}
         tokens = {}
@@ -210,8 +221,11 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             'org_3',
             'org_4_for_deletion',
             'org_5_for_deletion']
+
+        # generate organizations in database
         self.orgs = self.create_orgs(self.orgs_list)
 
+        # generate sub organizations of org_1
         self.org_1_sub_orgs = {
             'sub_1_org_1': 'org_1',
             'sub_2_org_1': 'org_1',
@@ -220,6 +234,7 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             'sub_5_org_1_for_deletion': 'org_1',
         }
 
+        # generate sub organizations of org_2
         self.org_2_sub_orgs = {
             'sub_1_org_2': 'org_2',
             'sub_2_org_2': 'org_2',
@@ -228,16 +243,19 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             'sub_5_org_2_for_deletion': 'org_2',
         }
 
+        # generate sub organizations of org_3
         self.org_3_sub_orgs = {
             'sub_1_org_3': 'org_3',
             'sub_2_org_3': 'org_3',
             'sub_3_org_3_for_deletion': 'org_3',
         }
 
+        # generate sub organizations of org_4
         self.org_4_sub_orgs = {
             'sub_1_org_4': 'org_4_for_deletion'
         }
 
+        # generate sub organizations dictionary
         self.sub_orgs_dict = {
             **self.org_1_sub_orgs,
             **self.org_2_sub_orgs,
@@ -245,9 +263,10 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             **self.org_4_sub_orgs,
         }
 
+        # update organizations list with sub_organizations in database
         self.orgs.update(self.create_sub_orgs(self.sub_orgs_dict, self.orgs))
 
-        # generate test locations
+        # generate locations of org_1
         self.org_1_locations = {
             'location_1_org_1': 'org_1',
             'location_2_org_1': 'org_1',
@@ -256,6 +275,7 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             'location_5_org_1': 'org_1',
         }
 
+        # generate locations of sub_1_org_1
         self.sub_1_org_1_locations = {
             'location_1_sub_1_org_1': 'sub_1_org_1',
             'location_2_sub_1_org_1': 'sub_1_org_1',
@@ -263,22 +283,26 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             'location_4_sub_1_org_1': 'sub_1_org_1',
         }
 
+        # generate locations of org_2
         self.org_2_locations = {
             'location_1_org_2': 'org_2',
             'location_2_org_2': 'org_2',
             'location_3_org_2': 'org_2',
         }
 
+        # generate locations of sub_1_org_2
         self.sub_1_org_2_locations = {
             'location_1_sub_1_org_2': 'sub_1_org_2',
             'location_2_sub_1_org_2': 'sub_1_org_2',
         }
 
+        # generate locations of org_3
         self.org_3_locations = {
             'location_1_org_3': 'org_3',
             'location_2_org_3': 'org_3',
         }
 
+        # generate locations dictionary
         self.locations_dict = {
             **self.org_1_locations,
             **self.sub_1_org_1_locations,
@@ -286,6 +310,8 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             **self.sub_1_org_2_locations,
             **self.org_3_locations,
         }
+
+        # generate locations in database
         self.locations = self.create_locations(self.locations_dict, self.orgs)
 
         # generate test floors
@@ -310,8 +336,10 @@ class TestsBase(APITestCase, URLPatternsTestCase):
                 'floor': 'floor_0_location_1'},
         }
 
+        # generate blocks in database
         self.blocks = self.create_blocks(blocks_dict, self.floors)
 
+        # make a list of users with respective properties
         self.users_dict = {
             'staff_user': 'staff',
             'org_1_admin_user': {
@@ -372,12 +400,70 @@ class TestsBase(APITestCase, URLPatternsTestCase):
                 'sub_organization': None
             },
         }
+
+        # generate users and their tokens in database
         self.users, self.tokens = self.create_users(
             self.users_dict, self.groups, self.orgs, self.locations)
 
+        # call the setup_apps command to generate any common functionality
+        # added separately in the applications.
         call_command('setup_apps')
 
     def run_single_test(self, config):
+        """
+        Runs a single test as defined in the config. Each test contains
+        multiple sub-tests that are called separately.
+
+        :param config: The test configuration. An example configuration is
+            shown below:
+
+        config = {
+                # name of the test
+                'test_name': 'test_name',
+
+                # (get, patch, delete, post, etc)
+                'type': 'get',
+
+                # view url name as defined in urls.py
+                'path_name': 'url_name',
+
+                # A list of requests. Each request is a sub-test hitting the
+                # specified url with specified type
+                'request': [
+                    {
+                        # sub test name
+                        'test_name': 'sub_test_1',
+
+                        # query parameters to send
+                        'args': [query_param_1, query_param_2],
+
+                        # user that is calling the request
+                        'user': 'staff_user',
+
+                        # data to be sent, for example, for post requests
+                        'data': {
+                            'data1': 'data1',
+                            'data2': 'data2',
+                        },
+
+                        # return status code that should be matched for a
+                        # successful run. Test fails if the returned status
+                        # code is different from this one
+                        'status': status.HTTP_200_OK,
+
+                        # a lambda function that asserts the returned response.
+                        # the lambda takes the returned response data and
+                        # performs any necessary assertions for the test.
+                        'response_check': lambda test, data: (
+                            test.assertEqual(
+                                data['name'],
+                                'data1')
+                        )
+                    },
+                    {...},
+                    ...
+                    {...},
+        """
         path_name = config['path_name']
         for request in config['request']:
             with self.subTest(request=request, test_name=config['test_name']):
@@ -412,6 +498,9 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             response_check=None,
             debug=True,
             make_assert=True):
+        """
+        Calls the rest api for tests cases as defined by the input parameters.
+        """
 
         if JWT_AUTH:
             auth_string = 'JWT {}'.format(token)
