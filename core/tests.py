@@ -14,8 +14,13 @@ from users.models import AppUser
 
 from .permissions import UserGroups
 
+# define payload handler for generating JWT token in tests
 JWT_PAYLOAD_HANDLER = api_settings.JWT_PAYLOAD_HANDLER
+
+# define encode handler for generating JWT token in tests
 JWT_ENCODE_HANDLER = api_settings.JWT_ENCODE_HANDLER
+
+# use JWT authentication tokens?
 JWT_AUTH = True
 
 
