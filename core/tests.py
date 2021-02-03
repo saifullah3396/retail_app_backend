@@ -202,20 +202,48 @@ class TestsBase(APITestCase, URLPatternsTestCase):
         self.groups = self.create_groups(groups_list)
 
         # generate test organizations
-        orgs_list = ['org_1', 'org_2', 'org_3']
-        self.orgs = self.create_orgs(orgs_list)
+        self.orgs_list = [
+            'org_1',
+            'org_2',
+            'org_3',
+            'org_4_for_deletion',
+            'org_5_for_deletion']
+        self.orgs = self.create_orgs(self.orgs_list)
 
-        # generate test sub organizations
-        sub_orgs_dict = {
+        self.org_1_sub_orgs = {
             'sub_1_org_1': 'org_1',
             'sub_2_org_1': 'org_1',
+            'sub_3_org_1_for_deletion': 'org_1',
+            'sub_4_org_1_for_deletion': 'org_1',
+            'sub_5_org_1_for_deletion': 'org_1',
+        }
+
+        self.org_2_sub_orgs = {
             'sub_1_org_2': 'org_2',
             'sub_2_org_2': 'org_2',
             'sub_3_org_2': 'org_2',
+            'sub_4_org_2_for_deletion': 'org_2',
+            'sub_5_org_2_for_deletion': 'org_2',
+        }
+
+        self.org_3_sub_orgs = {
             'sub_1_org_3': 'org_3',
             'sub_2_org_3': 'org_3',
+            'sub_3_org_3_for_deletion': 'org_3',
         }
-        self.orgs.update(self.create_sub_orgs(sub_orgs_dict, self.orgs))
+
+        self.org_4_sub_orgs = {
+            'sub_1_org_4': 'org_4_for_deletion'
+        }
+
+        self.sub_orgs_dict = {
+            **self.org_1_sub_orgs,
+            **self.org_2_sub_orgs,
+            **self.org_3_sub_orgs,
+            **self.org_4_sub_orgs,
+        }
+
+        self.orgs.update(self.create_sub_orgs(self.sub_orgs_dict, self.orgs))
 
         # generate test locations
         self.org_1_locations = {
