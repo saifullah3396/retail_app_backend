@@ -181,13 +181,6 @@ class CoreRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView, CoreAPIView):
     applications for model specific retrieve-update-destroy views.
     """
 
-    pagination_class = PaginationConfig
-    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
-    ordering_fields = ['id', 'name', 'desc']
-    filterset_fields = {
-        'name': ['exact', 'icontains'],
-    }
-
     def __init__(self):
         super(CoreRetrieveUpdateDestroyView, self).__init__()
 
