@@ -8,7 +8,7 @@ from organizations.models import Organization
 from organizations.api.serializers import \
     OrganizationSerializer
 from locations.api.serializers import \
-    LocationDetailSerializer, LocationSerializer
+    LocationDetailSerializer, LocationListSerializer
 from backend import settings
 
 
@@ -28,7 +28,7 @@ class AdminUserSerializerAdminAccess(serializers.ModelSerializer):
         # return all locations as authorized in super user
         authorized_locations = Location.objects.all()
         return \
-            LocationSerializer(authorized_locations, many=True).data
+            LocationListSerializer(authorized_locations, many=True).data
 
     def get_group(self, app_user):
         return "Super Admin"
