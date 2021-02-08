@@ -24,7 +24,7 @@ USER_GROUP_PERMISSIONS = {
 }
 
 
-class OrganizationListCreateDestroyPermission(AppDjangoModelPermissions):
+class OrganizationsListCreateDestroyPermission(AppDjangoModelPermissions):
     """
     Permissions required on the OrganizationListCreateDestroyView
     """
@@ -36,7 +36,7 @@ class OrganizationListCreateDestroyPermission(AppDjangoModelPermissions):
         self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
 
 
-class OrganizationRetrieveUpdateDestroyPermission(AppDjangoModelPermissions):
+class OrganizationsRetrieveUpdateDestroyPermission(AppDjangoModelPermissions):
     """
     Permissions required on the OrganizationListCreateDestroyView
     """
