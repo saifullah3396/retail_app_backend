@@ -24,10 +24,6 @@ class CoreAPIView(GenericAPIView):
 
     pagination_class = PaginationConfig
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
-    ordering_fields = ['id', 'name', 'desc']
-    filterset_fields = {
-        'name': ['exact', 'icontains'],
-    }
 
     def __init__(self):
         super(CoreAPIView, self).__init__()
@@ -83,6 +79,26 @@ class CoreAPIView(GenericAPIView):
             return self.request.query_params.getlist('id')
         else:
             return self.request.data.get('id')
+
+    def _filter_object_by_id_list(self, objects, id_list):
+        """
+        Filters the object by id list. If all ids in the list do not
+        match, a not found exception is raised.
+        """
+        filtered_objects = filter_queryset_by_id_list(
+            objects, id_list)
+
+        # make sure all the given ids are inside filtered objects,
+        # otherwise raise a validation error
+        if len(filtered_objects) != len(id_list):
+            raise exceptions.NotFound(
+                {
+                    'id': 'The following requested ids are invalid: {}'.format(
+                        exclude_queryset_by_id_list(
+                            objects, id_list).values_list(
+                            'id', flat=True))
+                })
+        return filtered_objects
 
     def _get_queryset_by_group(self):
         """
@@ -155,12 +171,20 @@ class CoreListCreateDestroyView(
         """
         serializer.save()
 
+    def _order_by(self):
+        """
+        Returns the field with respect to which queries are to be ordered.
+
+        To be implemented by the child class.
+        """
+        raise NotImplementedError()
+
     def get_queryset(self):
         """
         Implements the get_queryset function. Any final modifications to the
         query set are made here.
         """
-        return self._get_queryset().order_by('name')
+        return self._get_queryset().order_by(self._order_by())
 
     def perform_create(self, serializer):
         """
