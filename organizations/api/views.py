@@ -62,6 +62,12 @@ class OrganizationsListCreateDestroyView(CoreListCreateDestroyView):
 
         return Organization
 
+    def _order_by(self):
+        """
+        Returns the field with respect to which queries are to be ordered.
+        """
+        return 'name'
+
     def _get_organizations_tree(self, organization):
         """
         Returns the organizations descendents tree given the request type and
