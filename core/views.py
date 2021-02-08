@@ -80,7 +80,7 @@ class CoreAPIView(GenericAPIView):
         else:
             return self.request.data.get('id')
 
-    def _filter_object_by_id_list(self, objects, id_list):
+    def _filter_objects_by_id_list(self, objects, id_list):
         """
         Filters the object by id list. If all ids in the list do not
         match, a not found exception is raised.

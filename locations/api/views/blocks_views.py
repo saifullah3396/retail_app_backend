@@ -262,12 +262,6 @@ class BlocksRetrieveUpdateDestroyView(
 
         return BlocksView._get_model(self)
 
-    def _order_by(self):
-        """
-        Returns the field with respect to which queries are to be ordered.
-        """
-        return BlocksView._order_by(self)
-
     def _get_queryset_by_staff(self):
         """
         Returns all the floors within any provided location for staff users.

@@ -13,47 +13,11 @@ from ..permissions import *
 from .serializers import OrganizationSerializer
 
 
-class OrganizationsListCreateDestroyView(CoreListCreateDestroyView):
-    """
-    Defines the organizations list-create-destroy view.
-    """
-
-    queryset = Organization.objects.none()
-    serializer_class = OrganizationSerializer
-    permission_classes = (OrganizationsListCreateDestroyPermission,)
+class OrganizationsView:
     ordering_fields = ['id', 'name', 'desc']
     filterset_fields = {
         'name': ['exact', 'icontains'],
     }
-
-    # Define the mapping from request type to query that returns the
-    # organizations tree that is used in the requests. For example, in DELETE
-    # requests, organization does not include itself while in GET it does
-    organizations_tree_wrt_request = {
-        'GET': lambda organization: organization.get_descendants(
-            include_self=True),
-        'DELETE': lambda organization: organization.get_descendants()
-    }
-
-    def _define_get_queryset_by_group_fn(self):
-        """
-        Returns a dictionary mapping user group to get_queryset function
-        that will be called if the request user is in that user group.
-        """
-        return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._get_organization_admin_queryset
-        }
-
-    def _define_perform_create_by_group_fn(self):
-        """
-        Returns a dictionary mapping user group to perform_create function
-        that will be called if the request user is in that user group.
-        """
-        return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._perform_create_by_organization_admin
-        }
 
     def _get_model(self):
         """
@@ -75,6 +39,59 @@ class OrganizationsListCreateDestroyView(CoreListCreateDestroyView):
         """
         return self.organizations_tree_wrt_request[self.request.method](
             organization)
+
+
+class OrganizationsListCreateDestroyView(
+        CoreListCreateDestroyView, OrganizationsView):
+    """
+    Defines the organizations list-create-destroy view.
+    """
+
+    queryset = Organization.objects.none()
+    serializer_class = OrganizationSerializer
+    permission_classes = (OrganizationsListCreateDestroyPermission,)
+
+    # Define the mapping from request type to query that returns the
+    # organizations tree that is used in the requests. For example, in DELETE
+    # requests, organization does not include itself while in GET it does
+    organizations_tree_wrt_request = {
+        'GET': lambda organization: organization.get_descendants(
+            include_self=True),
+        'DELETE': lambda organization: organization.get_descendants()
+    }
+
+    def _get_model(self):
+        """
+        Returns the get queryset for staff users.
+        """
+
+        return OrganizationsView._get_model(self)
+
+    def _order_by(self):
+        """
+        Returns the field with respect to which queries are to be ordered.
+        """
+        return OrganizationsView._order_by(self)
+
+    def _define_get_queryset_by_group_fn(self):
+        """
+        Returns a dictionary mapping user group to get_queryset function
+        that will be called if the request user is in that user group.
+        """
+        return {
+            UserGroups.ORGANIZATION_ADMIN_GROUP:
+                self._get_organization_admin_queryset
+        }
+
+    def _define_perform_create_by_group_fn(self):
+        """
+        Returns a dictionary mapping user group to perform_create function
+        that will be called if the request user is in that user group.
+        """
+        return {
+            UserGroups.ORGANIZATION_ADMIN_GROUP:
+                self._perform_create_by_organization_admin
+        }
 
     def _get_organization_admin_queryset(self):
         """
@@ -116,7 +133,8 @@ class OrganizationsListCreateDestroyView(CoreListCreateDestroyView):
         serializer.save()
 
 
-class OrganizationsRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
+class OrganizationsRetrieveUpdateDestroyView(
+        CoreRetrieveUpdateDestroyView, OrganizationsView):
     """
     Defines the organizations retrieve-update-destroy view.
     """
@@ -124,10 +142,6 @@ class OrganizationsRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
     queryset = Organization.objects.none()  # Added for model permissions
     serializer_class = OrganizationSerializer
     permission_classes = (OrganizationsRetrieveUpdateDestroyPermission,)
-    ordering_fields = ['id', 'name', 'desc']
-    filterset_fields = {
-        'name': ['exact', 'icontains'],
-    }
 
     # Define the mapping from request type to query that returns the
     # organizations tree that is used in the requests. For example, in DELETE
@@ -142,6 +156,13 @@ class OrganizationsRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
         'DELETE': lambda organization: organization.get_descendants()
     }
 
+    def _get_model(self):
+        """
+        Returns the get queryset for staff users.
+        """
+
+        return OrganizationsView._get_model(self)
+
     def _define_get_queryset_by_group_fn(self):
         """
         Returns a dictionary mapping user group to get_queryset function
@@ -154,20 +175,6 @@ class OrganizationsRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
             UserGroups.EMPLOYEE_GROUP:
                 self._get_employee_queryset,
         }
-
-    def _get_model(self):
-        """
-        Returns the get queryset for staff users.
-        """
-        return Organization
-
-    def _get_organizations_tree(self, organization):
-        """
-        Returns the organizations descendents tree given the request type and
-        organzation.
-        """
-        return self.organizations_tree_wrt_request[self.request.method](
-            organization)
 
     def _get_organization_admin_queryset(self):
         """

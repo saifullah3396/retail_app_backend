@@ -187,12 +187,6 @@ class LocationsRetrieveUpdateDestroyView(
 
         return LocationsView._get_model(self)
 
-    def _order_by(self):
-        """
-        Returns the field with respect to which queries are to be ordered.
-        """
-        return LocationsView._order_by(self)
-
     def _define_get_queryset_by_group_fn(self):
         """
         Returns a dictionary mapping user group to get_queryset function
