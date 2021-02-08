@@ -76,26 +76,6 @@ class OrganizationsListCreateDestroyView(CoreListCreateDestroyView):
         return self.organizations_tree_wrt_request[self.request.method](
             organization)
 
-    def _filter_organizations_by_id_list(self, organizations, id_list):
-        """
-        Filters the organizations by id list. If all ids in the list do not
-        match, a not found exception is raised.
-        """
-        filtered_organizations = filter_queryset_by_id_list(
-            organizations, id_list)
-
-        # make sure all the given ids are inside filtered locations,
-        # otherwise raise a validation error
-        if len(filtered_organizations) != len(id_list):
-            raise exceptions.NotFound(
-                {
-                    'id': 'The following requested ids are invalid: {}'.format(
-                        exclude_queryset_by_id_list(
-                            organizations, id_list).values_list(
-                            'id', flat=True))
-                })
-        return filtered_organizations
-
     def _get_organization_admin_queryset(self):
         """
         For an organization admin, all the organizations below the user
@@ -108,7 +88,7 @@ class OrganizationsListCreateDestroyView(CoreListCreateDestroyView):
 
         # get the organization tree of the user if its an admin
         if id_list:
-            return self._filter_organizations_by_id_list(
+            return self._filter_objects_by_id_list(
                 organizations_tree, id_list
             )
         return organizations_tree
