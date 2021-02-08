@@ -21,6 +21,10 @@ class OrganizationsListCreateDestroyView(CoreListCreateDestroyView):
     queryset = Organization.objects.none()
     serializer_class = OrganizationSerializer
     permission_classes = (OrganizationsListCreateDestroyPermission,)
+    ordering_fields = ['id', 'name', 'desc']
+    filterset_fields = {
+        'name': ['exact', 'icontains'],
+    }
 
     # Define the mapping from request type to query that returns the
     # organizations tree that is used in the requests. For example, in DELETE
@@ -134,6 +138,10 @@ class OrganizationsRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
     queryset = Organization.objects.none()  # Added for model permissions
     serializer_class = OrganizationSerializer
     permission_classes = (OrganizationsRetrieveUpdateDestroyPermission,)
+    ordering_fields = ['id', 'name', 'desc']
+    filterset_fields = {
+        'name': ['exact', 'icontains'],
+    }
 
     # Define the mapping from request type to query that returns the
     # organizations tree that is used in the requests. For example, in DELETE
