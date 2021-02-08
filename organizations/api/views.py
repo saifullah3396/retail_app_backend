@@ -20,7 +20,7 @@ class OrganizationsListCreateDestroyView(CoreListCreateDestroyView):
 
     queryset = Organization.objects.none()
     serializer_class = OrganizationSerializer
-    permission_classes = (OrganizationListCreateDestroyPermission,)
+    permission_classes = (OrganizationsListCreateDestroyPermission,)
 
     # Define the mapping from request type to query that returns the
     # organizations tree that is used in the requests. For example, in DELETE
@@ -133,7 +133,7 @@ class OrganizationsRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
 
     queryset = Organization.objects.none()  # Added for model permissions
     serializer_class = OrganizationSerializer
-    permission_classes = (OrganizationRetrieveUpdateDestroyPermission,)
+    permission_classes = (OrganizationsRetrieveUpdateDestroyPermission,)
 
     # Define the mapping from request type to query that returns the
     # organizations tree that is used in the requests. For example, in DELETE
