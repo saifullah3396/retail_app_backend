@@ -14,27 +14,32 @@ from locations.permissions import *
 from locations.api.serializers import *
 
 
-class FloorsListCreateDestroyView(CoreListCreateDestroyView):
-    """
-    Defines the list-create-destroy view for Floor.
-    """
-
-    queryset = Floor.objects.none()  # Added for model permissions
-    serializer_class = FloorListSerializer
-    permission_classes = (FloorsListCreateDestroyPermission,)
+class FloorsView:
     ordering_fields = ['id', 'number']
     filterset_fields = {
         'number': ['exact'],
     }
 
-    # Define the mapping from request type to query that returns the
-    # organizations tree that is used in the requests.
-    organizations_tree_wrt_request = {
-        'GET': lambda organization: organization.get_descendants(
-            include_self=True),
-        'POST': lambda organization: organization.get_descendants(
-            include_self=True),
-    }
+    def _get_model(self):
+        """
+        Returns the get queryset for staff users.
+        """
+
+        return Floor
+
+    def _order_by(self):
+        """
+        Returns the field with respect to which queries are to be ordered.
+        """
+        return 'number'
+
+    def _get_queryset_by_staff(self):
+        """
+        Returns all the floors within any provided location for staff users.
+        """
+        uuid = self.kwargs.get('location_id')
+        location = self._get_location_by_uuid(uuid)
+        return self._filter_floors_with_location(location)
 
     def _get_organizations_tree(self, organization):
         """
@@ -66,6 +71,44 @@ class FloorsListCreateDestroyView(CoreListCreateDestroyView):
 
         return floors_in_location
 
+
+class FloorsListCreateDestroyView(CoreListCreateDestroyView, FloorsView):
+    """
+    Defines the list-create-destroy view for Floor.
+    """
+
+    queryset = Floor.objects.none()  # Added for model permissions
+    serializer_class = FloorListSerializer
+    permission_classes = (FloorsListCreateDestroyPermission,)
+
+    # Define the mapping from request type to query that returns the
+    # organizations tree that is used in the requests.
+    organizations_tree_wrt_request = {
+        'GET': lambda organization: organization.get_descendants(
+            include_self=True),
+        'POST': lambda organization: organization.get_descendants(
+            include_self=True),
+    }
+
+    def _get_model(self):
+        """
+        Returns the model of this view
+        """
+
+        return FloorsView._get_model(self)
+
+    def _order_by(self):
+        """
+        Returns the field with respect to which queries are to be ordered.
+        """
+        return FloorsView._order_by(self)
+
+    def _get_queryset_by_staff(self):
+        """
+        Returns all the floors within any provided location for staff users.
+        """
+        return FloorsView._get_queryset_by_staff(self)
+
     def _define_get_queryset_by_group_fn(self):
         """
         Returns a dictionary mapping user group to get_queryset function
@@ -87,27 +130,6 @@ class FloorsListCreateDestroyView(CoreListCreateDestroyView):
             UserGroups.ORGANIZATION_ADMIN_GROUP:
                 self._perform_create_by_organization_admin
         }
-
-    def _get_model(self):
-        """
-        Returns the get queryset for staff users.
-        """
-
-        return Floor
-
-    def _order_by(self):
-        """
-        Returns the field with respect to which queries are to be ordered.
-        """
-        return 'number'
-
-    def _get_queryset_by_staff(self):
-        """
-        Returns all the floors within any provided location for staff users.
-        """
-        uuid = self.kwargs.get('location_id')
-        location = self._get_location_by_uuid(uuid)
-        return self._filter_floors_with_location(location)
 
     def _get_organization_admin_queryset(self):
         """
@@ -183,7 +205,8 @@ class FloorsListCreateDestroyView(CoreListCreateDestroyView):
         serializer.save()
 
 
-class FloorsRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
+class FloorsRetrieveUpdateDestroyView(
+        CoreRetrieveUpdateDestroyView, FloorsView):
     """
     Defines the retrieve-update-destroy view for floors.
     """
@@ -191,10 +214,6 @@ class FloorsRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
     queryset = Location.objects.none()  # Added for model permissions
     serializer_class = FloorDetailSerializer
     permission_classes = (LocationsRetrieveUpdateDestroyPermission,)
-    ordering_fields = ['id', 'number']
-    filterset_fields = {
-        'number': ['exact'],
-    }
 
     # Define the mapping from request type to query that returns the
     # organizations tree that is used in the requests.
@@ -210,35 +229,24 @@ class FloorsRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
         )
     }
 
-    def _get_organizations_tree(self, organization):
+    def _get_model(self):
         """
-        Returns the organizations descendents tree given the request type and
-        organzation.
+        Returns the model of this view
         """
-        return self.organizations_tree_wrt_request[self.request.method](
-            organization)
 
-    def _get_location_by_uuid(self, uuid):
-        try:
-            return Location.objects.get(id=uuid)
-        except Location.DoesNotExist:
-            raise exceptions.ValidationError(
-                "Queried location does not exist.")
+        return FloorsView._get_model(self)
 
-    def _get_floors_in_location(self, location):
-        return Floor.objects.filter(location=location)
+    def _order_by(self):
+        """
+        Returns the field with respect to which queries are to be ordered.
+        """
+        return FloorsView._order_by(self)
 
-    def _filter_floors_with_location(self, location):
-        # get all floors of the requested location
-        floors_in_location = self._get_floors_in_location(location)
-
-        # filter with ids if present
-        id_list = self._get_id_list()
-        if id_list:
-            return self._filter_objects_by_id_list(
-                floors_in_location, id_list)
-
-        return floors_in_location
+    def _get_queryset_by_staff(self):
+        """
+        Returns all the floors within any provided location for staff users.
+        """
+        return FloorsView._get_queryset_by_staff(self)
 
     def _define_get_queryset_by_group_fn(self):
         """
@@ -251,20 +259,6 @@ class FloorsRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
             UserGroups.EMPLOYEE_GROUP:
                 self._get_employee_queryset,
         }
-
-    def _get_model(self):
-        """
-        Returns the get queryset for staff users.
-        """
-        return Floor
-
-    def _get_queryset_by_staff(self):
-        """
-        Returns all the floors within any provided location for staff users.
-        """
-        uuid = self.kwargs.get('location_id')
-        location = self._get_location_by_uuid(uuid)
-        return self._filter_floors_with_location(location)
 
     def _get_organization_admin_queryset(self):
         """

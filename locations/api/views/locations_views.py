@@ -14,27 +14,24 @@ from locations.permissions import *
 from locations.api.serializers import *
 
 
-class LocationsListCreateDestroyView(CoreListCreateDestroyView):
-    """
-    Defines the locations list-create-destroy view.
-    """
-
-    queryset = Location.objects.none()  # Added for model permissions
-    serializer_class = LocationListSerializer
-    permission_classes = (LocationsListCreateDestroyPermission,)
+class LocationsView:
     ordering_fields = ['id', 'name']
     filterset_fields = {
         'name': ['exact', 'icontains'],
     }
 
-    # Define the mapping from request type to query that returns the
-    # organizations tree that is used in the requests.
-    organizations_tree_wrt_request = {
-        'GET': lambda organization: organization.get_descendants(
-            include_self=True),
-        'DELETE': lambda organization: organization.get_descendants(
-            include_self=True)
-    }
+    def _get_model(self):
+        """
+        Returns the get queryset for staff users.
+        """
+
+        return Location
+
+    def _order_by(self):
+        """
+        Returns the field with respect to which queries are to be ordered.
+        """
+        return 'name'
 
     def _get_organizations_tree(self, organization):
         """
@@ -50,6 +47,39 @@ class LocationsListCreateDestroyView(CoreListCreateDestroyView):
         queryset
         """
         return Location.objects.filter(organization__in=organizations)
+
+
+class LocationsListCreateDestroyView(
+        CoreListCreateDestroyView, LocationsView):
+    """
+    Defines the locations list-create-destroy view.
+    """
+
+    queryset = Location.objects.none()  # Added for model permissions
+    serializer_class = LocationListSerializer
+    permission_classes = (LocationsListCreateDestroyPermission,)
+
+    # Define the mapping from request type to query that returns the
+    # organizations tree that is used in the requests.
+    organizations_tree_wrt_request = {
+        'GET': lambda organization: organization.get_descendants(
+            include_self=True),
+        'DELETE': lambda organization: organization.get_descendants(
+            include_self=True)
+    }
+
+    def _get_model(self):
+        """
+        Returns the model for this view
+        """
+
+        return LocationsView._get_model(self)
+
+    def _order_by(self):
+        """
+        Returns the field with respect to which queries are to be ordered.
+        """
+        return LocationsView._order_by(self)
 
     def _define_get_queryset_by_group_fn(self):
         """
@@ -72,19 +102,6 @@ class LocationsListCreateDestroyView(CoreListCreateDestroyView):
             UserGroups.ORGANIZATION_ADMIN_GROUP:
                 self._perform_create_by_organization_admin
         }
-
-    def _get_model(self):
-        """
-        Returns the get queryset for staff users.
-        """
-
-        return Location
-
-    def _order_by(self):
-        """
-        Returns the field with respect to which queries are to be ordered.
-        """
-        return 'name'
 
     def _get_organization_admin_queryset(self):
         """
@@ -139,7 +156,8 @@ class LocationsListCreateDestroyView(CoreListCreateDestroyView):
         serializer.save()
 
 
-class LocationsRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
+class LocationsRetrieveUpdateDestroyView(
+        CoreRetrieveUpdateDestroyView, LocationsView):
     """
     Defines the locations retrieve-update-destroy view.
     """
@@ -147,10 +165,6 @@ class LocationsRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
     queryset = Location.objects.none()  # Added for model permissions
     serializer_class = LocationDetailSerializer
     permission_classes = (LocationsRetrieveUpdateDestroyPermission,)
-    ordering_fields = ['id', 'name']
-    filterset_fields = {
-        'name': ['exact', 'icontains'],
-    }
 
     # Define the mapping from request type to query that returns the
     # organizations tree that is used in the requests.
@@ -166,20 +180,18 @@ class LocationsRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
         )
     }
 
-    def _get_organizations_tree(self, organization):
+    def _get_model(self):
         """
-        Returns the organizations descendents tree given the request type and
-        organzation.
+        Returns the model for this view
         """
-        return self.organizations_tree_wrt_request[self.request.method](
-            organization)
 
-    def _get_locations_in_organizations(self, organizations):
+        return LocationsView._get_model(self)
+
+    def _order_by(self):
         """
-        Returns all locations which present within the given organizations
-        queryset
+        Returns the field with respect to which queries are to be ordered.
         """
-        return Location.objects.filter(organization__in=organizations)
+        return LocationsView._order_by(self)
 
     def _define_get_queryset_by_group_fn(self):
         """
@@ -192,12 +204,6 @@ class LocationsRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
             UserGroups.EMPLOYEE_GROUP:
                 self._get_employee_queryset,
         }
-
-    def _get_model(self):
-        """
-        Returns the get queryset for staff users.
-        """
-        return Location
 
     def _get_organization_admin_queryset(self):
         """
