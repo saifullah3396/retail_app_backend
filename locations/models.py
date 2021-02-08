@@ -51,6 +51,10 @@ class Floor(models.Model):
         on_delete=models.CASCADE,
     )
 
+    class Meta:
+        """Don't allow non-unique floors for any given location."""
+        unique_together = ('number', 'location',)
+
     def __str__(self):
         """
         String serializer of the model
@@ -81,6 +85,10 @@ class Block(models.Model):
         'locations.Floor',
         on_delete=models.CASCADE,
     )
+
+    class Meta:
+        """Don't allow non-unique blocks for any given floor."""
+        unique_together = ('name', 'floor',)
 
     def __str__(self):
         """
