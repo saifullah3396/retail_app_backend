@@ -3,15 +3,14 @@ from core.utils import *
 from core.views import *
 from django.contrib.auth.models import Group
 from django_filters.rest_framework import DjangoFilterBackend
+from locations.api.serializers import *
+from locations.models import Floor, Location
+from locations.permissions import *
 from rest_framework import *
 from rest_framework import filters, pagination
 from rest_framework.generics import *
 from rest_framework.response import Response
 from rest_framework_jwt import authentication
-
-from locations.models import Location, Floor
-from locations.permissions import *
-from locations.api.serializers import *
 
 
 class FloorsView:
@@ -254,6 +253,16 @@ class FloorsRetrieveUpdateDestroyView(
                 self._get_employee_queryset,
         }
 
+    def _define_perform_update_by_group_fn(self):
+        """
+        Returns a dictionary mapping user group to perform_update function
+        that will be called if the request user is in that user group.
+        """
+        return {
+            UserGroups.ORGANIZATION_ADMIN_GROUP:
+                self._perform_update_by_organization_admin
+        }
+
     def _get_organization_admin_queryset(self):
         """
         For organization admin, all floors are returned within the queried
@@ -301,3 +310,6 @@ class FloorsRetrieveUpdateDestroyView(
                 "Unauthorized location requested.")
 
         return self._filter_floors_with_location(location)
+
+    def _perform_update_by_organization_admin(self, serializer):
+        serializer.save()

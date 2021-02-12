@@ -3,21 +3,22 @@ from core.utils import *
 from core.views import *
 from django.contrib.auth.models import Group
 from django_filters.rest_framework import DjangoFilterBackend
+from locations.api.serializers import *
+from locations.models import Location
+from locations.permissions import *
+from locations.utils import *
 from rest_framework import *
 from rest_framework import filters, pagination
 from rest_framework.generics import *
 from rest_framework.response import Response
 from rest_framework_jwt import authentication
 
-from locations.models import Location
-from locations.permissions import *
-from locations.api.serializers import *
-
 
 class LocationsView:
     ordering_fields = ['id', 'name']
     filterset_fields = {
         'name': ['exact', 'icontains'],
+        'organization__id': ['exact']
     }
 
     def _get_model(self):
@@ -33,21 +34,6 @@ class LocationsView:
         """
         return 'name'
 
-    def _get_organizations_tree(self, organization):
-        """
-        Returns the organizations descendents tree given the request type and
-        organzation.
-        """
-        return self.organizations_tree_wrt_request[self.request.method](
-            organization)
-
-    def _get_locations_in_organizations(self, organizations):
-        """
-        Returns all locations which present within the given organizations
-        queryset
-        """
-        return Location.objects.filter(organization__in=organizations)
-
 
 class LocationsListCreateDestroyView(
         CoreListCreateDestroyView, LocationsView):
@@ -58,15 +44,6 @@ class LocationsListCreateDestroyView(
     queryset = Location.objects.none()  # Added for model permissions
     serializer_class = LocationListSerializer
     permission_classes = (LocationsListCreateDestroyPermission,)
-
-    # Define the mapping from request type to query that returns the
-    # organizations tree that is used in the requests.
-    organizations_tree_wrt_request = {
-        'GET': lambda organization: organization.get_descendants(
-            include_self=True),
-        'DELETE': lambda organization: organization.get_descendants(
-            include_self=True)
-    }
 
     def _get_model(self):
         """
@@ -109,27 +86,23 @@ class LocationsListCreateDestroyView(
         the user organization are returned. In case a list of ids is provided, the
         locations are filtered further by ids.
         """
-        # get all organizations under this one
-        organizations_tree = self._get_organizations_tree(
-            self.request.user.organization)
-
-        # get all locations in the tree
-        locations_in_tree = self._get_locations_in_organizations(
-            organizations_tree)
+        locations = get_locations_for_organization_admin(
+            self.request.user, include_self=True)
 
         id_list = self._get_id_list()
         if id_list:
             return self._filter_objects_by_id_list(
-                locations_in_tree, id_list)
+                locations, id_list)
 
-        return locations_in_tree
+        return locations
 
     def _get_employee_queryset(self):
         """
         For an employee, only authorized_locations are returned. If ids are
         provided, locations are further filtered by the them.
         """
-        locations = self.request.user.authorized_locations.all()
+        locations = get_locations_for_employee(
+            self.request.user, include_self=True)
         id_list = self._get_id_list()
         if id_list:
             return self._filter_objects_by_id_list(
@@ -166,20 +139,6 @@ class LocationsRetrieveUpdateDestroyView(
     serializer_class = LocationDetailSerializer
     permission_classes = (LocationsRetrieveUpdateDestroyPermission,)
 
-    # Define the mapping from request type to query that returns the
-    # organizations tree that is used in the requests.
-    organizations_tree_wrt_request = {
-        'GET': lambda organization: organization.get_descendants(
-            include_self=True),
-        'POST': lambda organization: organization.get_descendants(
-            include_self=True),
-        'PATCH': lambda organization: organization.get_descendants(
-            include_self=True),
-        'DELETE': lambda organization: organization.get_descendants(
-            include_self=True
-        )
-    }
-
     def _get_model(self):
         """
         Returns the model for this view
@@ -199,21 +158,29 @@ class LocationsRetrieveUpdateDestroyView(
                 self._get_employee_queryset,
         }
 
+    def _define_perform_update_by_group_fn(self):
+        """
+        Returns a dictionary mapping user group to perform_update function
+        that will be called if the request user is in that user group.
+        """
+        return {
+            UserGroups.ORGANIZATION_ADMIN_GROUP:
+                self._perform_update_by_organization_admin
+        }
+
     def _get_organization_admin_queryset(self):
         """
         Returns the get_queryset for organization admin user group
         """
-        # get all organizations under this users organization
-        organizations_tree = self._get_organizations_tree(
-            self.request.user.organization)
-
-        # get all locations in the tree
-        locations_in_tree = self._get_locations_in_organizations(
-            organizations_tree)
-        return locations_in_tree
+        return get_locations_for_organization_admin(
+            self.request.user, include_self=True)
 
     def _get_employee_queryset(self):
         """
         Returns the get_queryset for employee user group
         """
-        return self.request.user.authorized_locations.all()
+        return get_locations_for_employee(
+            self.request.user, include_self=True)
+
+    def _perform_update_by_organization_admin(self, serializer):
+        serializer.save()
