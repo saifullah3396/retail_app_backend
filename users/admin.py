@@ -26,9 +26,7 @@ class AppUserAdmin(UserAdmin):
                     'last_name',
                     'password1',
                     'password2',
-                    'authority',
                     'organization',
-                    'sub_organization',
                 )
             }
         ),
@@ -51,12 +49,10 @@ class AppUserAdmin(UserAdmin):
                     'email',
                     'first_name',
                     'last_name',
-                    'authority',
                     'is_staff',
                     'is_active',
                     'is_superuser',
                     'organization',
-                    'sub_organization',
                 )
             }
         ),
