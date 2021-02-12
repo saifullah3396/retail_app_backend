@@ -95,12 +95,7 @@ class RegistrationSerializer(RegisterSerializer):
         organization = data.get('organization')
         locations = data.get('authorized_locations')
 
-        if locations is None:
-            raise serializers.ValidationError(
-                "Please choose locations which are to be authorized to "
-                "the user."
-            )
-        else:
+        if locations is not None:
             # get locations available to the organization tree
             organizations = organization.get_descendants(include_self=True)
             available_locations = Location.objects.filter(
