@@ -140,3 +140,22 @@ class RegistrationSerializer(RegisterSerializer):
         cleaned_data['organization'] = self.validated_data.get(
             'organization', None)
         return cleaned_data
+
+
+class JWTSerializer(serializers.Serializer):
+    """
+    Serializer for JWT authentication.
+    """
+    token = serializers.CharField()
+    user = serializers.SerializerMethodField()
+
+    def get_user(self, obj):
+        """
+        Required to allow using custom USER_DETAILS_SERIALIZER in
+        JWTSerializer. Defining it here to avoid circular imports
+        """
+        user = get_user_from_serializer(self, raise_exception=True)
+        JWTUserDetailsSerializer = AppUserDetailSerializer
+        user_data = JWTUserDetailsSerializer(
+            obj['user'], context=self.context).data
+        return user_data
