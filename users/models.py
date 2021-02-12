@@ -24,11 +24,6 @@ class AppUserManager(UserManager):
             email=email,
             password=password
         )
-        # set super user authority to max
-        user.authority = settings.SUPERUSER_AUTHORITY
-
-        # by default super user will have access to all available locations
-        # user.authorized_locations.set(Location.objects.all())
 
         user.is_staff = True
         user.is_admin = True
@@ -55,10 +50,7 @@ class AppUser(AbstractUser):
     # replace id with uuid
     uuid = models.UUIDField(default=uuid.uuid4, unique=True)
 
-    # user authority [0, 1, ... N]. N means highest authority
-    authority = models.IntegerField(default=-1)
-
-    # organization with which this sub-organization is associated
+    # organization with which this user is associated
     organization = models.ForeignKey(
         'organizations.Organization',
         on_delete=models.CASCADE,
