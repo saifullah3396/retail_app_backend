@@ -202,6 +202,17 @@ class CoreRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView, CoreAPIView):
 
     def __init__(self):
         super(CoreRetrieveUpdateDestroyView, self).__init__()
+        self._perform_update_by_group_fn = \
+            self._define_perform_update_by_group_fn()
+
+    def _define_perform_update_by_group_fn(self):
+        """
+        Returns a dictionary mapping user group to perform_update function
+        that will be called if the request user is in that user group.
+
+        To be implemented by the child class.
+        """
+        raise NotImplementedError()
 
     def _get_queryset_by_staff(self):
         """
@@ -209,12 +220,35 @@ class CoreRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView, CoreAPIView):
         """
         return self._get_model().objects.all()
 
+    def _perform_update_by_staff(self, serializer):
+        """
+        Implements perform_update for staff users.
+        """
+        serializer.save()
+
     def get_queryset(self):
         """
         Implements the get_queryset function. Any final modifications to the
         query set are made here.
         """
         return self._get_queryset()
+
+    def perform_update(self, serializer):
+        """
+        Implements the customized perform_update functionalty.
+        """
+        if self.request.user.is_staff:
+            return self._perform_update_by_staff(serializer)
+        else:
+            return self._perform_update_by_group(serializer)
+
+    def _perform_update_by_group(self, serializer):
+        """
+        Calls the perform update for individual user groups as defined by the
+        [_perform_update_by_group_fn] dictionary initialized in child class.
+        """
+        return get_fn_by_group(
+            self.request.user, self._perform_update_by_group_fn)(serializer)
 
     def destroy(self, request, *args, **kwargs):
         """
