@@ -139,30 +139,139 @@ class AppUserDetailRetrieveSerializer(serializers.ModelSerializer):
             'organization']
 
 
+class AppUserDetailUpdateSerializer(serializers.ModelSerializer):
+    group = WritableSerializerMethodField(
+        deserializer_field=serializers.CharField(required=False))
+    organization = WritableSerializerMethodField(
+        deserializer_field=serializers.UUIDField(required=False))
+    authorized_locations = WritableSerializerMethodField(
+        deserializer_field=serializers.ListField(
+            child=serializers.UUIDField(), required=False))
 
+    def __init__(self, *args, **kwargs):
+        super(serializers.ModelSerializer, self).__init__(*args, **kwargs)
+        self.group_to_locations_fn = {
+            UserGroups.ORGANIZATION_ADMIN_GROUP:
+                self._get_organization_admin_locations,
+            UserGroups.EMPLOYEE_GROUP:
+                self._get_employee_locations
+        }
 
-class AppUserSerializerAppUserAccess(serializers.ModelSerializer):
-    organization = OrganizationSerializer()
-    authorized_locations = LocationDetailSerializer(
-        many=True, read_only=True)
-    group = serializers.SerializerMethodField()
+        self.group_to_organizations_fn = {
+            UserGroups.ORGANIZATION_ADMIN_GROUP:
+                self._get_organization_admin_organizations,
+            UserGroups.EMPLOYEE_GROUP:
+                self._get_employee_organizations
+        }
 
-    # get group
-    def get_group(self, user):
-        for key, value in settings.REGISTRATION_GROUPS_WITH_AUTHORITY.items():
-            if user.authority == value:
-                return key
+    def get_group(self, instance):
+        if instance.is_staff:
+            return "SUPER_USER_GROUP"
+
+        for group in UserGroups:
+            group = instance.groups.filter(name=group.name)
+            if group.exists():
+                return group.first().name
+
+    def set_group(self, group_name):
+        try:
+            group = Group.objects.get(name=group_name)
+            user_groups = [g.name for g in UserGroups]
+            if group.name not in user_groups:
+                raise serializers.ValidationError(
+                    {
+                        "group": "Can only be assigned one of the following "
+                        "{}".format(user_groups)
+                    }
+                )
+            return {
+                'group': group
+            }
+        except Group.DoesNotExist:
+            raise serializers.ValidationError(
+                'Group of id={} does not exist. Available groups: {}'.format(
+                    group_name, [group.name for group in UserGroups]))
+
+    def get_authorized_locations(self, instance):
+        locations = Location.objects.none()
+        if instance.is_staff:
+            locations = get_locations_for_staff()
+        else:
+            locations = \
+                get_fn_by_group(instance, self.group_to_locations_fn)(instance)
+        return AppUserDetailLocationSerializer(locations, many=True).data
+
+    def set_authorized_locations(self, location_ids):
+        locations = []
+        for location_name in location_ids:
+            try:
+                location = Location.objects.get(id=location_name)
+                locations.append(location)
+            except Location.DoesNotExist:
+                raise serializers.ValidationError(
+                    'Location {} does not exist.'.format(location_name))
+        return {
+            'authorized_locations': locations
+        }
+
+    def _get_organization_admin_locations(self, instance):
+        return get_locations_for_organization_admin(
+            instance, include_self=True)
+
+    def _get_employee_locations(self, instance):
+        return get_locations_for_employee(instance)
+
+    def get_organization(self, instance):
+        organizations = Organization.objects.none()
+        if not instance.is_staff:
+            organizations = \
+                get_fn_by_group(
+                    instance, self.group_to_organizations_fn)(instance)
+        return AppUserDetailOrganizationSerializer(
+            organizations, many=True).data
+
+    def set_organization(self, organization_id):
+        try:
+            return {
+                'organization': Organization.objects.get(id=organization_id)
+            }
+        except Organization.DoesNotExist:
+            raise serializers.ValidationError(
+                'Organization of id={} does not exist.'.format(
+                    organization_id))
+
+    def _get_organization_admin_organizations(self, instance):
+        return instance.organization.get_descendants(include_self=True)
+
+    def _get_employee_organizations(self, instance):
+        return [instance.organization]
+
+    def update(self, instance, validated_data):
+        # # set user permission groups
+        group = validated_data.pop('group')
+        if group is not None:
+            instance.groups.clear()
+            instance.groups.add(group)
+
+        # add organization to user
+        organization = validated_data.pop('organization')
+        if organization is not None:
+            instance.organization = organization
+
+        # add all authorized locations to user if its an employee
+        if instance.groups.filter(name=UserGroups.EMPLOYEE_GROUP.name).exists():
+            locations = validated_data.pop('authorized_locations')
+            if locations is not None:
+                for location in locations:
+                    instance.authorized_locations.add(location)
+        return super().update(instance, validated_data)
 
     class Meta:
         model = AppUser
         fields = [
-            'uuid',
-            'username',
-            'email',
             'first_name',
             'last_name',
-            'is_staff',
+            'avatar',
             'group',
-            'organization',
-            'sub_organization',
-            'authorized_locations']
+            'authorized_locations',
+            'organization']
