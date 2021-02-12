@@ -1,52 +1,53 @@
-from rest_framework import serializers
-from ..models import AppUser
-from django.contrib.auth.models import AbstractUser
-from organizations.api.serializers import \
-    OrganizationSerializer
-from locations.models import Location
-from organizations.models import Organization
-from organizations.api.serializers import \
-    OrganizationSerializer
-from locations.api.serializers import \
-    LocationDetailSerializer, LocationListSerializer
 from backend import settings
+from core.permissions import UserGroups
+from core.utils import *
+from django.contrib.auth.models import AbstractUser, Group
+from locations.api.serializers import (LocationDetailSerializer,
+                                       LocationListSerializer)
+from locations.models import Location
+from locations.utils import *
+from organizations.api.serializers import OrganizationSerializer
+from organizations.models import Organization
+from rest_framework import exceptions, serializers
+from user_auth.serializers import RegistrationSerializer
+
+from ..models import AppUser
 
 
-class AdminUserSerializerAdminAccess(serializers.ModelSerializer):
-    organizations = serializers.SerializerMethodField()
-    sub_organizations = serializers.SerializerMethodField()
-    authorized_locations = serializers.SerializerMethodField()
+class GroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Group
+        fields = ['name']
+
+
+class AppUserListOrganizationSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Organization
+        fields = ['id', 'name']
+
+
+class AppUserListSerializer(serializers.ModelSerializer):
     group = serializers.SerializerMethodField()
 
-    def get_organizations(self, app_user):
-        # return all locations as authorized in super user
-        organizations = Organization.objects.all()
-        return \
-            OrganizationSerializer(organizations, many=True).data
+    def get_group(self, instance):
+        if instance.is_staff:
+            return "SUPER_USER_GROUP"
 
-    def get_authorized_locations(self, app_user):
-        # return all locations as authorized in super user
-        authorized_locations = Location.objects.all()
-        return \
-            LocationListSerializer(authorized_locations, many=True).data
-
-    def get_group(self, app_user):
-        return "Super Admin"
+        for group in UserGroups:
+            group = instance.groups.filter(name=group.name)
+            if group.exists():
+                return group.first().name
 
     class Meta:
         model = AppUser
         fields = [
-            'uuid',
+            'id',
             'username',
             'email',
-            'first_name',
-            'last_name',
             'is_staff',
             'group',
-            'organizations',
-            'sub_organizations',
-            'authorized_locations',
-            'avatar']
+            'organization']
 
 
 class AppUserSerializerAdminAccess(serializers.ModelSerializer):
