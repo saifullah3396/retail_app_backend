@@ -3,7 +3,6 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, UserManager
 from allauth.account.models import EmailAddress
 from backend import settings
-# from locations.models import Location
 
 
 class AppUserManager(UserManager):
@@ -28,7 +27,6 @@ class AppUserManager(UserManager):
         user.is_staff = True
         user.is_admin = True
         user.is_superuser = True
-
         user.save(using=self._db)
 
         address = EmailAddress.objects.create(user=user)
@@ -48,7 +46,7 @@ class AppUser(AbstractUser):
     objects = AppUserManager()
 
     # replace id with uuid
-    uuid = models.UUIDField(default=uuid.uuid4, unique=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
 
     # organization with which this user is associated
     organization = models.ForeignKey(
