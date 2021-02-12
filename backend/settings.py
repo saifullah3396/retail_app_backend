@@ -14,7 +14,7 @@ import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+BASE_URL = "http://127.0.0.1/"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
@@ -58,10 +58,12 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'rest_auth',
     'rest_auth.registration',
+    'core',
     'organizations',
     'locations',
     'cameras',
-    'users'
+    'users',
+    'user_auth',
 ]
 
 MIDDLEWARE = [
@@ -161,7 +163,7 @@ REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,
     # or allow read-only access for unauthenticated users.
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+        'rest_framework.permissions.DjangoModelPermissions'
     ],
     # 'DEFAULT_RENDERER_CLASSES': [
     #     'rest_framework.renderers.JSONRenderer',
@@ -190,32 +192,30 @@ SITE_ID = 1
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
 ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 86400
 ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/accounts/email/'
-ACCOUNT_EMAIL_CONFIRMATION_HMAC = True
+ACCOUNT_EMAIL_CONFIRMATION_HMAC = False
 
 REST_AUTH_REGISTER_PERMISSION_CLASSES = [
     'rest_framework.permissions.IsAuthenticated',
-    'users.permissions.CanRegisterUser']
+    'users.permissions.AppUsersListCreateDestroyPermission']
 
 REST_AUTH_REGISTER_SERIALIZERS = {
-    'REGISTER_SERIALIZER': 'users.serializers.AppRegisterSerializer',
+    'REGISTER_SERIALIZER':
+    'user_auth.serializers.RegistrationSerializer',
 }
 
 REST_AUTH_SERIALIZERS = {
     'JWT_SERIALIZER':
-        'users.serializers.JWTSerializer',
+        'user_auth.serializers.JWTSerializer',
 }
-REGISTRATION_GROUPS_WITH_AUTHORITY = {
-    'organization_admin': 2,
-    'sub_organization_admin': 1,
-    'employee': 0}
-SUPERUSER_AUTHORITY = 10
-ACCOUNT_ADAPTER = 'users.adapter.AppAccountAdapter'
+
+ACCOUNT_ADAPTER = 'user_auth.adapter.AppAccountAdapter'
 REST_USE_JWT = True
 
 JWT_AUTH = {
@@ -240,7 +240,7 @@ JWT_AUTH = {
     'JWT_PRIVATE_KEY': None,
     'JWT_ALGORITHM': 'HS256',
     'JWT_VERIFY': True,
-    'JWT_VERIFY_EXPIRATION': True,
+    'JWT_VERIFY_EXPIRATION': False,
     'JWT_LEEWAY': 0,
     'JWT_AUDIENCE': None,
     'JWT_ISSUER': None,

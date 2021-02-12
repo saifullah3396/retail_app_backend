@@ -1,189 +1,203 @@
-from rest_framework import permissions, pagination, filters, status
-from rest_framework_jwt import authentication
-from rest_framework.generics import \
-    GenericAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView, \
-    DestroyAPIView
-from rest_framework.response import Response
+from core.utils import *
+from core.views import *
+from django.contrib.auth.models import Group
 from django_filters.rest_framework import DjangoFilterBackend
-from ..models import Organization, SubOrganization
-from .serializers import \
-    OrganizationSerializer, SubOrganizationSerializer
-from ..permissions import (
-    OrganizationsRUDPermissions,
-    SubOrganizationsListCreatePermissions,
-    SubOrganizationsRUDPermissions)
+from rest_framework import *
+from rest_framework import filters, pagination
+from rest_framework.generics import *
+from rest_framework.response import Response
+from rest_framework_jwt import authentication
+
+from ..models import Organization
+from ..permissions import *
+from .serializers import OrganizationSerializer
 
 
-class PaginationConfig(pagination.PageNumberPagination):
-    page_size = 25
-    page_size_query_param = 'page_size'
-    max_page_size = 100
-
-
-class OrganizationsListCreateView(ListCreateAPIView, DestroyAPIView):
-    queryset = Organization.objects.all().order_by('name')
-    serializer_class = OrganizationSerializer
-    permission_classes = (
-        permissions.IsAuthenticated, permissions.IsAdminUser)
-    authentication_classes = [authentication.JSONWebTokenAuthentication]
-    pagination_class = PaginationConfig
-    filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
+class OrganizationsView:
     ordering_fields = ['id', 'name', 'desc']
     filterset_fields = {
         'name': ['exact', 'icontains'],
     }
 
-    def get_queryset(self):
-        id_list = self.request.query_params.getlist('id')
+    def _get_model(self):
+        """
+        Returns the get queryset for staff users.
+        """
+
+        return Organization
+
+    def _order_by(self):
+        """
+        Returns the field with respect to which queries are to be ordered.
+        """
+        return 'name'
+
+    def _get_organizations_tree(self, organization):
+        """
+        Returns the organizations descendents tree given the request type and
+        organzation.
+        """
+        return self.organizations_tree_wrt_request[self.request.method](
+            organization)
+
+
+class OrganizationsListCreateDestroyView(
+        CoreListCreateDestroyView, OrganizationsView):
+    """
+    Defines the organizations list-create-destroy view.
+    """
+
+    queryset = Organization.objects.none()
+    serializer_class = OrganizationSerializer
+    permission_classes = (OrganizationsListCreateDestroyPermission,)
+
+    # Define the mapping from request type to query that returns the
+    # organizations tree that is used in the requests. For example, in DELETE
+    # requests, organization does not include itself while in GET it does
+    organizations_tree_wrt_request = {
+        'GET': lambda organization: organization.get_descendants(
+            include_self=True),
+        'DELETE': lambda organization: organization.get_descendants()
+    }
+
+    def _get_model(self):
+        """
+        Returns the get queryset for staff users.
+        """
+
+        return OrganizationsView._get_model(self)
+
+    def _order_by(self):
+        """
+        Returns the field with respect to which queries are to be ordered.
+        """
+        return OrganizationsView._order_by(self)
+
+    def _define_get_queryset_by_group_fn(self):
+        """
+        Returns a dictionary mapping user group to get_queryset function
+        that will be called if the request user is in that user group.
+        """
+        return {
+            UserGroups.ORGANIZATION_ADMIN_GROUP:
+                self._get_organization_admin_queryset
+        }
+
+    def _define_perform_create_by_group_fn(self):
+        """
+        Returns a dictionary mapping user group to perform_create function
+        that will be called if the request user is in that user group.
+        """
+        return {
+            UserGroups.ORGANIZATION_ADMIN_GROUP:
+                self._perform_create_by_organization_admin
+        }
+
+    def _get_organization_admin_queryset(self):
+        """
+        For an organization admin, all the organizations below the user
+        organization are returned. In case a list of ids is provided, the
+        organizations tree is filtered further by ids.
+        """
+        id_list = self._get_id_list()
+        organizations_tree = self._get_organizations_tree(
+            self.request.user.organization)
+
+        # get the organization tree of the user if its an admin
         if id_list:
-            return Organization.objects.filter(id__in=id_list).order_by('name')
-        return Organization.objects.all().order_by('name')
+            return self._filter_objects_by_id_list(
+                organizations_tree, id_list
+            )
+        return organizations_tree
 
-    def delete(self, request, *args, **kwargs):
-        self.get_queryset().delete()
-        return Response(data={
-            "msg": "Organizations deleted successfully."},
-            status=status.HTTP_200_OK)
+    def _perform_create_by_organization_admin(self, serializer):
+        """
+        Creates a new organization, given the request is valid for an
+        organization admin. This functions validates two things; the new
+        organization must have a parent, and the parent must be within the
+        descendents of the organization of this admin.
+        """
+
+        # an organization cannot be created without a parent id
+        if 'parent' not in self.request.data:
+            raise exceptions.PermissionDenied()
+
+        # see if the parent of requested organization is within descendents
+        # of the current user.
+        descendents = self.request.user.organization.get_descendants(
+            include_self=True)
+        if not descendents.filter(id=self.request.data.get('parent', None)):
+            raise exceptions.PermissionDenied()
+
+        # create organization in db
+        serializer.save()
 
 
-class OrganizationsRUDView(RetrieveUpdateDestroyAPIView):
+class OrganizationsRetrieveUpdateDestroyView(
+        CoreRetrieveUpdateDestroyView, OrganizationsView):
+    """
+    Defines the organizations retrieve-update-destroy view.
+    """
+
+    queryset = Organization.objects.none()  # Added for model permissions
     serializer_class = OrganizationSerializer
-    permission_classes = (
-        permissions.IsAuthenticated,
-        OrganizationsRUDPermissions)
-    authentication_classes = [authentication.JSONWebTokenAuthentication]
-    pagination_class = PaginationConfig
-    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
-    ordering_fields = ['id', 'name', 'desc']
-    filterset_fields = {
-        'name': ['exact', 'icontains'],
+    permission_classes = (OrganizationsRetrieveUpdateDestroyPermission,)
+
+    # Define the mapping from request type to query that returns the
+    # organizations tree that is used in the requests. For example, in DELETE
+    # requests, organization does not include itself while in GET it does
+    organizations_tree_wrt_request = {
+        'GET': lambda organization: organization.get_descendants(
+            include_self=True),
+        'POST': lambda organization: organization.get_descendants(
+            include_self=True),
+        'PATCH': lambda organization: organization.get_descendants(
+            include_self=True),
+        'DELETE': lambda organization: organization.get_descendants()
     }
 
-    def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:
-            # return all if it is super admin
-            queryset = \
-                Organization.objects.all().order_by('name')
-            return queryset
-        else:
-            # else can only be an organization admin according to permissions
-            # on the view. Return all sub-organizations under the users
-            # organization
-            queryset = \
-                Organization.objects.filter(
-                    id=user.organization.id).order_by('name')
-            return queryset
+    def _get_model(self):
+        """
+        Returns the get queryset for staff users.
+        """
 
-    def delete(self, request, *args, **kwargs):
-        # update delete response
-        try:
-            organization_name = self.get_object().name
-            resp = super(OrganizationsRUDView, self).delete(
-                request, *args, **kwargs)
-            return Response(data={
-                "msg": "Organization {} deleted successfully.".format(
-                    organization_name)}, status=status.HTTP_200_OK)
-        except Organization.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+        return OrganizationsView._get_model(self)
 
+    def _define_get_queryset_by_group_fn(self):
+        """
+        Returns a dictionary mapping user group to get_queryset function
+        that will be called if the request user is in that user group.
+        """
 
-class SubOrganizationsListCreateView(ListCreateAPIView, DestroyAPIView):
-    serializer_class = SubOrganizationSerializer
-    permission_classes = (
-        permissions.IsAuthenticated,
-        SubOrganizationsListCreatePermissions)
-    authentication_classes = [authentication.JSONWebTokenAuthentication]
-    pagination_class = PaginationConfig
-    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
-    ordering_fields = ['id', 'name', 'desc', 'organization']
-    filterset_fields = {
-        'name': ['exact', 'icontains'],
-        'organization': ['exact']
-    }
+        return {
+            UserGroups.ORGANIZATION_ADMIN_GROUP:
+                self._get_organization_admin_queryset,
+            UserGroups.EMPLOYEE_GROUP:
+                self._get_employee_queryset,
+        }
 
-    def send_user_response(self, request, user):
-        serializer = self.serializer_class(
-            user, context={'request': request})
-        return Response({"user": serializer.data}, status=status.HTTP_200_OK)
+    def _define_perform_update_by_group_fn(self):
+        """
+        Returns a dictionary mapping user group to perform_update function
+        that will be called if the request user is in that user group.
+        """
+        return {
+            UserGroups.ORGANIZATION_ADMIN_GROUP:
+                self._perform_update_by_organization_admin
+        }
 
-    def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:
-            # return all if it is super admin
-            queryset = SubOrganization.objects.all().order_by('name')
-            return queryset
-        else:
-            # else can only be an organization admin according to permissions
-            # on the view. Return all sub-organizations under the users
-            # organization
-            queryset = SubOrganization.objects.filter(
-                organization__id=user.organization.id).order_by('name')
-            return queryset
+    def _get_organization_admin_queryset(self):
+        """
+        Returns the get_queryset for organization admin user group
+        """
+        return self._get_organizations_tree(self.request.user.organization)
 
-    def create(self, request, *args, **kwargs):
-        # check that the user is admin of the organization in which
-        # sub-organization is requested
-        if request.user.is_staff or \
-                request.data['organization'] == \
-                str(request.user.organization.id):
-            return super(SubOrganizationsListCreateView, self).create(
-                request, *args, *kwargs)
-        else:
-            return Response(status=status.HTTP_403_FORBIDDEN)
+    def _get_employee_queryset(self):
+        """
+        Returns the get_queryset for employee user group
+        """
+        return self._get_model().objects.filter(
+            id=self.request.user.organization.id)
 
-    def delete(self, request, *args, **kwargs):
-        if request.user.is_staff or \
-                request.data['organization'] == \
-                str(request.user.organization.id):
-            self.get_queryset().delete()
-            return Response(data={
-                "msg": "Organizations deleted successfully."},
-                status=status.HTTP_200_OK)
-        else:
-            return Response(status=status.HTTP_403_FORBIDDEN)
-
-
-class SubOrganizationsRUDView(RetrieveUpdateDestroyAPIView):
-    serializer_class = SubOrganizationSerializer
-    permission_classes = (
-        permissions.IsAuthenticated,
-        SubOrganizationsRUDPermissions)
-    authentication_classes = [authentication.JSONWebTokenAuthentication]
-    pagination_class = PaginationConfig
-    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
-    ordering_fields = ['id', 'name', 'desc', 'organization']
-    filterset_fields = {
-        'name': ['exact', 'icontains'],
-        'organization': ['exact']
-    }
-
-    def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:
-            # return all if it is super admin
-            queryset = SubOrganization.objects.all().order_by('name')
-            return queryset
-        else:
-            if user.sub_organization is None:
-                # user is organization admin so return all underlying sub-
-                # organizations
-                queryset = SubOrganization.objects.filter(
-                    organization__id=user.organization.id).order_by('name')
-            else:
-                # Return only the associated sub organization
-                queryset = SubOrganization.objects.filter(
-                    id=user.sub_organization.id).order_by('name')
-            return queryset
-
-    def delete(self, request, *args, **kwargs):
-        # update delete response
-        try:
-            sub_organization_name = self.get_object().name
-            resp = super(SubOrganizationsRUDView, self).delete(
-                request, *args, **kwargs)
-            return Response(data={
-                "msg": "Sub-organization {} deleted successfully.".format(
-                    sub_organization_name)}, status=status.HTTP_200_OK)
-        except SubOrganization.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+    def _perform_update_by_organization_admin(self, serializer):
+        serializer.save()

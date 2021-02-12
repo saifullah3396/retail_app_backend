@@ -1,47 +1,48 @@
-# permissions.py
-from django.contrib.auth.models import Group
-from rest_framework import permissions
-from backend.permissions import HasGroupPermission
+"""
+Defines the permissions used in this application.
+"""
+
+import copy
+
+from core.permissions import AppDjangoModelPermissions, UserGroups
+
+from .models import Organization
+
+"""
+Define the user group permissions for the Organization model.
+"""
+USER_GROUP_PERMISSIONS = {
+    # add organization admin permissions on Organization
+    UserGroups.ORGANIZATION_ADMIN_GROUP.name: {
+        Organization: ['add', 'change', 'view', 'delete'],
+    },
+
+    # add employee permissions on Organization
+    UserGroups.EMPLOYEE_GROUP.name: {
+        Organization: ['view'],
+    },
+}
 
 
-class OrganizationsRUDPermissions(HasGroupPermission):
+class OrganizationsListCreateDestroyPermission(AppDjangoModelPermissions):
     """
-    Ensure user has access to sub organizations
+    Permissions required on the OrganizationListCreateDestroyView
     """
-    required_groups_mapping = {
-        'GET': ['organization_admin'],
-        'PUT': ['organization_admin'],
-        'PATCH': ['organization_admin'],
-        'DELETE': [],
-    }
 
-    def has_permission(self, request, view):
-        return super().has_permission(request, view)
+    def __init__(self):
+        self.perms_map = copy.deepcopy(self.perms_map)
+
+        # add 'view' permission requirement on the view
+        self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
 
 
-class SubOrganizationsListCreatePermissions(HasGroupPermission):
+class OrganizationsRetrieveUpdateDestroyPermission(AppDjangoModelPermissions):
     """
-    Ensure user has access to sub organizations
+    Permissions required on the OrganizationListCreateDestroyView
     """
-    required_groups_mapping = {
-        'GET': ['organization_admin'],
-        'POST': ['organization_admin'],
-    }
 
-    def has_permission(self, request, view):
-        return super().has_permission(request, view)
+    def __init__(self):
+        self.perms_map = copy.deepcopy(self.perms_map)
 
-
-class SubOrganizationsRUDPermissions(HasGroupPermission):
-    """
-    Ensure user has access to sub organizations
-    """
-    required_groups_mapping = {
-        'GET': ['organization_admin', 'sub_organization_admin'],
-        'PUT': ['organization_admin', 'sub_organization_admin'],
-        'PATCH': ['organization_admin', 'sub_organization_admin'],
-        'DELETE': ['organization_admin'],
-    }
-
-    def has_permission(self, request, view):
-        return super().has_permission(request, view)
+        # add 'view' permission requirement on the view
+        self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']

@@ -1,32 +1,31 @@
 # permissions.py
+import copy
+
+from core.permissions import AppDjangoModelPermissions, UserGroups
 from django.contrib.auth.models import Group
 from rest_framework import permissions
-from backend.permissions import HasGroupPermission
+
+from .models import AppUser
+
+USER_GROUP_PERMISSIONS = {
+    UserGroups.ORGANIZATION_ADMIN_GROUP.name: {
+        AppUser: ['add', 'change', 'view', 'delete'],
+    },
+    UserGroups.EMPLOYEE_GROUP.name: {
+        AppUser: ['view', 'change'],
+    },
+}
 
 
-class CanRegisterUser(HasGroupPermission):
-    """
-    Ensure user is in the organization_admin or sub_organization_admin group
-    """
-    required_groups_mapping = {
-        'GET': ['organization_admin', 'sub_organization_admin'],
-        'POST': ['organization_admin', 'sub_organization_admin'],
-        'PUT': ['organization_admin', 'sub_organization_admin'],
-    }
+class AppUsersListCreateDestroyPermission(AppDjangoModelPermissions):
 
-    def has_permission(self, request, view):
-        return super().has_permission(request, view)
+    def __init__(self):
+        self.perms_map = copy.deepcopy(self.perms_map)
+        self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
 
 
-class CanAccessUser(HasGroupPermission):
-    """
-    Ensure user is in the organization_admin or sub_organization_admin group
-    """
-    required_groups_mapping = {
-        'GET': ['organization_admin', 'sub_organization_admin'],
-        'POST': ['organization_admin', 'sub_organization_admin'],
-        'PUT': ['organization_admin', 'sub_organization_admin'],
-    }
+class AppUsersRetrieveUpdateDestroyPermission(AppDjangoModelPermissions):
 
-    def has_permission(self, request, view):
-        return super().has_permission(request, view)
+    def __init__(self):
+        self.perms_map = copy.deepcopy(self.perms_map)
+        self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']

@@ -3,7 +3,6 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, UserManager
 from allauth.account.models import EmailAddress
 from backend import settings
-from locations.models import Location
 
 
 class AppUserManager(UserManager):
@@ -24,16 +23,10 @@ class AppUserManager(UserManager):
             email=email,
             password=password
         )
-        # set super user authority to max
-        user.authority = settings.SUPERUSER_AUTHORITY
-
-        # by default super user will have access to all available locations
-        user.authorized_locations.set(Location.objects.all())
 
         user.is_staff = True
         user.is_admin = True
-        user.is_superadmin = True
-
+        user.is_superuser = True
         user.save(using=self._db)
 
         address = EmailAddress.objects.create(user=user)
@@ -53,22 +46,11 @@ class AppUser(AbstractUser):
     objects = AppUserManager()
 
     # replace id with uuid
-    uuid = models.UUIDField(default=uuid.uuid4, unique=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
 
-    # user authority [0, 1, ... N]. N means highest authority
-    authority = models.IntegerField(default=-1)
-
-    # organization with which this sub-organization is associated
+    # organization with which this user is associated
     organization = models.ForeignKey(
         'organizations.Organization',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
-    )
-
-    # organization with which this sub-organization is associated
-    sub_organization = models.ForeignKey(
-        'organizations.SubOrganization',
         on_delete=models.CASCADE,
         null=True,
         blank=True
@@ -77,8 +59,7 @@ class AppUser(AbstractUser):
     # authorized locations
     authorized_locations = models.ManyToManyField(
         'locations.Location',
-        blank=True,
-        null=True
+        blank=True
     )
 
     # user avatar image

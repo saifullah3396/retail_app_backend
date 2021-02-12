@@ -1,26 +1,18 @@
-from django.urls import path
-from .views import \
-    OrganizationsListCreateView, \
-    OrganizationsRUDView, \
-    SubOrganizationsListCreateView, \
-    SubOrganizationsRUDView
+"""
+Defines the urls for the views defined in the organizations api.
+"""
 
+from django.urls import path
+
+from .views import *
 
 urlpatterns = [
     path(
         '',
-        OrganizationsListCreateView.as_view(),
-        name='organizations_list_create'),
+        OrganizationsListCreateDestroyView.as_view(),
+        name='organizations_list_create_delete'),
     path(
         '<pk>',
-        OrganizationsRUDView.as_view(),
-        name='organizations_rud'),
-    path(
-        'sub/',
-        SubOrganizationsListCreateView.as_view(),
-        name='sub_organizations_list_create'),
-    path(
-        'sub/<pk>',
-        SubOrganizationsRUDView.as_view(),
-        name='sub_organizations_rud'),
+        OrganizationsRetrieveUpdateDestroyView.as_view(),
+        name='organizations_retrieve_update_delete'),
 ]

@@ -1,28 +1,36 @@
+"""
+Defines the urls for the views defined in the locations api.
+"""
+
 from django.urls import path
-from .views import AdminLocationListView, AdminLocationDetailView, \
-    AdminFloorListView, AdminFloorDetailView, AdminBlockListView, \
-    AdminBlockDetailView, LocationDetailsAppUserAccess
+
+from .views.locations_views import *
+from .views.floors_views import *
+from .views.blocks_views import *
 
 urlpatterns = [
-    # admin views
-    path('admin/', AdminLocationListView.as_view(), name='locations_admin'),
     path(
-        'admin/<pk>',
-        AdminLocationDetailView.as_view(),
-        name='locations_admin_detail'),
-    path('admin/floors/', AdminFloorListView.as_view(), name='floors_admin'),
-    path(
-        'admin/floors/<pk>',
-        AdminFloorDetailView.as_view(),
-        name='floors_admin_detail'),
-    path('admin/blocks/', AdminBlockListView.as_view(), name='blocks_admin'),
-    path(
-        'admin/blocks/<pk>',
-        AdminBlockDetailView.as_view(),
-        name='blocks_admin_detail'),
-
+        '',
+        LocationsListCreateDestroyView.as_view(),
+        name='locations_list_create_delete'),
     path(
         '<pk>',
-        LocationDetailsAppUserAccess.as_view(),
-        name='locations_detail_app_user_access'),
+        LocationsRetrieveUpdateDestroyView.as_view(),
+        name='locations_retrieve_update_delete'),
+    path(
+        '<uuid:location_id>/floors/',
+        FloorsListCreateDestroyView.as_view(),
+        name='floors_list_create_delete'),
+    path(
+        '<uuid:location_id>/floors/<pk>',
+        FloorsRetrieveUpdateDestroyView.as_view(),
+        name='floors_retrieve_update_delete'),
+    path(
+        '<uuid:location_id>/floors/<uuid:floor_id>/blocks/',
+        BlocksListCreateDestroyView.as_view(),
+        name='blocks_list_create_delete'),
+    path(
+        '<uuid:location_id>/floors/<uuid:floor_id>/blocks/<pk>',
+        BlocksRetrieveUpdateDestroyView.as_view(),
+        name='blocks_retrieve_update_delete'),
 ]

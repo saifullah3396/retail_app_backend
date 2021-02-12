@@ -1,72 +1,97 @@
+"""
+Defines the models of this application.
+"""
+
 import uuid
+
 from django.db import models
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import Point
 
 
 class Location(models.Model):
-    # generate unique uuid for each location
+    """
+    A model of a location associated with any organization
+    """
+
+    """Unique uuid for each location."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    # location name
-    name = models.CharField(max_length=120, default="Unknown", unique=True)
+    """Location name."""
+    name = models.CharField(max_length=120, unique=True)
 
-    # organization with which this location is associated
+    """Organization with which this location is associated."""
     organization = models.ForeignKey(
         'organizations.Organization',
         on_delete=models.CASCADE,
     )
 
-    # sub-organization with which this location is associated. Sub-organization
-    # can be null
-    sub_organization = models.ForeignKey(
-        'organizations.SubOrganization',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
-    )
-
     def __str__(self):
-        return self.name
+        """
+        String serializer of the model
+        """
+        return "Location={}, Organization={}".format(
+            self.name, self.organization.name)
 
 
 class Floor(models.Model):
-    # generate unique uuid for each location floor
+    """
+    A model of a floor associated with a location
+    """
+
+    """Unique uuid for each location."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    # floor
+    """Floor number."""
     number = models.IntegerField(default=0)
 
-    # location with which this floor is associated
+    """Location with which this floor is associated."""
     location = models.ForeignKey(
         'locations.Location',
         on_delete=models.CASCADE,
     )
 
+    class Meta:
+        """Don't allow non-unique floors for any given location."""
+        unique_together = ('number', 'location',)
+
     def __str__(self):
-        return "Floor #{} ({})".format(self.number, str(self.location))
+        """
+        String serializer of the model
+        """
+        return "Floor={}, {}".format(self.number, str(self.location))
 
 
 class Block(models.Model):
-    # generate unique uuid for each location block
+    """
+    A model of a single block floor associated with a location
+    """
+
+    """Unique uuid for each location."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    # block name
-    name = models.CharField(
-        default='Main', max_length=150, blank=True, unique=True)
+    """Name number."""
+    name = models.CharField(default='Main Block', max_length=150)
 
-    # add image field for block floor map
+    """Block floor map image."""
     floor_map = models.ImageField(
         upload_to='maps', blank=True, null=True)
 
-    # local coordinate frame of the block
+    """Local coordinate frame of the floor map of the block."""
     coordinate_frame = models.PointField(default=Point(0, 0))
 
-    # location with which this floor is associated
+    """Floor with which this block is associated."""
     floor = models.ForeignKey(
         'locations.Floor',
         on_delete=models.CASCADE,
     )
 
+    class Meta:
+        """Don't allow non-unique blocks for any given floor."""
+        unique_together = ('name', 'floor',)
+
     def __str__(self):
-        return "{}, {}".format(self.name, str(self.floor))
+        """
+        String serializer of the model
+        """
+        return "Block={}, {}".format(self.name, str(self.floor))
