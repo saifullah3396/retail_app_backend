@@ -134,92 +134,148 @@ class AppUsersListCreateDestroyView(
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
+class AppUsersRetrieveUpdateDestroyView(
+        CoreRetrieveUpdateDestroyView, AppUsersView):
     """
-    Lists all app users. Can only be accessed by staff users.
+    Defines the organizations retrieve-update-destroy view.
     """
-    queryset = AppUser.objects.all()
-    serializer_class = AppUserSerializerAdminAccess
-    permission_classes = (
-        permissions.IsAuthenticated,
-        permissions.IsAdminUser,)
-    authentication_classes = [authentication.JSONWebTokenAuthentication]
 
+    queryset = AppUser.objects.none()  # Added for model permissions
+    permission_classes = (AppUsersRetrieveUpdateDestroyPermission,)
 
-class AppUserListAppUserAccess(APIView):
-    """
-    Lists all app users under organization of app admin. AppAdmin corresponds
-    to organization or sub_organization admins.
-    """
-    serializer_class = AppUserSerializerAppUserAccess
-    permission_classes = (permissions.IsAuthenticated,)
-    authentication_classes = [authentication.JSONWebTokenAuthentication]
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return AppUserDetailRetrieveSerializer
+        if self.request.method == 'PUT' or self.request.method == 'PATCH':
+            return AppUserDetailUpdateSerializer
+        return AppUserDetailRetrieveSerializer
 
-    def send_user_list_response(self, request, user_list):
-        serializer = self.serializer_class(
-            user_list, many=True, context={'request': request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    # Define the mapping from request type to query that returns the
+    # organizations tree that is used in the requests. For example, in DELETE
+    # requests, organization does not include itself while in GET it does
+    organizations_tree_wrt_request = {
+        'GET': lambda organization: organization.get_descendants(
+            include_self=True),
+        'POST': lambda organization: organization.get_descendants(
+            include_self=True),
+        'PATCH': lambda organization: organization.get_descendants(
+            include_self=True),
+        'DELETE': lambda organization: organization.get_descendants()
+    }
 
-    def get(self, request):
+    def _get_model(self):
         """
-        Return the users under this user, for example if this user is an
-        organization admin, this get request will return all organization
-        users.
+        Returns the get queryset for staff users.
         """
-        try:
-            user_list = AppUser.objects.filter(
-                organization=request.user.organization,
-                authority__lte=request.user.authority).\
-                exclude(id=request.user.id)
-            if user_list:
-                return self.send_user_list_response(request, user_list)
-            else:
-                return Response(status=status.HTTP_403_FORBIDDEN)
-        except AppUser.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
 
+        return AppUsersView._get_model(self)
 
-class AppUserDetailAppUserAccess(APIView):
-    serializer_class = AppUserSerializerAppUserAccess
-    permission_classes = (permissions.IsAuthenticated,)
-    authentication_classes = [authentication.JSONWebTokenAuthentication]
-
-    def send_user_response(self, request, user):
-        serializer = self.serializer_class(
-            user, context={'request': request})
-        return Response({"user": serializer.data}, status=status.HTTP_200_OK)
-
-    def get(self, request, *args, **kwargs):
+    def _define_get_queryset_by_group_fn(self):
         """
-        Return the user itself if <pk>=me else returns the user with
-        input <pk> if the request user has authority.
+        Returns a dictionary mapping user group to get_queryset function
+        that will be called if the request user is in that user group.
         """
-        if request.user.is_staff:
-            self.serializer_class = AdminUserSerializerAdminAccess
-        else:
-            self.serializer_class = AppUserSerializerAppUserAccess
 
-        pk = self.kwargs.get('pk')
-        if pk == "me":
-            return self.send_user_response(request, request.user)
-        else:
-            try:
-                if request.user.sub_organization is None:
-                    # if sub is none then its parent to sub
-                    user = AppUser.objects.filter(
-                        pk=pk,
-                        organization=request.user.organization,
-                        authority__lte=request.user.authority)
-                else:
-                    # if this does not work that means user > request.user
-                    # so it is forbidden
-                    user = AppUser.objects.filter(
-                        pk=pk,
-                        organization=request.user.organization,
-                        sub_organization=request.user.sub_organization,
-                        authority__lte=request.user.authority)
-                if user:
-                    return self.send_user_response(request, user[0])
-                else:
-                    return Response(status=status.HTTP_403_FORBIDDEN)
-            except AppUser.DoesNotExist:
-                return Response(status=status.HTTP_404_NOT_FOUND)
+        return {
+            UserGroups.ORGANIZATION_ADMIN_GROUP:
+                self._get_organization_admin_queryset,
+            UserGroups.EMPLOYEE_GROUP:
+                self._get_employee_queryset,
+        }
+
+    def _define_perform_update_by_group_fn(self):
+        """
+        Returns a dictionary mapping user group to perform_update function
+        that will be called if the request user is in that user group.
+        """
+        return {
+            UserGroups.ORGANIZATION_ADMIN_GROUP:
+                self._perform_update_by_organization_admin,
+            UserGroups.EMPLOYEE_GROUP:
+                self._perform_update_by_employee
+        }
+
+    def _get_organization_admin_queryset(self):
+        """
+        Returns the get_queryset for organization admin user group
+        """
+        # get all organizations under this users organization
+        organizations_tree = self._get_organizations_tree(
+            self.request.user.organization)
+
+        # get all users in the tree
+        users_in_tree = self._get_users_in_organizations(
+            organizations_tree)
+        return users_in_tree
+
+    def _get_employee_queryset(self):
+        """
+        Returns the get_queryset for employee user group
+        """
+        return self._get_users_in_organizations(
+            self.request.user.organization)
+
+    def _perform_update_by_organization_admin(self, serializer):
+        data = serializer.validated_data
+        request_user = self.request.user
+        app_user_to_update = self.get_object()
+
+        # make sure user to be updated is within the admin's authorization
+        request_user_organizations = request_user.organization.get_descendants(
+            include_self=True)
+        current_organization = app_user_to_update.organization
+        if app_user_to_update.organization not in request_user_organizations:
+            raise exceptions.ValidationError(
+                "Invalid user id.")
+
+        to_organization = data.get('organization', None)
+        if to_organization is not None and \
+                to_organization not in request_user_organizations:
+            raise exceptions.ValidationError({
+                "organization": "Invalid field."
+            })
+
+        # get locations available to the organization tree
+        available_locations = Location.objects.filter(
+            organization__in=request_user_organizations)
+
+        # check if requested locations are not associated with the
+        # organization
+        invalid_locations = []
+        locations = data.get('authorized_locations')
+        for location in locations:
+            if location not in available_locations:
+                invalid_locations.append(location.id)
+
+        if len(invalid_locations) != 0:
+            raise serializers.ValidationError({
+                "authorized_locations": (
+                    "The locations {} are not associated with the "
+                    "organization: {}".format(
+                        invalid_locations, request_user.organization))})
+
+        serializer.save()
+
+    def _perform_update_by_employee(self, serializer):
+        data = serializer.validated_data()
+        request_user = self.request.user
+        app_user_to_update = self.get_object()
+
+        # make sure employee is only able to update himself
+        if request_user is not app_user_to_update:
+            raise exceptions.PermissionDenied()
+
+        # make sure employee cannot update the organization,
+        # authorized_locations and the user groups
+        error = {}
+        request_invalid = False
+        invalid_inputs = ['authorized_locations', 'organizations', 'group']
+        for field in invalid_inputs:
+            if data.get(field, None) is not None:
+                error[field] = "Not authorized to update this field."
+                request_invalid = True
+
+        if request_invalid:
+            raise exceptions.ValidationError(error)
+
+        serializer.save()
