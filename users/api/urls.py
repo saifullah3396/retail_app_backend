@@ -1,19 +1,13 @@
 from django.urls import path
-from .views import AppUserListAdminAccess, AppUserListAppUserAccess, \
-    AppUserDetailAppUserAccess
+from .views import *
 
 urlpatterns = [
-    # admin views
-    path(
-        'admin/',
-        AppUserListAdminAccess.as_view(),
-        name='app_user_list_admin_access'),
     path(
         '',
-        AppUserListAppUserAccess.as_view(),
-        name='app_user_list_app_admin_access'),
+        AppUsersListCreateDestroyView.as_view(),
+        name='app_users_list_create_delete'),
     path(
-        '<pk>/',
-        AppUserDetailAppUserAccess.as_view(),
-        name='app_user_detail_app_admin_access')
+        '<pk>',
+        AppUsersRetrieveUpdateDestroyView.as_view(),
+        name='app_users_retrieve_update_delete'),
 ]
