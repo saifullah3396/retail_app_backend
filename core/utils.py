@@ -39,6 +39,21 @@ def is_in_group(user, group_name):
         return None
 
 
+def get_fn_by_group(user, group_to_fn_map):
+    """
+    Returns the function to be called for the user group the user is in
+    given the user group to function map.
+    """
+    get_queryset_fn = None
+    for group in UserGroups:
+        if is_in_group(user, group.name):
+            get_queryset_fn = group_to_fn_map.get(group, None)
+            break
+    if get_queryset_fn is None:
+        raise exceptions.PermissionDenied()
+    return get_queryset_fn
+
+
 def is_organization_admin(user):
     """
     Returns true if the user is in ORGANIZATION_ADMIN_GROUP user group.

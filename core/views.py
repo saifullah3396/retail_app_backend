@@ -57,20 +57,6 @@ class CoreAPIView(GenericAPIView):
         """
         raise NotImplementedError()
 
-    def _get_fn_by_group(self, user, group_to_fn_map):
-        """
-        Returns the function to be called for the user group the user is in
-        given the user group to function map.
-        """
-        get_queryset_fn = None
-        for group in UserGroups:
-            if is_in_group(user, group.name):
-                get_queryset_fn = group_to_fn_map.get(group, None)
-                break
-        if get_queryset_fn is None:
-            raise exceptions.PermissionDenied()
-        return get_queryset_fn
-
     def _get_id_list(self):
         """
         Returns the list of ids based on different request types.
@@ -105,7 +91,7 @@ class CoreAPIView(GenericAPIView):
         Returns the get queryset for individual user groups as defined by the
         [_get_queryset_by_group_fn] dictionary initialized in child class.
         """
-        return self._get_fn_by_group(
+        return get_fn_by_group(
             self.request.user, self._get_queryset_by_group_fn)()
 
     def _get_queryset(self):
@@ -124,14 +110,6 @@ class CoreAPIView(GenericAPIView):
         To be implemented by the child class.
         """
         raise NotImplementedError()
-
-    def _perform_create_by_group(self, serializer):
-        """
-        Calls the get queryset for individual user groups as defined by the
-        [_perform_create_by_group_fn] dictionary initialized in child class.
-        """
-        return self._get_fn_by_group(
-            self.request.user, self._perform_create_by_group_fn)(serializer)
 
 
 class CoreListCreateDestroyView(
@@ -194,6 +172,14 @@ class CoreListCreateDestroyView(
             return self._perform_create_by_staff(serializer)
         else:
             return self._perform_create_by_group(serializer)
+
+    def _perform_create_by_group(self, serializer):
+        """
+        Calls the perform create for individual user groups as defined by the
+        [_perform_create_by_group_fn] dictionary initialized in child class.
+        """
+        return get_fn_by_group(
+            self.request.user, self._perform_create_by_group_fn)(serializer)
 
     def destroy(self, request, *args, **kwargs):
         """
