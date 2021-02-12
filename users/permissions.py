@@ -1,7 +1,10 @@
 # permissions.py
+import copy
+
+from core.permissions import AppDjangoModelPermissions, UserGroups
 from django.contrib.auth.models import Group
-from core.permissions import UserGroups, AppDjangoModelPermissions
 from rest_framework import permissions
+
 from .models import AppUser
 
 USER_GROUP_PERMISSIONS = {
@@ -9,19 +12,19 @@ USER_GROUP_PERMISSIONS = {
         AppUser: ['add', 'change', 'view', 'delete'],
     },
     UserGroups.EMPLOYEE_GROUP.name: {
-        AppUser: ['view'],
+        AppUser: ['view', 'change'],
     },
 }
 
 
-class CanRegisterUser(AppDjangoModelPermissions):
+class AppUsersListCreateDestroyPermission(AppDjangoModelPermissions):
 
     def __init__(self):
         self.perms_map = copy.deepcopy(self.perms_map)
         self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
 
 
-class CanAccessUser(AppDjangoModelPermissions):
+class AppUsersRetrieveUpdateDestroyPermission(AppDjangoModelPermissions):
 
     def __init__(self):
         self.perms_map = copy.deepcopy(self.perms_map)
