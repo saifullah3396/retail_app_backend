@@ -176,6 +176,16 @@ class OrganizationsRetrieveUpdateDestroyView(
                 self._get_employee_queryset,
         }
 
+    def _define_perform_update_by_group_fn(self):
+        """
+        Returns a dictionary mapping user group to perform_update function
+        that will be called if the request user is in that user group.
+        """
+        return {
+            UserGroups.ORGANIZATION_ADMIN_GROUP:
+                self._perform_update_by_organization_admin
+        }
+
     def _get_organization_admin_queryset(self):
         """
         Returns the get_queryset for organization admin user group
@@ -188,3 +198,6 @@ class OrganizationsRetrieveUpdateDestroyView(
         """
         return self._get_model().objects.filter(
             id=self.request.user.organization.id)
+
+    def _perform_update_by_organization_admin(self, serializer):
+        serializer.save()
