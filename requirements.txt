@@ -7,5 +7,6 @@ sqlparse==0.4.1
 pillow
 django-filter
 django-mptt
+dj_database_url
 ./django-rest-auth
 ./django-rest-framework-jwt
