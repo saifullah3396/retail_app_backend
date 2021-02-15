@@ -15,6 +15,7 @@ api_urlpatterns = [
 ]
 
 urlpatterns = [
+    path('', include('frontend.urls')),
     path('admin/', admin.site.urls),
     path('api/v1/', include(api_urlpatterns)),
     path('api-token-auth/', obtain_jwt_token),
