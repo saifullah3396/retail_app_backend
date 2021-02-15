@@ -168,7 +168,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'project_name/static')]
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'retail_app/static')]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # REST framework settings
@@ -267,6 +267,6 @@ JWT_AUTH = {
 # frontend configuration
 REACT_APP_DIR = os.path.join(BASE_DIR, 'frontend')
 
-STATICFILES_DIRS = [
+STATICFILES_DIRS.append(
     os.path.join(REACT_APP_DIR, 'build', 'static'),
-]
+)
