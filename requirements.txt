@@ -10,6 +10,6 @@ django-mptt
 dj_database_url
 gunicorn
 whitenoise
-dotenv
+python-dotenv
 ./django-rest-auth
 ./django-rest-framework-jwt
