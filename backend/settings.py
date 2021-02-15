@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 
 import os
 
+import dj_database_url
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_URL = "http://127.0.0.1/"
@@ -20,18 +22,21 @@ BASE_URL = "http://127.0.0.1/"
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '(v%(7v*^d5i1=5bi(90d7!#34pgxitjb)%(ix2c3-a2oyus(0$'
+SECRET_KEY = os.environ.get('SECRET_KEY')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['127.0.0.1']
-CORS_ORIGIN_ALLOW_ALL = True
+ALLOWED_HOSTS = [
+    '0.0.0.0',
+    'localhost',
+    '127.0.0.1',
+    'https://retail-irl-ncai.herokuapp.com/']
 CORS_ORIGIN_WHITELIST = (
     'http://localhost:3000',
 )
-
-ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -48,6 +53,7 @@ INSTALLED_APPS = [
 
     # The following apps are required for rest registration
     'django.contrib.sites',
+    'whitenoise.runserver_nostatic',
 
     'allauth',
     'allauth.account',
@@ -76,6 +82,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -109,6 +116,8 @@ DATABASES = {
         'USER': 'sai',
     }
 }
+db_from_env = dj_database_url.config(conn_max_age=600)
+DATABASES['default'].update(db_from_env)
 
 # User config
 AUTH_USER_MODEL = "users.AppUser"
@@ -158,6 +167,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'project_name/static')]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # REST framework settings
 REST_FRAMEWORK = {
@@ -178,7 +190,7 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
 
-MEDIA_ROOT = '/home/sai/project/retail_app_backend/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
 # Email backend
