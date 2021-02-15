@@ -8,5 +8,6 @@ pillow
 django-filter
 django-mptt
 dj_database_url
+gunicorn
 ./django-rest-auth
 ./django-rest-framework-jwt
