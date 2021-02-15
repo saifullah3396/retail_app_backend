@@ -2,10 +2,10 @@ Django==3.1.2
 psycopg2==2.8.6
 django-cors-headers
 django-allauth
-django-rest-auth
 djangorestframework
 sqlparse==0.4.1
 pillow
 django-filter
-djangorestframework-jwt
 django-mptt
+./django-rest-auth
+./django-rest-framework-jwt
