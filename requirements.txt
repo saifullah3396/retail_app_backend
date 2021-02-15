@@ -9,5 +9,6 @@ django-filter
 django-mptt
 dj_database_url
 gunicorn
+whitenoise
 ./django-rest-auth
 ./django-rest-framework-jwt
