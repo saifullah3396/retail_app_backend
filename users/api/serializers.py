@@ -9,7 +9,6 @@ from locations.utils import *
 from organizations.api.serializers import OrganizationSerializer
 from organizations.models import Organization
 from rest_framework import exceptions, serializers
-from user_auth.serializers import RegistrationSerializer
 
 from ..models import AppUser
 
@@ -61,7 +60,7 @@ class AppUserDetailLocationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Location
-        fields = ['id', 'organization']
+        fields = ['id', 'name', 'organization']
 
 
 class AppUserDetailRetrieveSerializer(serializers.ModelSerializer):
@@ -112,7 +111,9 @@ class AppUserDetailRetrieveSerializer(serializers.ModelSerializer):
 
     def get_organization(self, instance):
         organizations = Organization.objects.none()
-        if not instance.is_staff:
+        if instance.is_staff:
+            organizations = Organization.objects.all()
+        else:
             organizations = \
                 get_fn_by_group(
                     instance, self.group_to_organizations_fn)(instance)

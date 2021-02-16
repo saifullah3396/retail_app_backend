@@ -8,7 +8,7 @@ from locations.models import Location
 from organizations.models import Organization
 from rest_auth.registration.serializers import RegisterSerializer
 from rest_framework import exceptions, serializers, status
-from users.api.serializers import *
+from users.api.serializers import AppUserDetailRetrieveSerializer
 from users.models import AppUser
 
 
@@ -150,7 +150,7 @@ class JWTSerializer(serializers.Serializer):
         JWTSerializer. Defining it here to avoid circular imports
         """
         user = get_user_from_serializer(self, raise_exception=True)
-        JWTUserDetailsSerializer = AppUserDetailSerializer
+        JWTUserDetailsSerializer = AppUserDetailRetrieveSerializer
         user_data = JWTUserDetailsSerializer(
             obj['user'], context=self.context).data
         return user_data

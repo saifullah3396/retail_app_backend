@@ -170,6 +170,17 @@ class AppUsersRetrieveUpdateDestroyView(
 
         return AppUsersView._get_model(self)
 
+    def _get_queryset(self):
+        """
+        Implements the customized get_queryset functionalty.
+        """
+        pk = self.kwargs.get('pk')
+        if pk == "me":
+            self.kwargs['pk'] = self.request.user.id
+            return self._get_model().objects.filter(id=self.request.user.id)
+        else:
+            return super()._get_queryset()
+
     def _define_get_queryset_by_group_fn(self):
         """
         Returns a dictionary mapping user group to get_queryset function
