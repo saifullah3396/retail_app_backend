@@ -42,7 +42,6 @@ CORS_ORIGIN_WHITELIST = (
     'http://localhost:3000',
 )
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -73,7 +72,6 @@ INSTALLED_APPS = [
     'locations',
     'cameras',
     'users',
-    'user_auth',
     'frontend'
 ]
 
@@ -183,9 +181,9 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.DjangoModelPermissions'
     ],
-    'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRenderer',
-    ],
+    # 'DEFAULT_RENDERER_CLASSES': [
+    #     'rest_framework.renderers.JSONRenderer',
+    # ],
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
     ),
@@ -271,7 +269,7 @@ JWT_AUTH = {
 
 # frontend configuration
 REACT_APP_DIR = os.environ.get('RETAIL_APP_FRONTEND')
-
+print('REACT_APP_DIR', REACT_APP_DIR)
 STATICFILES_DIRS.append(
     os.path.join(REACT_APP_DIR, 'build', 'static'),
 )

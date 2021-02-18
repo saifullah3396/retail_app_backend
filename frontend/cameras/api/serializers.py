@@ -7,3 +7,8 @@ class CameraSerializer(serializers.ModelSerializer):
         model = Camera
         fields = ('id', 'place_name', 'ip_addr', 'coords', 'block')
 
+
+class CameraUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Camera
+        fields = ('id', 'coords', 'block')
