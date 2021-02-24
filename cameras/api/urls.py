@@ -1,14 +1,17 @@
+"""
+Defines the urls for the views defined in the cameras api.
+"""
 from django.urls import path
-from .views import CamerasListCreateDestroyView,CamerasRetrieveUpdateDestroyView
-#  CameraDetailView, CameraFilterListView, \
-#     CameraFilterDetailView
-from .views import *
+
+from .views import (CamerasListCreateDestroyView,
+                    CamerasRetrieveUpdateDestroyView)
+
 urlpatterns = [
- path(
+    path(
         '',
         CamerasListCreateDestroyView.as_view(),
         name='cameras_list_create_delete'),
- path(
+    path(
         '<pk>',
         CamerasRetrieveUpdateDestroyView.as_view(),
         name='cameras_retrieve_update_delete'),

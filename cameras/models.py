@@ -1,21 +1,20 @@
-from django.db import models
-from django.contrib.gis.db import models
-
-from mptt.models import MPTTModel, TreeForeignKey
 import uuid
+
+from django.contrib.gis.db import models
 from django.contrib.gis.geos import Point
+
 # Create your models here.
 
 
 class Camera(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    """Location name."""
+    """place name where camera is located."""
     place_name = models.CharField(max_length=125, default="Main", unique=True)
 
     """Camera ip Address."""
     ip_addr = models.CharField(max_length=120)
 
-        # camera coordinates with respect to block frame
+    """ camera coordinates with respect to block frame"""
     coords = models.PointField(default=Point(0, 0))
 
     """ block name with which the camera is associated """

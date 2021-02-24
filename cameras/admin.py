@@ -1,4 +1,9 @@
+"""
+Registers the Camera Model to the admin interface.
+"""
+
 from django.contrib import admin
+
 from .models import Camera
-# Register your models here.
+
 admin.site.register(Camera)

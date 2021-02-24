@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     'locations',
     'cameras',
     'users',
+    'user_auth',
     'frontend'
 ]
 
@@ -269,7 +270,6 @@ JWT_AUTH = {
 
 # frontend configuration
 REACT_APP_DIR = os.environ.get('RETAIL_APP_FRONTEND')
-print('REACT_APP_DIR', REACT_APP_DIR)
 STATICFILES_DIRS.append(
     os.path.join(REACT_APP_DIR, 'build', 'static'),
 )
