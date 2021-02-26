@@ -7,17 +7,22 @@ from django.contrib.gis.geos import Point
 
 
 class Camera(models.Model):
+    """
+    A model of a camera associated with a block.
+    """
+
+    """Unique uuid for each camera."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    """place name where camera is located."""
+    """Place name where camera is located."""
     place_name = models.CharField(max_length=125, default="Main", unique=True)
 
     """Camera ip Address."""
     ip_addr = models.CharField(max_length=120)
 
-    """ camera coordinates with respect to block frame"""
+    """ Camera coordinates with respect to block frame"""
     coords = models.PointField(default=Point(0, 0))
 
-    """ block name with which the camera is associated """
+    """ Block name with which the camera is associated """
     block = models.ForeignKey(
         'locations.Block',
         on_delete=models.CASCADE,

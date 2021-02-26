@@ -44,5 +44,5 @@ class CamerasRetrieveUpdateDestroyPermission(AppDjangoModelPermissions):
     def __init__(self):
         self.perms_map = copy.deepcopy(self.perms_map)
 
-        # add 'view' permission requirement on the view
+        # Add 'view' permission requirement on the view
         self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']

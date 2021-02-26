@@ -9,7 +9,7 @@ def get_cameras_in_locations(locations):
     Returns all locations which present within the given organizations
     queryset
     """
-    return Camera.objects.filter(block__floor__location__id=locations)
+    return Camera.objects.filter(block__floor__location__in=locations)
 
 
 def get_cameras_for_organization_admin(user):
