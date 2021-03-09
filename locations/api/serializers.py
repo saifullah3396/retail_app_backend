@@ -26,9 +26,19 @@ class BlockListSerializer(serializers.ModelSerializer):
 
 
 class BlockDetailSerializer(serializers.ModelSerializer):
+    floor_map = serializers.SerializerMethodField()
+
     class Meta:
         model = Block
         fields = ('id', 'name', 'floor_map', 'coordinate_frame')
+
+    def get_floor_map(self, block):
+        request = self.context.get('request')
+        if block.floor_map and hasattr(block.floor_map, 'url'):
+            floor_map_url = block.floor_map.url
+            return request.build_absolute_uri(floor_map_url)
+        else:
+            None
 
 
 class FloorDetailSerializer(serializers.ModelSerializer):
@@ -38,7 +48,7 @@ class FloorDetailSerializer(serializers.ModelSerializer):
         # return all blocks in this floor
         blocks = Block.objects.filter(floor=floor)
         return \
-            BlockDetailSerializer(blocks, many=True).data
+            BlockDetailSerializer(blocks, many=True, context=self.context).data
 
     class Meta:
         model = Floor
@@ -52,7 +62,7 @@ class LocationDetailSerializer(serializers.ModelSerializer):
         # return all floors in this location
         floors = Floor.objects.filter(location__id=location.id)
         return \
-            FloorDetailSerializer(floors, many=True).data
+            FloorDetailSerializer(floors, many=True, context=self.context).data
 
     class Meta:
         model = Location
