@@ -73,7 +73,8 @@ INSTALLED_APPS = [
     'cameras',
     'users',
     'user_auth',
-    'frontend'
+    'frontend',
+    'servers'
 ]
 
 MIDDLEWARE = [

@@ -56,7 +56,7 @@ class CamerasListCreateDestroyView(CoreListCreateDestroyView, CameraView):
     def _perform_create_by_organization_admin(self, serializer):
         try:
             block = Block.objects.get(self.request.data['block'])
-        except:
+        except Exception as exceptions:
             raise exceptions.ValidationError(
                 {
                     'block': 'Block not found'

@@ -6,27 +6,27 @@ import copy
 
 from core.permissions import AppDjangoModelPermissions, UserGroups
 
-from .models import Camera
+from .models import Server
 
 """
-Define the user group permissions for the Camera model.
+Define the user group permissions for the Server model.
 """
 USER_GROUP_PERMISSIONS = {
-    # add organization admin permissions on Camera
+    # add organization admin permissions on Server
     UserGroups.ORGANIZATION_ADMIN_GROUP.name: {
-        Camera: ['add', 'change', 'view', 'delete'],
+        Server: ['add', 'change', 'view', 'delete'],
     },
 
-    # add employee permissions on Cameras
+    # add employee permissions on Server
     UserGroups.EMPLOYEE_GROUP.name: {
-        Camera: ['view'],
+        Server: ['view'],
     },
 }
 
 
-class CamerasListCreateDestroyPermission(AppDjangoModelPermissions):
+class ServersListCreateDestroyPermission(AppDjangoModelPermissions):
     """
-    Permissions required on the  CamerasListCreateDestroyView
+    Permissions required on the ServersListCreateDestroyView
     """
 
     def __init__(self):
@@ -36,9 +36,9 @@ class CamerasListCreateDestroyPermission(AppDjangoModelPermissions):
         self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
 
 
-class CamerasRetrieveUpdateDestroyPermission(AppDjangoModelPermissions):
+class ServersRetrieveUpdateDestroyPermission(AppDjangoModelPermissions):
     """
-    Permissions required on the CameraCreateDestroyView
+    Permissions required on the ServerCreateDestroyView
     """
 
     def __init__(self):
