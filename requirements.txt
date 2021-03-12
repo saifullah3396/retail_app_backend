@@ -11,5 +11,6 @@ dj_database_url
 gunicorn
 whitenoise
 python-dotenv
+channels
 ./django-rest-auth
 ./django-rest-framework-jwt
