@@ -4,9 +4,9 @@ Defines the models of this application.
 
 import uuid
 
-from django.db import models
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import Point
+from django.db import models
 
 
 class Location(models.Model):
@@ -79,6 +79,9 @@ class Block(models.Model):
 
     """Local coordinate frame of the floor map of the block."""
     coordinate_frame = models.PointField(default=Point(0, 0))
+
+    """Total size of the floor map in a x and y starting from the origin."""
+    size = models.PointField(default=Point(0, 0))
 
     """Floor with which this block is associated."""
     floor = models.ForeignKey(
