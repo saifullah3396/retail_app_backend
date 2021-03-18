@@ -27,6 +27,11 @@ class Camera(models.Model):
         'locations.Block',
         on_delete=models.CASCADE,
     )
+    """ Server with which the camera is associated """
+    server = models.ForeignKey(
+        'servers.Server',
+        on_delete=models.CASCADE,
+    )
 
     def __str__(self):
         """

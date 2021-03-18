@@ -70,11 +70,11 @@ INSTALLED_APPS = [
     'core',
     'organizations',
     'locations',
-    'cameras',
     'users',
     'user_auth',
     'frontend',
-    'servers'
+    'servers',
+    'cameras'
 ]
 
 MIDDLEWARE = [

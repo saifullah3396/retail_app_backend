@@ -20,12 +20,6 @@ class Server(models.Model):
     """Block with which this server is associated."""
     block = models.OneToOneField("locations.Block", on_delete=models.CASCADE)
 
-    """Cameras associated with this server."""
-    camera = models.ForeignKey(
-        'cameras.Camera',
-        on_delete=models.CASCADE,
-    )
-
 
 def __str__(self):
     """
