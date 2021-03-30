@@ -1,28 +1,40 @@
 import uuid
-from django.db import models
+
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import Point
 
+# Create your models here.
+
 
 class Camera(models.Model):
-    # generate unique uuid for each camera
+    """
+    A model of a camera associated with a block.
+    """
+
+    """Unique uuid for each camera."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    """Place name where camera is located."""
+    place_name = models.CharField(max_length=125, default="Main", unique=True)
 
-    # user understandable identifying name for the place where the camera is
-    # mounted
-    place_name = models.CharField(default='Main', max_length=120, unique=True)
-
-    # camera ip address
+    """Camera ip Address."""
     ip_addr = models.CharField(max_length=120)
 
-    # camera coordinates with respect to block frame
+    """ Camera coordinates with respect to block frame"""
     coords = models.PointField(default=Point(0, 0))
 
-    # block name with which the camera is associated
+    """ Block name with which the camera is associated """
     block = models.ForeignKey(
         'locations.Block',
         on_delete=models.CASCADE,
     )
+    """ Server with which the camera is associated """
+    server = models.ForeignKey(
+        'servers.Server',
+        on_delete=models.CASCADE,
+    )
 
     def __str__(self):
-        return "{}, {}".format(self.place_name, str(self.block))
+        """
+        String serializer of the model
+        """
+        return "Camera={}, {}".format(self.place_name, str(self.block))

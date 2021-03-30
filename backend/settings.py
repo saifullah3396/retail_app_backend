@@ -26,7 +26,7 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = os.environ['SECRET_KEY']
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 
@@ -41,7 +41,6 @@ ALLOWED_HOSTS = [
 CORS_ORIGIN_WHITELIST = (
     'http://localhost:3000',
 )
-
 
 # Application definition
 
@@ -73,11 +72,12 @@ INSTALLED_APPS = [
     'core',
     'organizations',
     'locations',
-    'cameras',
     'users',
     'user_auth',
     'deepstream_manager',
     'frontend'
+    'deepstream_servers',
+    'cameras'
 ]
 
 MIDDLEWARE = [
@@ -127,8 +127,8 @@ CHANNEL_LAYERS = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'retail-app',
-        'USER': 'sai',
+        'NAME': 'retail-apps',
+        'USER': 'awais',
     }
 }
 db_from_env = dj_database_url.config(conn_max_age=600)
@@ -194,9 +194,9 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.DjangoModelPermissions'
     ],
-    'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRenderer',
-    ],
+    # 'DEFAULT_RENDERER_CLASSES': [
+    #     'rest_framework.renderers.JSONRenderer',
+    # ],
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
     ),
@@ -282,7 +282,6 @@ JWT_AUTH = {
 
 # frontend configuration
 REACT_APP_DIR = os.environ.get('RETAIL_APP_FRONTEND')
-
 STATICFILES_DIRS.append(
     os.path.join(REACT_APP_DIR, 'build', 'static'),
 )

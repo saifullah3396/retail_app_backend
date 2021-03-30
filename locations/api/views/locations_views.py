@@ -63,6 +63,7 @@ class LocationsListCreateDestroyView(
         Returns a dictionary mapping user group to get_queryset function
         that will be called if the request user is in that user group.
         """
+
         return {
             UserGroups.ORGANIZATION_ADMIN_GROUP:
                 self._get_organization_admin_queryset,
@@ -86,6 +87,7 @@ class LocationsListCreateDestroyView(
         the user organization are returned. In case a list of ids is provided, the
         locations are filtered further by ids.
         """
+
         locations = get_locations_for_organization_admin(
             self.request.user, include_self=True)
 
@@ -165,7 +167,7 @@ class LocationsRetrieveUpdateDestroyView(
         """
         return {
             UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._perform_update_by_organization_admin
+            self._perform_update_by_organization_admin
         }
 
     def _get_organization_admin_queryset(self):

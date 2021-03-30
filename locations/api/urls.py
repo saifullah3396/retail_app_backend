@@ -4,9 +4,9 @@ Defines the urls for the views defined in the locations api.
 
 from django.urls import path
 
-from .views.locations_views import *
-from .views.floors_views import *
 from .views.blocks_views import *
+from .views.floors_views import *
+from .views.locations_views import *
 
 urlpatterns = [
     path(
