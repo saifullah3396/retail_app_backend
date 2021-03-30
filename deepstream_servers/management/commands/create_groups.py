@@ -4,7 +4,7 @@ and their related permissions.
 """
 
 from core.management.commands.create_groups_base import Command
-from servers.permissions import USER_GROUP_PERMISSIONS
+from deepstream_servers.permissions import USER_GROUP_PERMISSIONS
 
 
 class Command(Command):

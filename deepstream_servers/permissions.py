@@ -6,27 +6,27 @@ import copy
 
 from core.permissions import AppDjangoModelPermissions, UserGroups
 
-from .models import Server
+from .models import DeepstreamServer
 
 """
 Define the user group permissions for the Server model.
 """
 USER_GROUP_PERMISSIONS = {
-    # add organization admin permissions on Server
+    # add organization admin permissions on DeepstreamServer
     UserGroups.ORGANIZATION_ADMIN_GROUP.name: {
-        Server: ['add', 'change', 'view', 'delete'],
+        DeepstreamServer: ['add', 'change', 'view', 'delete'],
     },
 
-    # add employee permissions on Server
+    # add employee permissions on DeepstreamServer
     UserGroups.EMPLOYEE_GROUP.name: {
-        Server: ['view'],
+        DeepstreamServer: ['view'],
     },
 }
 
 
-class ServersListCreateDestroyPermission(AppDjangoModelPermissions):
+class DeepstreamServersListCreateDestroyPermission(AppDjangoModelPermissions):
     """
-    Permissions required on the ServersListCreateDestroyView
+    Permissions required on the DeepstreamServersListCreateDestroyView
     """
 
     def __init__(self):
@@ -36,9 +36,9 @@ class ServersListCreateDestroyPermission(AppDjangoModelPermissions):
         self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
 
 
-class ServersRetrieveUpdateDestroyPermission(AppDjangoModelPermissions):
+class DeepstreamServersRetrieveUpdateDestroyPermission(AppDjangoModelPermissions):
     """
-    Permissions required on the ServerCreateDestroyView
+    Permissions required on the DeepstreamServerCreateDestroyView
     """
 
     def __init__(self):

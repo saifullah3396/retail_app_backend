@@ -1,9 +1,0 @@
-"""
-Registers the Server Model to the admin interface.
-"""
-
-from django.contrib import admin
-
-from .models import Server
-
-admin.site.register(Server)

@@ -1,12 +1,12 @@
 """
-Defines the model of an servers
+Defines the model of deepstream servers
 """
 import uuid
 
 from django.db import models
 
 
-class Server(models.Model):
+class DeepstreamServer(models.Model):
     """
     A model of a camera associated with a block.
     """
@@ -25,4 +25,4 @@ def __str__(self):
     """
     String serializer of the model
     """
-    return "Server={}".format(self.ip_addr)
+    return "DeepstreamServer={}".format(self.ip_addr)

@@ -1,7 +1,7 @@
 from locations.models import Location
 from locations.utils import *
 
-from .models import Server
+from .models import DeepstreamServer
 
 
 def get_servers_in_locations(locations):
@@ -9,7 +9,7 @@ def get_servers_in_locations(locations):
     Returns all locations which present within the given organizations
     queryset
     """
-    return Server.objects.filter(block__floor__location__in=locations)
+    return DeepstreamServer.objects.filter(block__floor__location__in=locations)
 
 
 def get_servers_for_organization_admin(user):

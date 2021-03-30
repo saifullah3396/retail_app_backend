@@ -1,17 +1,17 @@
 from core.permissions import UserGroups
 from core.utils import *
 from core.views import *
+from deepstream_servers.utils import *
 from locations.models import Block
 from locations.utils import *
-from servers.utils import *
 
 from ..models import Server
-from ..permissions import (ServersListCreateDestroyPermission,
-                           ServersRetrieveUpdateDestroyPermission)
-from .serializers import ServerSerializer
+from ..permissions import (DeepstreamServersListCreateDestroyPermission,
+                           DeepstreamServersRetrieveUpdateDestroyPermission)
+from .serializers import DeepstreamServerSerializer
 
 
-class ServerView:
+class DeepstreamServerView:
     ordering_fields = ['id', 'ip_addr', 'block', 'camera']
 
     def _get_model(self):
@@ -22,14 +22,14 @@ class ServerView:
         return Server
 
 
-class ServersListCreateDestroyView(CoreListCreateDestroyView, ServerView):
+class DeepstreamServersListCreateDestroyView(CoreListCreateDestroyView, DeepstreamServerView):
     queryset = Server.objects.none()
-    serializer_class = ServerSerializer
-    permission_classes = (ServersListCreateDestroyPermission,)
+    serializer_class = DeepstreamServerSerializer
+    permission_classes = (DeepstreamServersListCreateDestroyPermission,)
 
     def _get_model(self):
 
-        return ServerView._get_model(self)
+        return DeepstreamServerView._get_model(self)
 
 
 def _define_get_queryset_by_group_fn(self):
@@ -63,25 +63,25 @@ def _perform_create_by_organization_admin(self, serializer):
 
 
 def _get_organizations_admin_queryset(self):
-    servers = get_servers_for_organization_admin(
+    deepstream_servers = get_deepstream_servers_for_organization_admin(
         self.request.user)
 
     id_list = self._get_id_list()
     if id_list:
         return self._filter_objects_by_id_list(
-            servers, id_list)
+            deepstream_servers, id_list)
 
-        return servers
+        return deepstream_servers
 
 
 def _get_employee_queryset(self):
-    servers = get_servers_for_employee(
+    deepstream_servers = get_deepstream_servers_for_employee(
         self.request.user)
     id_list = self._get_id_list()
     if id_list:
         return self._filter_objects_by_id_list(
-            servers, id_list)
-        return servers
+            deepstream_servers, id_list)
+        return deepstream_servers
 
 
 def _define_perform_create_by_group_fn(self):
@@ -93,24 +93,24 @@ def _define_perform_create_by_group_fn(self):
 
     def _order_by(self):
 
-        return ServerView._order_by(self)
+        return DeepstreamServerView._order_by(self)
 
 
-class ServersRetrieveUpdateDestroyView(
-        CoreRetrieveUpdateDestroyView, ServerView):
+class DeepstreamServersRetrieveUpdateDestroyView(
+        CoreRetrieveUpdateDestroyView, DeepstreamServerView):
     """
-    Defines the servers retrieve-update-destroy view.
+    Defines the deepstream servers retrieve-update-destroy view.
     """
-    queryset = Server.objects.none()
-    serializer_class = ServerSerializer
-    permission_classes = (ServersListCreateDestroyPermission,)
+    queryset = DeepstreamServer.objects.none()
+    serializer_class = DeepstreamServerSerializer
+    permission_classes = (DeepstreamServersListCreateDestroyPermission,)
 
     def _get_model(self):
         """
         Returns the model for this view
         """
 
-        return ServerView._get_model(self)
+        return DeepstreamServerView._get_model(self)
 
     def _define_get_queryset_by_group_fn(self):
         """
@@ -139,14 +139,14 @@ class ServersRetrieveUpdateDestroyView(
         """
         Returns the get_queryset for organization admin user group
         """
-        return get_servers_for_organization_admin(
+        return get_deepstream_servers_for_organization_admin(
             self.request.user)
 
     def _get_employee_queryset(self):
         """
         Returns the get_queryset for employee user group
         """
-        return get_servers_for_employee(
+        return get_deepstream_servers_for_employee(
             self.request.user)
 
     def _perform_update_by_organization_admin(self, serializer):
