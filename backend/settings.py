@@ -19,6 +19,13 @@ from dotenv import load_dotenv
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_URL = "http://0.0.0.0/"
 
+# AMQP Server IP address
+AMQP_SERVER_ADDRESS = "10.12.42.157"
+AMQP_SERVER_PORT = "5672"
+AMQP_USER = "retail_django_admin"
+AMQP_PASSWORD = "admin"
+AMQP_SERVER_VHOST = "retail_django_server"
+
 # load environment variables stored in .env
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
@@ -121,7 +128,8 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_rabbitmq.core.RabbitmqChannelLayer',
         'CONFIG': {
-            "host": "amqp://guest:guest@127.0.0.1/asgi",
+            "host": "amqp://retail_django_admin:admin@" +
+            AMQP_SERVER_ADDRESS+"/"+AMQP_SERVER_VHOST,
         },
     },
 }
