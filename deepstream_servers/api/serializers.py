@@ -9,4 +9,4 @@ from ..models import DeepstreamServer
 class DeepstreamServerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Server
-        fields = ('id', 'ip_addr', 'block', 'camera')
+        fields = ('id', 'ip_addr', 'mac_addr', 'block', 'camera')
