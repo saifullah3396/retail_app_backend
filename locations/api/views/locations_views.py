@@ -167,7 +167,7 @@ class LocationsRetrieveUpdateDestroyView(
         """
         return {
             UserGroups.ORGANIZATION_ADMIN_GROUP:
-            self._perform_update_by_organization_admin
+                self._perform_update_by_organization_admin
         }
 
     def _get_organization_admin_queryset(self):
