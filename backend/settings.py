@@ -80,7 +80,7 @@ INSTALLED_APPS = [
     'users',
     'user_auth',
     'deepstream_manager',
-    'frontend'
+    'frontend',
     'deepstream_servers',
     'cameras'
 ]
