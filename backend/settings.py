@@ -298,3 +298,74 @@ REACT_APP_DIR = os.environ.get('RETAIL_APP_FRONTEND')
 STATICFILES_DIRS.append(
     os.path.join(REACT_APP_DIR, 'build', 'static'),
 )
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+        'deepstream_manager_input_request_format': {
+            'format': '{levelname} {conn_protocol} {request} {url} {status} /{msg_protocol} {client} {message}',
+            'style': '{',
+        },
+        'deepstream_manager_output_request_format': {
+            'format': '{levelname} {conn_protocol} {request} {url} /{msg_protocol} {client} {message}',
+            'style': '{',
+        },
+    },
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler'
+        },
+        'deepstream_manager_input_request_handler': {
+            'level': 'INFO',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'deepstream_manager_input_request_format'
+        },
+        'deepstream_manager_output_request_handler': {
+            'level': 'INFO',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'deepstream_manager_output_request_format'
+        }
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'propagate': True,
+        },
+        'django.request': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'deepstream_manager_input_request_logger': {
+            'handlers': ['deepstream_manager_input_request_handler'],
+            'level': 'INFO',
+        },
+        'deepstream_manager_output_request_logger': {
+            'handlers': ['deepstream_manager_output_request_handler'],
+            'level': 'INFO',
+        }
+    }
+}
