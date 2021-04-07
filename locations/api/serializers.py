@@ -27,10 +27,11 @@ class BlockListSerializer(serializers.ModelSerializer):
 
 class BlockDetailSerializer(serializers.ModelSerializer):
     floor_map = serializers.SerializerMethodField()
+    floor_map_resolution = serializers.SerializerMethodField()
 
     class Meta:
         model = Block
-        fields = ('id', 'name', 'floor_map', 'coordinate_frame')
+        fields = ('id', 'name', 'floor_map', 'floor_map_resolution')
 
     def get_floor_map(self, block):
         request = self.context.get('request')
@@ -39,6 +40,12 @@ class BlockDetailSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(floor_map_url)
         else:
             None
+
+    def get_floor_map_resolution(self, block):
+        return {
+            "x": block.pixels_to_m_x,
+            "y": block.pixels_to_m_y
+        }
 
 
 class FloorDetailSerializer(serializers.ModelSerializer):
