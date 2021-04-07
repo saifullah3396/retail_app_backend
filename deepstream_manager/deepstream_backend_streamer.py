@@ -4,17 +4,30 @@ Deepstream servers
 """
 import asyncio
 import json
+import logging
+import re
 import time
-import warnings
+from enum import IntEnum
 
 import aio_pika
+from backend.settings import AMQP_SERVER_ADDRESS, AMQP_USER, AMQP_PASSWORD, \
+    AMQP_SERVER_PORT,  AMQP_SERVER_VHOST
+from channels.db import database_sync_to_async
 from channels.generic.http import AsyncHttpConsumer
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.layers import get_channel_layer
-from rest_framework import status
+from deepstream_servers.models import DeepstreamLogEntry, DeepstreamServer
+from django.utils import timezone
+from rest_framework import exceptions, status
 
 from deepstream_manager.message_processors import *
-from deepstream_manager.utils import DeepstreamBackendStreamerCommands as DBSC
+from deepstream_manager.queries import *
+
+input_request_logger = logging.getLogger(
+    'deepstream_manager_input_request_logger')
+output_request_logger = logging.getLogger(
+    'deepstream_manager_output_request_logger')
+
 
 # currently active processing functionality for incoming live messages
 ACTIVE_MESSAGE_PROCESSORS = [
@@ -25,8 +38,19 @@ ACTIVE_MESSAGE_PROCESSORS = [
 # default initial state of the connection with deepstream servers
 SERVER_STATE_INIT = {
     'alive': False,
-    'addr': None,
+    'deepstream_server_id': None,
 }
+
+
+class MessageProtocol(IntEnum):
+    SEND_ADDR = 0
+    SEND_DIAGNOSTICS = 1
+    UPDATE_CONFIG = 2
+    STOP_STREAMING = 3
+    START_STREAMING = 4
+
+    def __str__(self):
+        return '%s' % self.name
 
 
 class DeepstreamBackendStreamer(AsyncWebsocketConsumer):
@@ -41,33 +65,78 @@ class DeepstreamBackendStreamer(AsyncWebsocketConsumer):
         Handles incoming websocket connections.
         """
 
-        # define command response callback map
-        self.CMD_RESPONSE_CB_MAP = {
-            DBSC.SEND_ADDR: self.cmd_send_addr_response_cb,
-            DBSC.SEND_DIAGNOSTICS: self.cmd_send_diagnostics_response_cb,
+        # map send functions to msg protocols
+        self.CMD_TO_FN_MAP = {
+            MessageProtocol.SEND_ADDR:
+                self.generate_cmd_send_addr,
+            MessageProtocol.SEND_DIAGNOSTICS:
+                self.generate_cmd_send_diagnostics,
+            MessageProtocol.UPDATE_CONFIG:
+                self.generate_cmd_update_config,
+            MessageProtocol.STOP_STREAMING:
+                self.generate_cmd_stop_streaming,
+            MessageProtocol.START_STREAMING:
+                self.generate_cmd_start_streaming,
         }
 
-        self.CMD_TO_FN_MAP = {
-            DBSC.SEND_ADDR: self.generate_cmd_send_addr,
-            DBSC.SEND_DIAGNOSTICS: self.generate_cmd_send_diagnostics,
+        # map response callback functions to msg protocols
+        self.CMD_RESPONSE_CB_MAP = {
+            MessageProtocol.SEND_ADDR:
+                self.cmd_send_addr_response_cb,
+            MessageProtocol.SEND_DIAGNOSTICS:
+                self.cmd_send_diagnostics_response_cb,
+            MessageProtocol.UPDATE_CONFIG:
+                self.cmd_update_config_response_cb,
+            MessageProtocol.STOP_STREAMING:
+                self.cmd_stop_streaming_response_cb,
+            MessageProtocol.START_STREAMING:
+                self.cmd_start_streaming_response_cb,
         }
 
         # initialize state of the server to default
         self.state = SERVER_STATE_INIT.copy()
 
+        # initialize logging extra fields
+        self.logging_extra = {
+            'conn_protocol': 'WebSocket',
+            'request': 'SEND/RECEIVE',
+            'url': 'deepstream/server/',
+            'client': self.scope['client']
+        }
+
         # accept the connection
         await self.accept()
-        await self.CMD_TO_FN_MAP.get(DBSC.SEND_ADDR)()
+        await self.CMD_TO_FN_MAP.get(MessageProtocol.SEND_ADDR)()
 
     async def disconnect(self, close_code):
         """
         Gets called when the client is disconnected.
         """
-        print(
-            "Disconnected from the server at address: {}".format(
-                self.state['addr']))
+        pass
 
-    async def send_command(self, command, data={}):
+    async def send_response(self, status, data=None, error=None):
+        """
+        Sends a response JSON object to the deepstream server.
+        """
+
+        if data:
+            # if there is data, only send data to the websocket client
+            await self.send(text_data=json.dumps({
+                "status": status,
+                "data": data
+            }))
+        elif error:
+            # if there is error send error to the websocket client
+            await self.send(text_data=json.dumps({
+                "status": status,
+                "error": error
+            }))
+        else:
+            await self.send(text_data=json.dumps({
+                "status": status
+            }))
+
+    async def send_command(self, msg_protocol, data={}):
         """
         Sends a command JSON object to the deepstream server.
         """
@@ -75,12 +144,12 @@ class DeepstreamBackendStreamer(AsyncWebsocketConsumer):
         if bool(data):
             # if there is data, only send data to the websocket client
             await self.send(text_data=json.dumps({
-                "command": command,
+                "msg_protocol": msg_protocol,
                 "data": data
             }))
         else:
             await self.send(text_data=json.dumps({
-                "command": command
+                "msg_protocol": msg_protocol
             }))
 
     async def receive(self, text_data):
@@ -88,47 +157,194 @@ class DeepstreamBackendStreamer(AsyncWebsocketConsumer):
         Handles the data received from the deepstream server
         """
 
-        data = json.loads(text_data)
-        if await self.validate_data(data):
-            cmd_response_cb_fn = self.CMD_RESPONSE_CB_MAP.get(data['command'])
-            if cmd_response_cb_fn:
-                await cmd_response_cb_fn(data)
+        try:
+            data = json.loads(text_data)
+            if await self.validate_data(data):
+                msg_protocol = MessageProtocol(data['msg_protocol'])
+
+                cmd_response_cb_fn = \
+                    self.CMD_RESPONSE_CB_MAP.get(msg_protocol)
+                if cmd_response_cb_fn:
+                    await cmd_response_cb_fn(data)
+
+        except Exception as exc:
+            input_request_logger.error(
+                'Exception raised: {}'.format(exc),
+                extra={
+                    **self.logging_extra,
+                    'status': status.HTTP_400_BAD_REQUEST,
+                    'msg_protocol': msg_protocol,
+                })
+            await self.send_response(
+                status.HTTP_400_BAD_REQUEST,
+                error="Could not process request."
+            )
 
     async def validate_data(self, data):
         """
         Validates the data received from the deepstream server
         """
 
-        # check if command exists in the data
-        if 'command' not in data:
-            warnings.warn(
-                "Invalid data received from the deepstream server: "
-                "{}".format(),
-                UserWarning)
+        # validate data schema, it must have status and msg type
+        response_status = status.HTTP_400_BAD_REQUEST
+
+        # make sure status is received
+        if 'status' not in data:
+            input_request_logger.error(
+                'Invalid response object received.',
+                extra={
+                    **self.logging_extra,
+                    'status': '',
+                    'msg_protocol': '',
+                })
+
+            await self.send_response(
+                response_status,
+                error={
+                    'status': 'Field required.'}
+            )
             return False
 
+        # check if we got bad request as response
+        if data['status'] == status.HTTP_400_BAD_REQUEST:
+            # check if we got any error related to send 'msg_protocol'
+            if 'error' in data and 'msg_protocol' in data['error']:
+                self.log_error(data, '')
+                return False
+
+        # make sure msg_protocol exists in response
+        if 'msg_protocol' not in data:
+            input_request_logger.error(
+                'Invalid response object received.',
+                extra={
+                    **self.logging_extra,
+                    'status': '',
+                    'msg_protocol': '',
+                })
+
+            await self.send_response(
+                response_status,
+                error={
+                    "msg_protocol":
+                    "Can only be of the following {}.".format(
+                        list(map(int, MessageProtocol)))}
+            )
+            return False
+
+        # check if valid msg protocol is present in data
+        if data['msg_protocol'] not in list(map(int, MessageProtocol)):
+            input_request_logger.error(
+                'Invalid msg_protocol received.',
+                extra={
+                    **self.logging_extra,
+                    'status': response_status,
+                    'msg_protocol': '',
+                })
+            await self.send_response(
+                response_status,
+                error={
+                    "msg_protocol":
+                    "Can only be of the following {}.".format(
+                        list(map(int, MessageProtocol)))}
+            )
+            return False
+
+        msg_protocol = MessageProtocol(data['msg_protocol'])
+
+        # if connection is not informed yet
         if not self.state['alive']:
             # make sure the server address is recieved before any other kind of
             # operation. Only recieve send_addr response until server is alive.
-            if data['command'] != DBSC.SEND_ADDR:
-                warnings.warn(
-                    "Server must send its address to operate",
-                    UserWarning)
+            if msg_protocol != MessageProtocol.SEND_ADDR:
+                input_request_logger.error(
+                    'No MAC address received from the deepstream server.',
+                    extra={
+                        **self.logging_extra,
+                        'status': response_status,
+                        'msg_protocol': msg_protocol,
+                    })
+                await self.send_response(
+                    response_status,
+                    error="Server must send its MAC address to operate"
+                )
                 return False
 
-            if 'addr' not in data:
-                warnings.warn(
-                    "addr: Field required.",
-                    UserWarning)
+            if 'mac_addr' not in data:
+                input_request_logger.error(
+                    '',
+                    extra={
+                        **self.logging_extra,
+                        'status': response_status,
+                        'msg_protocol': msg_protocol,
+                    })
+                await self.send_response(
+                    response_status,
+                    error={"mac_addr": "Field is required."}
+                )
                 return False
+
+            if not re.search(
+                    '([0-9a-fA-F]{2}[:]){5}([0-9a-fA-F]{2})', data['mac_addr']):
+                input_request_logger.error(
+                    '',
+                    extra={
+                        **self.logging_extra,
+                        'status': response_status,
+                        'msg_protocol': msg_protocol,
+                    })
+                await self.send_response(
+                    response_status,
+                    error={"mac_addr": "MAC address is invalid."}
+                )
+                return False
+
         else:
             # server is alive
-            if data['command'] == DBSC.SEND_DIAGNOSTICS and \
-                    'server_state' not in data:
-                warnings.warn(
-                    "No state received from the deepstream server: {}".format(
-                        self.state['addr']),
-                    UserWarning)
+            if msg_protocol == MessageProtocol.SEND_DIAGNOSTICS and \
+                    'diagnostics_info' not in data:
+                input_request_logger.error(
+                    '',
+                    extra={
+                        **self.logging_extra,
+                        'status': response_status,
+                        'msg_protocol': msg_protocol,
+                    })
+                await self.send_response(
+                    response_status,
+                    error={"diagnostics_info": "Field is required."}
+                )
+                return False
+
+            elif msg_protocol == MessageProtocol.START_STREAMING:
+                if 'stream_info' not in data:
+                    input_request_logger.error(
+                        '',
+                        extra={
+                            **self.logging_extra,
+                            'status': response_status,
+                            'msg_protocol': msg_protocol,
+                        })
+                    await self.send_response(
+                        response_status,
+                        error={"stream_info": "Field is required."}
+                    )
+                    return False
+
+                if 'group_id' not in data['stream_info']:
+                    input_request_logger.error(
+                        '',
+                        extra={
+                            **self.logging_extra,
+                            'status': response_status,
+                            'msg_protocol': msg_protocol,
+                        })
+                    await self.send_response(
+                        response_status,
+                        error={
+                            "stream_info": {
+                                "group_id": "Field is required."
+                            }}
+                    )
                 return False
 
         return True
@@ -139,14 +355,67 @@ class DeepstreamBackendStreamer(AsyncWebsocketConsumer):
         SEND_ADDR is sent.
         """
 
-        if not self.state['alive']:
-            # connection established
-            self.state['alive'] = True
-            self.state['addr'] = data['addr']
+        received_status = data['status']
+        if received_status == status.HTTP_200_OK:
+            if not self.state['alive']:
+                # connection established
+                self.state['alive'] = True
 
-            print(
-                "Connection established with the "
-                "server at address: {}".format(self.state['addr']))
+                # get the deepstream server associated with the mac address
+                deepstream_server = await database_sync_to_async(
+                    get_deepstream_server)(data['mac_addr'])
+                self.state['deepstream_server_id'] = deepstream_server.id
+
+                if deepstream_server:
+                    input_request_logger.info(
+                        "Deepstream server validated.",
+                        extra={
+                            **self.logging_extra,
+                            'status': status.HTTP_200_OK,
+                            'msg_protocol': data['msg_protocol'],
+                        })
+
+                    # update the server configuration from actual connected
+                    # server in db
+                    deepstream_server.ip_addr = \
+                        self.scope['client'][0] + ':' + \
+                        str(self.scope['client'][1])
+                    current_time = timezone.now()
+                    deepstream_server.status = DeepstreamServer.ONLINE
+                    deepstream_server.connected_at = current_time
+                    deepstream_server.last_response_received_at = current_time
+                    await database_sync_to_async(
+                        save_deepstream_server)(deepstream_server)
+
+                    # add a log entry to the database regarding connection
+                    await self.log_to_database(
+                        "Connection made with the server.")
+
+                    # send the configuration of this server added in database
+                    # to the server for initialization
+                    await self.generate_cmd_update_config()
+                else:
+                    input_request_logger.info(
+                        "Deepstream server [{}] invalidated.".format(
+                            data['mac_addr']),
+                        extra={
+                            **self.logging_extra,
+                            'status': status.HTTP_200_OK,
+                            'msg_protocol': data['msg_protocol'],
+                        })
+                    await self.send_response(
+                        status.HTTP_400_BAD_REQUEST,
+                        error={
+                            "mac_addr": "MAC address not registered as a "
+                            "deepstream server."}
+                    )
+        else:
+            self.log_error(
+                data,
+                MessageProtocol.SEND_ADDR,
+                log_to_database=True,
+                error_message_prefix="Error raised while fetching MAC address "
+                "from the server.")
 
     async def cmd_send_diagnostics_response_cb(self, data):
         """
@@ -154,8 +423,82 @@ class DeepstreamBackendStreamer(AsyncWebsocketConsumer):
         SEND_DIAGNOSTICS is sent.
         """
 
-        if self.state['alive']:
-            self.state['server_state'] = data['server_state']
+        if data['status'] == status.HTTP_200_OK:
+            if self.state['alive']:
+                await self.log_to_database(
+                    "Diagnostics information received from the server.")
+                self.state['diagnostics_info'] = data['diagnostics_info']
+        else:
+            self.log_error(
+                data,
+                MessageProtocol.SEND_DIAGNOSTICS,
+                log_to_database=True,
+                error_message_prefix="Error raised while fetching diagnostics "
+                "info from the server:")
+
+    async def cmd_update_config_response_cb(self, data):
+        """
+        Callback for response received from the server when the command
+        UPDATE_CONFIG is sent.
+        """
+
+        if data['status'] == status.HTTP_200_OK:
+            if self.state['alive']:
+                await self.log_to_database(
+                    "Deepstream configuration successfully updated:")
+
+                # send the start streaming command once the configuration is
+                # successfully
+                await self.generate_cmd_start_streaming()
+        else:
+            self.log_error(
+                data,
+                MessageProtocol.UPDATE_CONFIG,
+                log_to_database=True,
+                error_message_prefix="Error raised while updating deepstream "
+                "configuration to the server:")
+
+    async def cmd_start_streaming_response_cb(self, data):
+        """
+        Callback for response received from the server when the command
+        START_STREAMING is sent.
+        """
+
+        if data['status'] == status.HTTP_200_OK:
+            if self.state['alive']:
+                await self.log_to_database("Deepstream pipeline started.")
+
+            # start consuming msgs from the started stream
+            try:
+                await self.init_amqp_consumer(data['stream_info']['group_id'])
+            except Exception:
+                # if there is some issue in initializing amqp consumer, send
+                # stop streaming command to server
+                await self.log_to_database(
+                    "Failed to initialize amqp consumer for streamed data.")
+                await self.generate_cmd_stop_streaming()
+        else:
+            self.log_error(
+                data,
+                MessageProtocol.START_STREAMING,
+                log_to_database=True,
+                error_message_prefix="Error raised while starting deepstream:")
+
+    async def cmd_stop_streaming_response_cb(self, data):
+        """
+        Callback for response received from the server when the command
+        STOP_STREAMING is sent.
+        """
+
+        if data['status'] == status.HTTP_200_OK:
+            if self.state['alive']:
+                await self.log_to_database("Deepstream pipeline stopped.")
+        else:
+            self.log_error(
+                data,
+                MessageProtocol.START_STREAMING,
+                log_to_database=True,
+                error_message_prefix="Error raised while stopping deepstream:")
 
     async def deepstream_generate_command(self, event):
         """
@@ -164,13 +507,13 @@ class DeepstreamBackendStreamer(AsyncWebsocketConsumer):
         """
         event = json.loads(event)
         if self.state['alive']:
-            await self.CMD_TO_FN_MAP(event['command'])(event['data'])
+            await self.CMD_TO_FN_MAP(event['msg_protocol'])(event['data'])
 
     async def generate_cmd_send_addr(self, data={}):
         """
         Generates a command for the server corresponding to SEND_DIAGNOSTICS
         """
-        await self.send_command(DBSC.SEND_ADDR)
+        await self.send_command(MessageProtocol.SEND_ADDR)
 
     async def generate_cmd_send_diagnostics(self, data):
         """
@@ -178,37 +521,120 @@ class DeepstreamBackendStreamer(AsyncWebsocketConsumer):
         """
 
         if self.state['alive']:
-            await self.send_command(DBSC.SEND_DIAGNOSTICS)
+            await self.log_to_database(
+                "Requesting diagnostics information from the server...")
+            await self.send_command(MessageProtocol.SEND_DIAGNOSTICS)
 
-    async def init_amqp_consumer(self, event):
-        # get the group_id from the url. Group id in our case would be the
-        # uuid of the respective block the client is watching
-        self.group_id = self.scope['url_route']['kwargs']['group_id']
+    async def generate_cmd_update_config(self):
+        """
+        Generates a command for the server corresponding to UPDATE_CONFIG.
+        """
 
+        if self.state['alive']:
+            # fetch all the cameras associated with this server
+
+            await self.log_to_database("Updating deepstream configuration...")
+            deepstream_config = await database_sync_to_async(
+                generate_deepstream_config)(
+                self.state['deepstream_server_id'])
+            if deepstream_config:
+                await self.send_command(
+                    MessageProtocol.UPDATE_CONFIG, data=deepstream_config)
+            else:
+                await self.log_to_database(
+                    "Failed to generate deepstream configuration.")
+
+    async def generate_cmd_start_streaming(self):
+        """
+        Generates a command for the server corresponding to START_STREAMING.
+        """
+
+        if self.state['alive']:
+            await self.log_to_database("Starting deepstream pipeline...")
+            await self.send_command(MessageProtocol.START_STREAMING)
+
+    async def generate_cmd_stop_streaming(self):
+        """
+        Generates a command for the server corresponding to STOP_STREAMING.
+        """
+
+        if self.state['alive']:
+            await self.log_to_database("Stopping deepstream pipeline...")
+            await self.send_command(MessageProtocol.STOP_STREAMING)
+
+            # close msg consuming as well
+            await self.close_amqp_consumer()
+
+    def log_error(
+            self,
+            data,
+            msg_protocol,
+            error_message_prefix="Error: ",
+            log_to_database=False):
+
+        error_message = error_message_prefix
+        if 'error' in data:
+            error_message += json.dumps({
+                key: data[key] for key in ['status', 'error']
+            })
+        else:
+            error_message += json.dumps({
+                key: data[key] for key in ['status']
+            })
+
+        output_request_logger.error(
+            error_message,
+            extra={
+                **self.logging_extra,
+                'msg_protocol': msg_protocol,
+            })
+
+        if log_to_database:
+            self.log_to_database(error_message)
+
+    async def log_to_database(self, message):
+        if self.state['deepstream_server_id']:
+            await database_sync_to_async(create_deepstream_log_entry)(
+                message, self.state['deepstream_server_id'])
+
+    async def init_amqp_consumer(self, group_id):
         # setup message processors for live incoming data
         self.processors = []
         for processor_type in ACTIVE_MESSAGE_PROCESSORS:
-            self.processors.append(processor_type(self.group_id))
+            self.processors.append(processor_type(group_id))
 
         # make an asynchronous connection to amqp server
-        connection = await aio_pika.connect_robust(
-            "amqp://guest:guest@127.0.0.1/")
+        self.amqp_connection = await aio_pika.connect_robust(
+            "amqp://{}:{}@{}:{}/{}".format(
+                AMQP_USER,
+                AMQP_PASSWORD,
+                AMQP_SERVER_ADDRESS,
+                AMQP_SERVER_PORT,
+                AMQP_SERVER_VHOST))
 
         # make the channel connection
-        channel = await connection.channel()
+        channel = await self.amqp_connection.channel()
         await channel.set_qos(prefetch_count=100)
 
         # setup the amqp queue
-        queue = await channel.declare_queue(
+        self.amqp_queue = await channel.declare_queue(
             exclusive=True, auto_delete=True)
-        await queue.bind(exchange='amq.topic', routing_key=self.group_id)
+        self.amqp_routing_key = group_id
+        await self.amqp_queue.bind(
+            exchange='amq.topic', routing_key=self.amqp_routing_key)
 
         # start consuming messages from the deepstream servers recevied on
         # group_id
-        await queue.consume(self.process_amqp_message)
+        await self.amqp_queue.consume(self.process_amqp_message)
 
     async def process_amqp_message(self, message):
         async with message.process():
             for processor in self.processors:
                 await processor(message.body.decode())
             await asyncio.sleep(1)
+
+    async def close_amqp_consumer(self):
+        # setup message processors for live incoming data
+        await self.amqp_queue.unbind('amq.topic', self.amqp_routing_key)
+        await self.amqp_queue.delete()
+        await self.amqp_connection.close()

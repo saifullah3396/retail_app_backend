@@ -7,7 +7,7 @@ import time
 from channels.generic.websocket import AsyncWebsocketConsumer
 from rest_framework import status
 
-from deepstream_manager.utils import DFSC as DFSC
+from deepstream_manager.utils import DeepstreamFrontendStreamerCommands as DFSC
 
 CONSUMER_STATE_INIT = {
     "streaming": False,

@@ -10,7 +10,7 @@ class DeepstreamFrontendStreamerCommands(IntEnum):
     CHANGE_CAMERA_IDS = 2
 
 
-class DeepstreamBackendStreamerCommands(IntEnum):
+class DeepstreamBackendStreamerMsgProtocol(IntEnum):
     SEND_ADDR = 0
     SEND_DIAGNOSTICS = 1
     UPDATE_CONFIG = 2
