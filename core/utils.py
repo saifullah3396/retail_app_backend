@@ -7,6 +7,8 @@ from rest_framework import exceptions, serializers
 
 from core.permissions import UserGroups
 
+MAC_ADDRESS_VALIDATOR_REGEX = '([0-9a-fA-F]{2}[:]){5}([0-9a-fA-F]{2})'
+
 
 class WritableSerializerMethodField(serializers.SerializerMethodField):
 
