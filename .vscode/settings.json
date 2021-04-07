@@ -25,6 +25,10 @@
     "python.linting.enabled": true,
     "prettier.tabWidth": 4,
     "editor.codeActionsOnSave": {
-        "source.organizeImports":true
+        "source.organizeImports":false
     },
+    "python.pythonPath": "/home/sai/.virtualenvs/django-backend/bin/python",
+    "python.autoComplete.extraPaths": [
+        "${workspaceFolder}/"
+    ]
 }
