@@ -38,7 +38,8 @@ ACTIVE_MESSAGE_PROCESSORS = [
 # default initial state of the connection with deepstream servers
 SERVER_STATE_INIT = {
     'alive': False,
-    'deepstream_server_id': None,
+    'server_id': None,
+    'server_group_id': None
 }
 
 
@@ -330,7 +331,7 @@ class DeepstreamBackendStreamer(AsyncWebsocketConsumer):
                     )
                     return False
 
-                if 'group_id' not in data['stream_info']:
+                if 'routing_key' not in data['stream_info']:
                     input_request_logger.error(
                         '',
                         extra={
@@ -342,10 +343,10 @@ class DeepstreamBackendStreamer(AsyncWebsocketConsumer):
                         response_status,
                         error={
                             "stream_info": {
-                                "group_id": "Field is required."
+                                "routing_key": "Field is required."
                             }}
                     )
-                return False
+                    return False
 
         return True
 
@@ -364,7 +365,9 @@ class DeepstreamBackendStreamer(AsyncWebsocketConsumer):
                 # get the deepstream server associated with the mac address
                 deepstream_server = await database_sync_to_async(
                     get_deepstream_server)(data['mac_addr'])
-                self.state['deepstream_server_id'] = deepstream_server.id
+                self.state['server_id'] = deepstream_server.id
+                self.state['server_group_id'] = await database_sync_to_async(
+                    get_deepstream_server_block_id)(deepstream_server)
 
                 if deepstream_server:
                     input_request_logger.info(
@@ -470,7 +473,9 @@ class DeepstreamBackendStreamer(AsyncWebsocketConsumer):
 
             # start consuming msgs from the started stream
             try:
-                await self.init_amqp_consumer(data['stream_info']['group_id'])
+                await self.init_amqp_consumer(
+                    data['stream_info']['routing_key'],
+                    str(self.state['server_group_id']))
             except Exception:
                 # if there is some issue in initializing amqp consumer, send
                 # stop streaming command to server
@@ -536,7 +541,7 @@ class DeepstreamBackendStreamer(AsyncWebsocketConsumer):
             await self.log_to_database("Updating deepstream configuration...")
             deepstream_config = await database_sync_to_async(
                 generate_deepstream_config)(
-                self.state['deepstream_server_id'])
+                self.state['server_id'])
             if deepstream_config:
                 await self.send_command(
                     MessageProtocol.UPDATE_CONFIG, data=deepstream_config)
@@ -593,15 +598,15 @@ class DeepstreamBackendStreamer(AsyncWebsocketConsumer):
             self.log_to_database(error_message)
 
     async def log_to_database(self, message):
-        if self.state['deepstream_server_id']:
+        if self.state['server_id']:
             await database_sync_to_async(create_deepstream_log_entry)(
-                message, self.state['deepstream_server_id'])
+                message, self.state['server_id'])
 
-    async def init_amqp_consumer(self, group_id):
+    async def init_amqp_consumer(self, routing_key, channels_group_id):
         # setup message processors for live incoming data
         self.processors = []
         for processor_type in ACTIVE_MESSAGE_PROCESSORS:
-            self.processors.append(processor_type(group_id))
+            self.processors.append(processor_type(channels_group_id))
 
         # make an asynchronous connection to amqp server
         self.amqp_connection = await aio_pika.connect_robust(
@@ -619,7 +624,7 @@ class DeepstreamBackendStreamer(AsyncWebsocketConsumer):
         # setup the amqp queue
         self.amqp_queue = await channel.declare_queue(
             exclusive=True, auto_delete=True)
-        self.amqp_routing_key = group_id
+        self.amqp_routing_key = routing_key
         await self.amqp_queue.bind(
             exchange='amq.topic', routing_key=self.amqp_routing_key)
 
