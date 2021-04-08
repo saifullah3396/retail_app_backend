@@ -6,7 +6,7 @@ between deepstream and django
 from deepstream_servers.models import DeepstreamLogEntry, DeepstreamServer
 from cameras.models import Camera
 from cameras.serializers import CameraDetailSerializerDeepstream
-from backend.settings import AMQP_SERVER_ADDRESS, AMQP_SERVER_PORT
+from backend.settings import AMQP_USER, AMQP_PASSWORD, AMQP_SERVER_ADDRESS, AMQP_SERVER_PORT
 
 
 def create_deepstream_log_entry(message, server_id):
@@ -30,12 +30,12 @@ def generate_deepstream_config(server_id):
         cameras = Camera.objects.filter(
             deepstream_server=deepstream_server)
         config = {
-            "block_id": str(deepstream_server.block.id),
+            "id": str(deepstream_server.id),
             "cameras": CameraDetailSerializerDeepstream(
                 cameras, many=True).data,
             "amqp_config": {
-                "username": "guest",
-                "password": "guest",
+                "username": AMQP_USER,
+                "password": AMQP_PASSWORD,
                 "hostname": AMQP_SERVER_ADDRESS,
                 "port": AMQP_SERVER_PORT
             }
