@@ -55,6 +55,13 @@ def get_deepstream_server(mac_addr):
         return None
 
 
+def get_deepstream_server_block_id(server):
+    """
+    Returns the deepstream server with associatd MAC address from the database
+    """
+    return server.block.id
+
+
 def save_deepstream_server(deepstream_server):
     """
     Saves the given deepstream server to db
