@@ -24,7 +24,7 @@ AMQP_SERVER_ADDRESS = "10.12.42.157"
 AMQP_SERVER_PORT = "5672"
 AMQP_USER = "retail_django_admin"
 AMQP_PASSWORD = "admin"
-AMQP_SERVER_VHOST = "retail_django_server"
+AMQP_SERVER_VHOST = ""
 
 # load environment variables stored in .env
 load_dotenv(os.path.join(BASE_DIR, '.env'))
@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.gis',
     'django_filters',
+    'django_extensions',
 
     # The following apps are required for rest registration
     'django.contrib.sites',
