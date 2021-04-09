@@ -23,7 +23,7 @@ class Location(models.Model):
     """Organization with which this location is associated."""
     organization = models.ForeignKey(
         'organizations.Organization',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
     )
 
     def __str__(self):
@@ -48,7 +48,7 @@ class Floor(models.Model):
     """Location with which this floor is associated."""
     location = models.ForeignKey(
         'locations.Location',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
     )
 
     class Meta:
@@ -84,7 +84,7 @@ class Block(models.Model):
     """Floor with which this block is associated."""
     floor = models.ForeignKey(
         'locations.Floor',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
     )
 
     class Meta:
@@ -117,7 +117,7 @@ class MeasurementFrame(models.Model):
     """Block with which this block is associated."""
     block = models.ForeignKey(
         'locations.Block',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
     )
 
     def __str__(self):

@@ -16,22 +16,17 @@ from .serializers import CameraSerializer
 
 
 class CameraView:
-    ordering_fields = ['id', 'place_name', 'ip_addr']
+    ordering_fields = ['id']
     filterset_fields = {
-        'place_name': ['exact', 'icontains'],
+        'id': ['exact'],
+        'block__id': ['exact'],
     }
 
     def _get_model(self):
-
         return Camera
 
     def _order_by(self):
-
-        return 'place_name'
-
-    # def _get_organizations_tree(self, organization):
-    #     return self.organizations_tree_wrt_request[self.request.method](
-    #         organization)
+        return 'id'
 
 
 class CamerasListCreateDestroyView(CoreListCreateDestroyView, CameraView):

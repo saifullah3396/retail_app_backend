@@ -24,7 +24,7 @@ class DeepstreamLogEntry(models.Model):
     """Server with which the log info is associated with."""
     deepstream_server = models.ForeignKey(
         'deepstream_servers.DeepstreamServer',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         null=True,
     )
 
@@ -51,7 +51,7 @@ class DeepstreamDiagnostics(models.Model):
     """Server with which the diagnostics info is associated with."""
     deepstream_server = models.ForeignKey(
         'deepstream_servers.DeepstreamServer',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
     )
 
     """CPU Utilization of the server."""
@@ -109,7 +109,7 @@ class DeepstreamServer(models.Model):
     mac_addr = models.CharField(max_length=17)
 
     """Block with which this server is associated."""
-    block = models.ForeignKey("locations.Block", on_delete=models.CASCADE)
+    block = models.ForeignKey("locations.Block", on_delete=models.PROTECT)
 
     """Status of the server whether it is currently online or offline"""
     status = models.CharField(

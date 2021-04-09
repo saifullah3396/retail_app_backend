@@ -22,7 +22,7 @@ class Organization(MPTTModel):
     desc = models.TextField(blank=True)
 
     """Parent organization if any exists."""
-    parent = TreeForeignKey('self', on_delete=models.CASCADE,
+    parent = TreeForeignKey('self', on_delete=models.PROTECT,
                             null=True, blank=True, related_name='children')
 
     def __str__(self):
