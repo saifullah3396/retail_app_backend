@@ -161,7 +161,7 @@ class DeepstreamFrontendStreamer(AsyncWebsocketConsumer):
         """
         message_dict = json.loads(event['message'])
         if self.state['streaming'] and \
-                int(message_dict['sensorId']) in self.state['camera_ids']:
+                message_dict['sensorId'] in self.state['camera_ids']:
             await self.send_response(
                 status.HTTP_200_OK,
                 data={
