@@ -64,7 +64,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.gis',
     'django_filters',
     'django_extensions',
 
@@ -142,8 +141,9 @@ CHANNEL_LAYERS = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'retail-app',
-        'USER': 'sai',
+        'NAME': 'admin_panel',
+        'USER': 'asif',
+        'PASSWORD':'EngrAsif@065'
     }
 }
 db_from_env = dj_database_url.config(conn_max_age=600)
