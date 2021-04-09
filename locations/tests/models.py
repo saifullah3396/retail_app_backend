@@ -4,7 +4,6 @@ Defines the test cases for models of this application.
 
 from django.test import TestCase
 from django.urls import reverse
-from django.contrib.gis.geos import Point
 from organizations.models import Organization
 from locations.models import Location, Floor, Block
 

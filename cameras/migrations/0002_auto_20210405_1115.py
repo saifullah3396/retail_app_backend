@@ -10,10 +10,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='camera',
-            name='coords',
-        ),
         migrations.AddField(
             model_name='camera',
             name='coords_x',

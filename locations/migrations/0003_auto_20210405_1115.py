@@ -6,22 +6,10 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('locations', '0002_auto_20210405_1110'),
+        ('locations', '0001_initial'),
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='block',
-            name='coordinate_frame',
-        ),
-        migrations.RemoveField(
-            model_name='block',
-            name='size',
-        ),
-        migrations.RemoveField(
-            model_name='measurementframe',
-            name='pose_in_global',
-        ),
         migrations.AddField(
             model_name='block',
             name='coordinate_frame_theta',
