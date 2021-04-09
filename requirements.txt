@@ -12,5 +12,6 @@ gunicorn
 whitenoise
 python-dotenv
 channels
+pika
 ./django-rest-auth
 ./django-rest-framework-jwt
