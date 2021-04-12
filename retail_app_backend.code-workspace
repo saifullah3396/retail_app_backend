@@ -4,5 +4,22 @@
 			"path": "."
 		}
     ],
-    "settings": {}
+    "settings": {
+        "python.pythonPath": "/home/sai/.virtualenvs/django-backend/bin/python",
+        "python.linting.pylintEnabled": false,
+        "python.linting.pycodestyleEnabled": true,
+        "python.linting.enabled": true,
+        "python.linting.pycodestyleArgs": [
+            "--max-line-length=120",
+            "--ignore=import-error"
+        ],
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4,
+        "editor.detectIndentation": false,
+        "prettier.tabWidth": 4,
+        "prettier.useTabs": false,
+        "files.trimTrailingWhitespace": true,
+        "editor.rulers": [ 120 ],
+        "editor.formatOnSave": true,
+    }
 }
