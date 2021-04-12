@@ -7,6 +7,7 @@ from django.urls import path
 from .views.blocks_views import *
 from .views.floors_views import *
 from .views.locations_views import *
+from .views.measurement_frame_views import *
 
 urlpatterns = [
     path(
@@ -33,4 +34,13 @@ urlpatterns = [
         '<uuid:location_id>/floors/<uuid:floor_id>/blocks/<pk>',
         BlocksRetrieveUpdateDestroyView.as_view(),
         name='blocks_retrieve_update_delete'),
+
+    path(
+        '<uuid:location_id>/floors/<uuid:floor_id>/blocks/<uuid:block_id>/frames/',
+        MeasurementFrameListCreateDestroyView.as_view(),
+        name='measurement_frame_list_create_delete'),
+    path(
+        '<uuid:location_id>/floors/<uuid:floor_id>/blocks/<uuid:block_id>/frames/<pk>',
+        MeasurementFrameRetrieveUpdateDestroyView.as_view(),
+        name='measurement_frame_retrieve_update_delete'),
 ]

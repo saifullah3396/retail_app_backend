@@ -4,7 +4,7 @@ Defines the serializers used in the locations api.
 
 from rest_framework import serializers
 
-from ..models import Block, Floor, Location
+from ..models import Block, Floor, Location, MeasurementFrame
 
 
 class LocationListSerializer(serializers.ModelSerializer):
@@ -24,6 +24,10 @@ class BlockListSerializer(serializers.ModelSerializer):
         model = Block
         fields = ('id', 'name')
 
+class MeasurementFrameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MeasurementFrame
+        fields = '__all__'
 
 class BlockDetailSerializer(serializers.ModelSerializer):
     floor_map = serializers.SerializerMethodField()
@@ -74,3 +78,4 @@ class LocationDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
         fields = ('id', 'name', 'organization', 'floors')
+

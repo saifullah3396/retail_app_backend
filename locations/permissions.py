@@ -83,3 +83,22 @@ class BlocksRetrieveUpdateDestroyPermission(AppDjangoModelPermissions):
     def __init__(self):
         self.perms_map = copy.deepcopy(self.perms_map)
         self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
+
+class MeasurementFrameListCreateDestroyPermission(AppDjangoModelPermissions):
+    """
+    Permissions required on the MeasurementFrameListCreateDestroyView
+    """
+
+    def __init__(self):
+        self.perms_map = copy.deepcopy(self.perms_map)
+        self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
+
+
+class MeasurementFrameRetrieveUpdateDestroyPermission(AppDjangoModelPermissions):
+    """
+    Permissions required on the MeasurementFrameRetrieveUpdateDestroyView
+    """
+
+    def __init__(self):
+        self.perms_map = copy.deepcopy(self.perms_map)
+        self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
