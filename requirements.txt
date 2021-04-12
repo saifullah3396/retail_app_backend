@@ -13,5 +13,7 @@ whitenoise
 python-dotenv
 channels
 pika
+aio_pika
+django_extensions
 ./django-rest-auth
 ./django-rest-framework-jwt
