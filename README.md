@@ -46,12 +46,6 @@ sudo apt update
 sudo apt install postgresql postgresql-contrib
 ```
 
-Install PostGis for Postgresql
-
-```
-sudo apt install postgresql-<available-version>-postgis-2.4
-```
-
 Login to base postgresql user:
 
 ```
@@ -74,13 +68,6 @@ Create a new database:
 
 ```
 createdb <database-name>
-```
-
-Create postgis extension needed from django:
-
-```
-psql -d <database-name>
-CREATE EXTENSION postgis;
 ```
 
 Update the postgresql configuration for the new user by adding the following line to `pg_hba.conf` file in `/etc/postgresql/`.
