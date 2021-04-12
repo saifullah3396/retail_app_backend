@@ -41,7 +41,6 @@ class OrganizationUpdateTests(TestsBase):
                         'user': 'staff_user',
                         'data': {
                             'name': 'test_1_org_1_updated',
-                            'desc': 'test_1_org_1_desc_updated',
                         },
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
@@ -58,7 +57,6 @@ class OrganizationUpdateTests(TestsBase):
                         'user': 'org_1_admin_user',
                         'data': {
                             'name': 'test_2_org_1_updated',
-                            'desc': 'test_2_org_1_desc_updated',
                         },
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
@@ -75,7 +73,6 @@ class OrganizationUpdateTests(TestsBase):
                         'user': 'sub_org_11_admin_user',
                         'data': {
                             'name': 'test_3_org_1_updated',
-                            'desc': 'test_3_org_1_desc_updated',
                         },
                         'status': status.HTTP_404_NOT_FOUND
                     },
@@ -86,7 +83,6 @@ class OrganizationUpdateTests(TestsBase):
                         'user': 'org_2_admin_user',
                         'data': {
                             'name': 'test_4_org_1_updated',
-                            'desc': 'test_4_org_1_desc_updated',
                         },
                         'status': status.HTTP_404_NOT_FOUND
                     },
@@ -96,7 +92,6 @@ class OrganizationUpdateTests(TestsBase):
                         'user': 'employee_user',
                         'data': {
                             'name': 'test_5_org_1_updated',
-                            'desc': 'test_5_org_1_desc_updated',
                         },
                         'status': status.HTTP_403_FORBIDDEN
                     },
@@ -106,7 +101,6 @@ class OrganizationUpdateTests(TestsBase):
                         'user': 'other_user',
                         'data': {
                             'name': 'test_6_org_1_updated',
-                            'desc': 'test_6_org_1_desc_updated',
                         },
                         'status': status.HTTP_403_FORBIDDEN
                     }
@@ -123,7 +117,6 @@ class OrganizationUpdateTests(TestsBase):
                         'user': 'staff_user',
                         'data': {
                             'name': 'test_1_sub_1_org_1_updated',
-                            'desc': 'test_1_sub_1_org_1_desc_updated',
                         },
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
@@ -142,7 +135,6 @@ class OrganizationUpdateTests(TestsBase):
                         'user': 'org_1_admin_user',
                         'data': {
                             'name': 'test_2_sub_1_org_1_updated',
-                            'desc': 'test_2_sub_1_org_1_desc_updated',
                         },
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
@@ -160,7 +152,6 @@ class OrganizationUpdateTests(TestsBase):
                         'user': 'sub_org_11_admin_user',
                         'data': {
                             'name': 'test_34_sub_1_org_1_updated',
-                            'desc': 'test_34_sub_1_org_1_desc_updated',
                         },
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
@@ -179,7 +170,6 @@ class OrganizationUpdateTests(TestsBase):
                         'user': 'sub_org_12_admin_user',
                         'data': {
                             'name': 'test_34_sub_1_org_1_updated',  # duplicate name here
-                            'desc': 'test_34_sub_1_org_1_desc_updated',
                         },
                         'status': status.HTTP_400_BAD_REQUEST
                     },
@@ -190,7 +180,6 @@ class OrganizationUpdateTests(TestsBase):
                         'user': 'org_2_admin_user',
                         'data': {
                             'name': 'test_5_sub_1_org_1_updated',
-                            'desc': 'test_5_sub_1_org_1_desc_updated',
                         },
                         'status': status.HTTP_404_NOT_FOUND
                     },
@@ -201,7 +190,6 @@ class OrganizationUpdateTests(TestsBase):
                         'user': 'sub_org_12_admin_user',
                         'data': {
                             'name': 'test_6_sub_1_org_1_updated',
-                            'desc': 'test_6_sub_1_org_1_desc_updated',
                         },
                         'status': status.HTTP_404_NOT_FOUND
                     },
@@ -211,7 +199,6 @@ class OrganizationUpdateTests(TestsBase):
                         'user': 'employee_user',
                         'data': {
                             'name': 'test_7_sub_1_org_1_updated',
-                            'desc': 'test_7_sub_1_org_1_desc_updated',
                         },
                         'status': status.HTTP_403_FORBIDDEN
                     },
@@ -221,7 +208,6 @@ class OrganizationUpdateTests(TestsBase):
                         'user': 'employee_user',
                         'data': {
                             'name': 'test_8_sub_1_org_1_updated',
-                            'desc': 'test_8_sub_1_org_1_desc_updated',
                         },
                         'status': status.HTTP_403_FORBIDDEN
                     },
@@ -231,7 +217,6 @@ class OrganizationUpdateTests(TestsBase):
                         'user': 'other_user',
                         'data': {
                             'name': 'test_9_sub_1_org_1_updated',
-                            'desc': 'test_9_sub_1_org_1_desc_updated',
                         },
                         'status': status.HTTP_403_FORBIDDEN
                     },

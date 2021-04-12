@@ -51,7 +51,7 @@ class AppUser(AbstractUser):
     # organization with which this user is associated
     organization = models.ForeignKey(
         'organizations.Organization',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         null=True,
         blank=True
     )

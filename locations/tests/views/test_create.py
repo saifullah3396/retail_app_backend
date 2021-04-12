@@ -145,7 +145,6 @@ class LocationCreateTests(TestsBase):
                         'test_name': 'create_location_other_user',
                         'data': {
                             'name': 'My location 7',
-                            'desc': 'No description',
                         },
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN

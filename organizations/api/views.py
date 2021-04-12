@@ -14,7 +14,7 @@ from .serializers import OrganizationSerializer
 
 
 class OrganizationsView:
-    ordering_fields = ['id', 'name', 'desc']
+    ordering_fields = ['id', 'name']
     filterset_fields = {
         'name': ['exact', 'icontains'],
     }

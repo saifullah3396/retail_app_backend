@@ -39,7 +39,6 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_org_by_staff',
                         'data': {
                             'name': 'test_12_organization',
-                            'desc': 'test_12_desc',
                         },
                         'user': 'staff_user',
                         'status': status.HTTP_201_CREATED,
@@ -52,7 +51,6 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_org_duplicate_by_staff',
                         'data': {
                             'name': 'test_12_organization',
-                            'desc': 'test_12_desc',
                         },
                         'user': 'staff_user',
                         'status': status.HTTP_400_BAD_REQUEST
@@ -61,7 +59,6 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_org_by_org_admin',
                         'data': {
                             'name': 'test_3_organization',
-                            'desc': 'test_3_desc',
                             'parent': None
                         },
                         'user': 'org_1_admin_user',
@@ -71,7 +68,6 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_org_by_sub_org_admin',
                         'data': {
                             'name': 'test_4_organization',
-                            'desc': 'test_4_desc',
                             'parent': None
                         },
                         'user': 'sub_org_11_admin_user',
@@ -81,7 +77,6 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_org_by_employee',
                         'data': {
                             'name': 'test_5_organization',
-                            'desc': 'test_5_desc',
                         },
                         'user': 'employee_user',
                         'status': status.HTTP_403_FORBIDDEN
@@ -90,7 +85,6 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_org_by_other_user',
                         'data': {
                             'name': 'test_6_organization',
-                            'desc': 'test_6_desc',
                         },
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN
@@ -106,7 +100,6 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_sub_org_in_org_1_by_staff',
                         'data': {
                             'name': 'test_12_sub_org_in_org_1',
-                            'desc': 'test_12_desc',
                             'parent': self.orgs['org_1'].id
                         },
                         'user': 'staff_user',
@@ -120,7 +113,6 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_dup_sub_org_in_org_1_by_staff',
                         'data': {
                             'name': 'test_12_sub_org_in_org_1',
-                            'desc': 'test_12_desc',
                             'parent': self.orgs['org_1'].id
                         },
                         'user': 'staff_user',
@@ -131,7 +123,6 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_sub_org_in_org_1_by_org_1_admin',
                         'data': {
                             'name': 'test_34_sub_org_in_org_1',
-                            'desc': 'test_34_desc',
                             'parent': self.orgs['org_1'].id
                         },
                         'user': 'org_1_admin_user',
@@ -145,7 +136,6 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_dup_sub_org_in_org_1_by_org_1_admin',
                         'data': {
                             'name': 'test_34_sub_org_in_org_1',
-                            'desc': 'test_34_desc',
                             'parent': self.orgs['org_1'].id
                         },
                         'user': 'org_1_admin_user',
@@ -156,7 +146,6 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_sub_org_in_org_1_by_sub_1_org_1_admin',
                         'data': {
                             'name': 'test_5_sub_org_in_org_1',
-                            'desc': 'test_5_desc',
                             'parent': self.orgs['org_1'].id
                         },
                         'user': 'sub_org_11_admin_user',
@@ -167,7 +156,6 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_sub_org_in_org_1_by_org_2_admin',
                         'data': {
                             'name': 'test_6_sub_org_in_org_1',
-                            'desc': 'test_6_desc',
                             'parent': self.orgs['org_1'].id
                         },
                         'user': 'org_2_admin_user',
@@ -177,7 +165,6 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_sub_org_in_org_2_by_org_2_admin',
                         'data': {
                             'name': 'test_7_sub_org_in_org_2',
-                            'desc': 'test_7_desc',
                             'parent': self.orgs['org_2'].id
                         },
                         'user': 'org_2_admin_user',
@@ -191,7 +178,6 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_sub_org_in_org_1_by_employee',
                         'data': {
                             'name': 'test_8_sub_org_in_org_1',
-                            'desc': 'test_8_desc',
                             'parent': self.orgs['org_1'].id
                         },
                         'user': 'employee_user',
@@ -201,7 +187,6 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_sub_org_in_org_1_by_other_user',
                         'data': {
                             'name': 'test_9_sub_org_in_org_1',
-                            'desc': 'test_9_desc',
                             'parent': self.orgs['org_1'].id
                         },
                         'user': 'other_user',

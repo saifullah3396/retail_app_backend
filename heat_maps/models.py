@@ -23,7 +23,7 @@ class DensityHistogram(models.Model):
     """Block with which this histogram is associated."""
     block = models.ForeignKey(
         'locations.Block',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
     )
 
     """Time at which the field was created."""

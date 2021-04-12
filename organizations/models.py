@@ -18,9 +18,6 @@ class Organization(MPTTModel):
     """Unique organization name."""
     name = models.CharField(max_length=125, default="Unknown", unique=True)
 
-    """Description of the organization."""
-    desc = models.TextField(blank=True)
-
     """Parent organization if any exists."""
     parent = TreeForeignKey('self', on_delete=models.PROTECT,
                             null=True, blank=True, related_name='children')
