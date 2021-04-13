@@ -8,9 +8,6 @@ from core.permissions import AppDjangoModelPermissions, UserGroups
 
 from .models import DeepstreamServer
 
-"""
-Define the user group permissions for the Server model.
-"""
 USER_GROUP_PERMISSIONS = {
     # add organization admin permissions on DeepstreamServer
     UserGroups.ORGANIZATION_ADMIN_GROUP.name: {
@@ -36,7 +33,8 @@ class DeepstreamServersListCreateDestroyPermission(AppDjangoModelPermissions):
         self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
 
 
-class DeepstreamServersRetrieveUpdateDestroyPermission(AppDjangoModelPermissions):
+class DeepstreamServersRetrieveUpdateDestroyPermission(
+        AppDjangoModelPermissions):
     """
     Permissions required on the DeepstreamServerCreateDestroyView
     """

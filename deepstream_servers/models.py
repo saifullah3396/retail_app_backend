@@ -4,11 +4,12 @@ Defines the model of deepstream servers
 import re
 import uuid
 
-from core.utils import MAC_ADDRESS_VALIDATOR_REGEX
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
 from django.db import models
 from django.utils import timezone
+
+from core.utils import MAC_ADDRESS_VALIDATOR_REGEX
 
 
 class DeepstreamLogEntry(models.Model):
@@ -45,7 +46,6 @@ class DeepstreamDiagnostics(models.Model):
     A model of a deepstream server diagnostics information
     """
 
-    """Unique uuid for each diagnostic message."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     """Server with which the diagnostics info is associated with."""

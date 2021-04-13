@@ -3,8 +3,9 @@ Defines the urls for the views defined in the Server api.
 """
 from django.urls import path
 
-from .views import (DeepstreamServersListCreateDestroyView,
-                    DeepstreamServersRetrieveUpdateDestroyView)
+from deepstream_servers.views import (
+    DeepstreamServersListCreateDestroyView,
+    DeepstreamServersRetrieveUpdateDestroyView)
 
 urlpatterns = [
     path(

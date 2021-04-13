@@ -13,20 +13,24 @@ class LocationListSerializer(serializers.ModelSerializer):
         model = Location
         fields = '__all__'
 
+
 class FloorListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Floor
         fields = ('id', 'number')
+
 
 class BlockListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Block
         fields = ('id', 'name')
 
+
 class MeasurementFrameSerializer(serializers.ModelSerializer):
     class Meta:
         model = MeasurementFrame
         fields = '__all__'
+
 
 class BlockDetailSerializer(serializers.ModelSerializer):
     floor_map = serializers.SerializerMethodField()
@@ -53,6 +57,7 @@ class BlockDetailSerializer(serializers.ModelSerializer):
             "y": block.pixels_to_m_y
         }
 
+
 class FloorDetailSerializer(serializers.ModelSerializer):
     blocks = serializers.SerializerMethodField()
 
@@ -67,6 +72,7 @@ class FloorDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Floor
         fields = ('id', 'number', 'blocks')
+
 
 class LocationDetailSerializer(serializers.ModelSerializer):
     floors = serializers.SerializerMethodField()

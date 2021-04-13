@@ -1,5 +1,6 @@
-from locations.models import Location
-from locations.utils import *
+# pylint: disable=missing-module-docstring
+from locations.utils import (get_locations_for_employee,
+                             get_locations_for_organization_admin)
 
 from .models import DeepstreamServer
 
