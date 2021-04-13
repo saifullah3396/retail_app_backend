@@ -4,12 +4,13 @@ Defines the base functionality for unit tests generation for our applications.
 
 from django.contrib.auth.models import Group
 from django.core.management import call_command
-from django.urls import include, path, reverse
-from locations.models import Block, Floor, Location
-from organizations.models import Organization
+from django.urls import reverse
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase, URLPatternsTestCase
 from rest_framework_jwt.settings import api_settings
+
+from locations.models import Block, Floor, Location
+from organizations.models import Organization
 from users.models import AppUser
 
 from .permissions import UserGroups
@@ -485,7 +486,7 @@ class TestsBase(APITestCase, URLPatternsTestCase):
                 if 'response_check' in request:
                     response_check = request['response_check']
 
-                response = self.call_api(
+                self.call_api(
                     url,
                     data,
                     self.tokens[request['user']],
@@ -501,8 +502,7 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             status_code,
             api_type,
             response_check=None,
-            debug=True,
-            make_assert=True):
+            debug=True):
         """
         Calls the rest api for tests cases as defined by the input parameters.
         """

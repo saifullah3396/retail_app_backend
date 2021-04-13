@@ -1,11 +1,16 @@
-from django.contrib.auth.models import Group
+"""
+Defines the core REST API views on which all other application views will be
+based.
+"""
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, pagination, status
-from rest_framework.generics import *
+from rest_framework import exceptions, filters, pagination, status
+from rest_framework.generics import (DestroyAPIView, GenericAPIView,
+                                     ListCreateAPIView,
+                                     RetrieveUpdateDestroyAPIView)
 from rest_framework.response import Response
-from rest_framework_jwt import authentication
 
-from core.utils import *
+from core.utils import (exclude_queryset_by_id_list,
+                        filter_queryset_by_id_list, get_fn_by_group)
 
 
 class PaginationConfig(pagination.PageNumberPagination):
@@ -255,8 +260,8 @@ class CoreRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView, CoreAPIView):
         Implements the customized destroy functionalty for a different response
         on deletion of item.
         """
-        resp = super(CoreRetrieveUpdateDestroyView, self).destroy(
-            request, *args, **kwargs)
+
+        _ = super().delete(request, *args, **kwargs)
         return Response(data={
             "msg": "Object(s) deleted successfully."},
             status=status.HTTP_200_OK)
