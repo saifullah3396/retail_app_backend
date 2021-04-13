@@ -1,13 +1,13 @@
 """
 Defines the unit tests related to 'create' api requests for this application.
 """
-import copy
-
-from core.tests import TestsBase
-from django.urls import include, path, reverse
+from django.urls import include, path
 from rest_framework import status
 
+from core.tests import TestsBase
 
+
+# pylint: disable=pointless-string-statement
 class LocationCreateTests(TestsBase):
     """
     Defines unit tests for 'create' api requests for views defined at
@@ -87,7 +87,8 @@ class LocationCreateTests(TestsBase):
                         )
                     },
                     {   # create location by org-admin in lower tree, okay
-                        'test_name': 'create_location_org_admin_1_in_sub_1_org_1',
+                        'test_name':
+                            'create_location_org_admin_1_in_sub_1_org_1',
                         'data': {
                             'name': 'My location 2',
                             'organization': self.orgs['sub_1_org_1'].id
@@ -111,7 +112,8 @@ class LocationCreateTests(TestsBase):
                     },
                     {   # create location by org-admin in other organization
                         # lower tree, bad
-                        'test_name': 'create_location_org_admin_1_in_sub_1_org_2',
+                        'test_name':
+                            'create_location_org_admin_1_in_sub_1_org_2',
                         'data': {
                             'name': 'My location 4',
                             'organization': self.orgs['sub_1_org_2'].id
@@ -129,7 +131,8 @@ class LocationCreateTests(TestsBase):
                         'status': status.HTTP_400_BAD_REQUEST
                     },
                     {   # create location by sub-org-admin in own tree, bad
-                        'test_name': 'create_location_sub_org_admin_1_in_sub_1_org_1',
+                        'test_name':
+                            'create_location_sub_org_admin_1_in_sub_1_org_1',
                         'data': {
                             'name': 'My location 6',
                             'organization': self.orgs['sub_1_org_1'].id

@@ -1,3 +1,6 @@
+"""
+Utilities used in locations api.
+"""
 from .models import Location, MeasurementFrame
 
 
@@ -43,13 +46,13 @@ def get_measurement_frame_in_locations(locations):
     """
     return MeasurementFrame.objects.filter(block__floor__location__in=locations)
 
+
 def get_measurement_frame_for_employee(user):
     """
     Returns all measurement_frame that are authorized to an employee
     """
     locations = get_locations_for_employee(user)
     return get_measurement_frame_in_locations(locations)
-
 
 
 def get_measurement_frame_for_organization_admin(user):

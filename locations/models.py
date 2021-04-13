@@ -7,6 +7,7 @@ import uuid
 from django.db import models
 
 
+# pylint: disable=pointless-string-statement
 class Location(models.Model):
     """
     A model of a location associated with any organization

@@ -6,11 +6,9 @@ import copy
 
 from core.permissions import AppDjangoModelPermissions, UserGroups
 
-from .models import Location, Floor, Block
+from .models import Block, Floor, Location
 
-"""
-Define the user group permissions for the models of this application.
-"""
+# Define the user group permissions for the models of this application.
 USER_GROUP_PERMISSIONS = {
     UserGroups.ORGANIZATION_ADMIN_GROUP.name: {
         Location: ['add', 'change', 'view', 'delete'],
@@ -84,6 +82,7 @@ class BlocksRetrieveUpdateDestroyPermission(AppDjangoModelPermissions):
         self.perms_map = copy.deepcopy(self.perms_map)
         self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
 
+
 class MeasurementFrameListCreateDestroyPermission(AppDjangoModelPermissions):
     """
     Permissions required on the MeasurementFrameListCreateDestroyView
@@ -94,7 +93,8 @@ class MeasurementFrameListCreateDestroyPermission(AppDjangoModelPermissions):
         self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
 
 
-class MeasurementFrameRetrieveUpdateDestroyPermission(AppDjangoModelPermissions):
+class MeasurementFrameRetrieveUpdateDestroyPermission(
+        AppDjangoModelPermissions):
     """
     Permissions required on the MeasurementFrameRetrieveUpdateDestroyView
     """

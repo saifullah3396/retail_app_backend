@@ -1,13 +1,14 @@
 """
 Defines the unit tests related to 'update' api requests for this application.
 """
-import copy
 
-from core.tests import TestsBase
-from django.urls import include, path, reverse
+from django.urls import include, path
 from rest_framework import status
 
+from core.tests import TestsBase
 
+
+# pylint: disable=pointless-string-statement
 class LocationUpdateTests(TestsBase):
     """
     Defines unit tests for 'update' api requests for views defined
@@ -66,7 +67,8 @@ class LocationUpdateTests(TestsBase):
                     },
                     {   # update location in higher level organization,
                         # no access
-                        'test_name': 'update_location_1_org_1_by_sub_1_org_1_admin',
+                        'test_name':
+                            'update_location_1_org_1_by_sub_1_org_1_admin',
                         'args': [self.locations['location_1_org_1'].id],
                         'user': 'sub_org_11_admin_user',
                         'data': {
@@ -84,7 +86,9 @@ class LocationUpdateTests(TestsBase):
                         'status': status.HTTP_404_NOT_FOUND
                     },
                     {   # update location in org by id, forbidden for employee
-                        'test_name': 'update_location_1_sub_1_org_1_by_sub_org_1_employee',
+                        'test_name':
+                            'update_location_1_sub_1_org_1_by_sub_org_1_'
+                            'employee',
                         'args': [self.locations['location_1_sub_1_org_1'].id],
                         'user': 'employee_user',
                         'data': {
@@ -93,7 +97,8 @@ class LocationUpdateTests(TestsBase):
                         'status': status.HTTP_403_FORBIDDEN
                     },
                     {   # update location by id, forbidden for random user
-                        'test_name': 'update_location_1_sub_1_org_1_by_other_user',
+                        'test_name':
+                            'update_location_1_sub_1_org_1_by_other_user',
                         'args': [self.locations['location_1_sub_1_org_1'].id],
                         'user': 'other_user',
                         'data': {
@@ -109,7 +114,8 @@ class LocationUpdateTests(TestsBase):
                 'path_name': 'locations_retrieve_update_delete',
                 'request': [
                     {   # update sub-org location by id, okay for staff
-                        'test_name': 'update_location_1_sub_1_org_1_by_staff_user',
+                        'test_name':
+                            'update_location_1_sub_1_org_1_by_staff_user',
                         'args': [self.locations['location_1_sub_1_org_1'].id],
                         'user': 'staff_user',
                         'data': {
@@ -124,7 +130,8 @@ class LocationUpdateTests(TestsBase):
                     },
                     {   # update sub-org by id, okay for org admin itself under
                         # which this sub-org exists
-                        'test_name': 'update_location_1_sub_1_org_1_by_org_1_admin',
+                        'test_name':
+                            'update_location_1_sub_1_org_1_by_org_1_admin',
                         'args': [self.locations['location_1_sub_1_org_1'].id],
                         'user': 'org_1_admin_user',
                         'data': {
@@ -137,8 +144,11 @@ class LocationUpdateTests(TestsBase):
                                 'location_1_sub_1_org_1_updated')
                         )
                     },
-                    {   # update sub-org location by id, okay for sub-org admin itself
-                        'test_name': 'update_location_1_sub_1_org_1_by_sub_1_org_1_admin',
+                    {   # update sub-org location by id, okay for sub-org
+                        # admin itself
+                        'test_name':
+                            'update_location_1_sub_1_org_1_by_sub_1_org_1_'
+                            'admin',
                         'args': [self.locations['location_1_sub_1_org_1'].id],
                         'user': 'sub_org_11_admin_user',
                         'data': {
@@ -152,7 +162,9 @@ class LocationUpdateTests(TestsBase):
                         )
                     },
                     {   # test for bad duplicate name
-                        'test_name': 'update_location_1_sub_1_org_2_by_sub_1_org_2_admin',
+                        'test_name':
+                            'update_location_1_sub_1_org_2_by_sub_1_org_2_'
+                            'admin',
                         'args': [self.locations['location_1_sub_1_org_2'].id],
                         'user': 'sub_org_12_admin_user',
                         'data': {

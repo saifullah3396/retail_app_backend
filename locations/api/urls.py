@@ -4,10 +4,15 @@ Defines the urls for the views defined in the locations api.
 
 from django.urls import path
 
-from .views.blocks_views import *
-from .views.floors_views import *
-from .views.locations_views import *
-from .views.measurement_frame_views import *
+from .views.blocks_views import (BlocksListCreateDestroyView,
+                                 BlocksRetrieveUpdateDestroyView)
+from .views.floors_views import (FloorsListCreateDestroyView,
+                                 FloorsRetrieveUpdateDestroyView)
+from .views.locations_views import (LocationsListCreateDestroyView,
+                                    LocationsRetrieveUpdateDestroyView)
+from .views.measurement_frame_views import (
+    MeasurementFrameListCreateDestroyView,
+    MeasurementFrameRetrieveUpdateDestroyView)
 
 urlpatterns = [
     path(
@@ -36,11 +41,13 @@ urlpatterns = [
         name='blocks_retrieve_update_delete'),
 
     path(
-        '<uuid:location_id>/floors/<uuid:floor_id>/blocks/<uuid:block_id>/frames/',
+        '<uuid:location_id>/floors/<uuid:floor_id>/blocks/'
+        '<uuid:block_id>/frames/',
         MeasurementFrameListCreateDestroyView.as_view(),
         name='measurement_frame_list_create_delete'),
     path(
-        '<uuid:location_id>/floors/<uuid:floor_id>/blocks/<uuid:block_id>/frames/<pk>',
+        '<uuid:location_id>/floors/<uuid:floor_id>/blocks/'
+        '<uuid:block_id>/frames/<pk>',
         MeasurementFrameRetrieveUpdateDestroyView.as_view(),
         name='measurement_frame_retrieve_update_delete'),
 ]

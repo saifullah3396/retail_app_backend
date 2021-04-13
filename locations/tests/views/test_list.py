@@ -1,13 +1,14 @@
 """
 Defines the unit tests related to 'list' api requests for this application.
 """
-import copy
 
-from core.tests import TestsBase
-from django.urls import include, path, reverse
+from django.urls import include, path
 from rest_framework import status
 
+from core.tests import TestsBase
 
+
+# pylint: disable=pointless-string-statement
 class LocationListTests(TestsBase):
     """
     Defines unit tests for 'list' api requests for views defined
@@ -41,7 +42,9 @@ class LocationListTests(TestsBase):
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertEqual(
-                                len(data.get('results', None)), len(self.locations_dict))
+                                len(
+                                    data.get('results', None)),
+                                len(self.locations_dict))
                         )
                     },
                     {    # get locations list by org admin

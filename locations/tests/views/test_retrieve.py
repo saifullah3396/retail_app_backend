@@ -1,13 +1,14 @@
 """
 Defines the unit tests related to 'retrieve' api requests for this application.
 """
-import copy
 
-from core.tests import TestsBase
-from django.urls import include, path, reverse
+from django.urls import include, path
 from rest_framework import status
 
+from core.tests import TestsBase
 
+
+# pylint: disable=pointless-string-statement
 class LocationRetrieveTests(TestsBase):
     """
     Defines unit tests for 'retrieve' api requests for views defined
@@ -91,12 +92,14 @@ class LocationRetrieveTests(TestsBase):
                             test.assertEqual(
                                 data.get('id', None),
                                 str(
-                                    self.locations['location_1_sub_1_org_1'].id))
+                                    self.locations[
+                                        'location_1_sub_1_org_1'].id))
                         )
                     },
                     {   # get sub-org location by id, okay for org admin itself
                         # under which this sub-org exists
-                        'test_name': 'get_location_1_sub_1_org_1_by_org_1_admin',
+                        'test_name':
+                            'get_location_1_sub_1_org_1_by_org_1_admin',
                         'args': [self.locations['location_1_sub_1_org_1'].id],
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_200_OK,
@@ -104,11 +107,14 @@ class LocationRetrieveTests(TestsBase):
                             test.assertEqual(
                                 data.get('id', None),
                                 str(
-                                    self.locations['location_1_sub_1_org_1'].id))
+                                    self.locations[
+                                        'location_1_sub_1_org_1'].id))
                         )
                     },
-                    {   # get sub-org location by id, okay for sub-org admin itself
-                        'test_name': 'get_location_1_sub_1_org_1_by_sub_1_org_1_admin',
+                    {   # get sub-org location by id, okay for sub-org admin
+                        # itself
+                        'test_name':
+                            'get_location_1_sub_1_org_1_by_sub_1_org_1_admin',
                         'args': [self.locations['location_1_sub_1_org_1'].id],
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_200_OK,
@@ -116,19 +122,22 @@ class LocationRetrieveTests(TestsBase):
                             test.assertEqual(
                                 data.get('id', None),
                                 str(
-                                    self.locations['location_1_sub_1_org_1'].id))
+                                    self.locations[
+                                        'location_1_sub_1_org_1'].id))
                         )
                     },
                     {   # get sub-org location by id, bad for other
                         # org-admin under which this sub-org does not exist
-                        'test_name': 'get_location_1_sub_1_org_1_by_org_2_admin',
+                        'test_name':
+                            'get_location_1_sub_1_org_1_by_org_2_admin',
                         'args': [self.locations['location_1_sub_1_org_1'].id],
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
                     {   # get sub-org location by id, bad for other
                         # sub-org admin to which this sub-org does not exist
-                        'test_name': 'get_location_1_sub_1_org_1_by_sub_1_org_2_admin',
+                        'test_name':
+                            'get_location_1_sub_1_org_1_by_sub_1_org_2_admin',
                         'args': [self.locations['location_1_sub_1_org_1'].id],
                         'user': 'sub_org_12_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
@@ -141,7 +150,8 @@ class LocationRetrieveTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 data.get('id', None),
-                                str(self.locations['location_1_sub_1_org_1'].id))
+                                str(self.locations[
+                                    'location_1_sub_1_org_1'].id))
                         )
                     },
                     {   # get employees unauth location info, bad

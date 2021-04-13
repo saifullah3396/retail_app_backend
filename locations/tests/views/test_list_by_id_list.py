@@ -2,13 +2,13 @@
 Defines the unit tests related to 'list-by-id-list' api requests for this
 application.
 """
-import copy
-
-from core.tests import TestsBase
-from django.urls import include, path, reverse
+from django.urls import include, path
 from rest_framework import status
 
+from core.tests import TestsBase
 
+
+# pylint: disable=pointless-string-statement
 class LocationListByIdListTests(TestsBase):
     """
     Defines unit tests for 'list-by-id-list' api requests for views defined
@@ -93,7 +93,8 @@ class LocationListByIdListTests(TestsBase):
                     {   # get locations of same org (1) by sub-org
                         # admin (1), okay
                         'test_name':
-                            'test_get_sub_org_1_locations_by_id_by_sub_org_1_admin',
+                            'test_get_sub_org_1_locations_by_id_by_sub_org_1_'
+                            'admin',
                         'args': None,
                         'data': {
                             'id': [

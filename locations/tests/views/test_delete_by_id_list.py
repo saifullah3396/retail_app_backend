@@ -2,13 +2,14 @@
 Defines the unit tests related to 'delete-by-id-list' api requests for this
 application.
 """
-import copy
 
-from core.tests import TestsBase
-from django.urls import include, path, reverse
+from django.urls import include, path
 from rest_framework import status
 
+from core.tests import TestsBase
 
+
+# pylint: disable=pointless-string-statement
 class LocationDeleteByIdListTests(TestsBase):
     """
     Defines unit tests for 'delete-by-id-list' api requests for views defined
@@ -67,7 +68,8 @@ class LocationDeleteByIdListTests(TestsBase):
                         'status': status.HTTP_200_OK
                     },
                     {   # delete location by org-admin in lower tree, okay
-                        'test_name': 'delete_location_org_admin_1_in_sub_1_org_1',
+                        'test_name':
+                            'delete_location_org_admin_1_in_sub_1_org_1',
                         'data': {
                             'id': [
                                 self.locations['location_1_sub_1_org_1'].id]
@@ -87,7 +89,8 @@ class LocationDeleteByIdListTests(TestsBase):
                     },
                     {   # delete location by org-admin in other organization
                         # lower tree, bad
-                        'test_name': 'delete_location_org_admin_1_in_sub_1_org_2',
+                        'test_name':
+                            'delete_location_org_admin_1_in_sub_1_org_2',
                         'data': {
                             'id': [
                                 self.locations['location_1_sub_1_org_2'].id]
@@ -107,7 +110,8 @@ class LocationDeleteByIdListTests(TestsBase):
                         'status': status.HTTP_404_NOT_FOUND
                     },
                     {   # delete location by sub-org-admin in own tree, okay
-                        'test_name': 'delete_location_sub_org_admin_1_in_sub_1_org_1',
+                        'test_name':
+                            'delete_location_sub_org_admin_1_in_sub_1_org_1',
                         'data': {
                             'id': [
                                 self.locations['location_3_sub_1_org_1'].id,
