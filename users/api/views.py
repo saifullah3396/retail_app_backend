@@ -1,23 +1,25 @@
-from core.utils import *
-from core.views import *
-from django.contrib.auth.models import Group
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import *
-from rest_framework import filters, pagination
-from rest_framework.generics import *
+# pylint: disable=missing-module-docstring
+from rest_framework import exceptions, serializers, status
 from rest_framework.response import Response
-from rest_framework_jwt import authentication
 
-from ..models import AppUser
-from ..permissions import *
-from .serializers import *
+from core.permissions import UserGroups
+from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
+from locations.models import Location
+from users.api.serializers import (AppUserDetailRetrieveSerializer,
+                                   AppUserDetailUpdateSerializer,
+                                   AppUserListSerializer)
+from users.models import AppUser
+from users.permissions import (AppUsersListCreateDestroyPermission,
+                               AppUsersRetrieveUpdateDestroyPermission)
 
 
+# pylint: disable=missing-class-docstring
 class AppUsersView:
     ordering_fields = ['id', 'username']
     filterset_fields = {
         'username': ['exact', 'icontains'],
     }
+    organizations_tree_wrt_request = []
 
     def _get_model(self):
         """
@@ -39,6 +41,7 @@ class AppUsersView:
         """
         return self.organizations_tree_wrt_request[self.request.method](
             organization)
+# pylint: disable=missing-function-docstring
 
     def _get_users_in_organizations(self, organizations):
         """
@@ -119,14 +122,7 @@ class AppUsersListCreateDestroyView(
 
         return users_in_tree
 
-        # get the organization tree of the user if its an admin
-        if id_list:
-            return self._filter_objects_by_id_list(
-                organizations_tree, id_list
-            )
-        return organizations_tree
-
-    def perform_create(self, serializer):
+    def perform_create(self):
         """
         User creation is done through RegisterView from django rest-auth
         """
@@ -142,6 +138,7 @@ class AppUsersRetrieveUpdateDestroyView(
 
     queryset = AppUser.objects.none()  # Added for model permissions
     permission_classes = (AppUsersRetrieveUpdateDestroyPermission,)
+# pylint: disable=missing-function-docstring
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
@@ -234,7 +231,6 @@ class AppUsersRetrieveUpdateDestroyView(
         # make sure user to be updated is within the admin's authorization
         request_user_organizations = request_user.organization.get_descendants(
             include_self=True)
-        current_organization = app_user_to_update.organization
         if app_user_to_update.organization not in request_user_organizations:
             raise exceptions.ValidationError(
                 "Invalid user id.")

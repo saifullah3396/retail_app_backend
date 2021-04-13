@@ -1,5 +1,8 @@
+# pylint: disable=missing-module-docstring
 from django.urls import path
-from .views import *
+
+from users.api.views import (AppUsersListCreateDestroyView,
+                             AppUsersRetrieveUpdateDestroyView)
 
 urlpatterns = [
     path(

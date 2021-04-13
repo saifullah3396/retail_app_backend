@@ -1,18 +1,18 @@
-from backend import settings
+# pylint: disable=missing-module-docstring
+from django.contrib.auth.models import Group
+from rest_framework import serializers
+
 from core.permissions import UserGroups
-from core.utils import *
-from django.contrib.auth.models import AbstractUser, Group
-from locations.api.serializers import (LocationDetailSerializer,
-                                       LocationListSerializer)
+from core.utils import WritableSerializerMethodField, get_fn_by_group
 from locations.models import Location
-from locations.utils import *
-from organizations.api.serializers import OrganizationSerializer
+from locations.utils import (get_locations_for_employee,
+                             get_locations_for_organization_admin,
+                             get_locations_for_staff)
 from organizations.models import Organization
-from rest_framework import exceptions, serializers
-
-from ..models import AppUser
+from users.models import AppUser
 
 
+# pylint: disable=missing-class-docstring
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
@@ -24,6 +24,8 @@ class AppUserListOrganizationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organization
         fields = ['id', 'name']
+
+# pylint: disable=missing-function-docstring
 
 
 class AppUserListSerializer(serializers.ModelSerializer):
@@ -69,7 +71,7 @@ class AppUserDetailRetrieveSerializer(serializers.ModelSerializer):
     organization = serializers.SerializerMethodField()
 
     def __init__(self, *args, **kwargs):
-        super(serializers.ModelSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.group_to_locations_fn = {
             UserGroups.ORGANIZATION_ADMIN_GROUP:
                 self._get_organization_admin_locations,
@@ -150,7 +152,7 @@ class AppUserDetailUpdateSerializer(serializers.ModelSerializer):
             child=serializers.UUIDField(), required=False))
 
     def __init__(self, *args, **kwargs):
-        super(serializers.ModelSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.group_to_locations_fn = {
             UserGroups.ORGANIZATION_ADMIN_GROUP:
                 self._get_organization_admin_locations,
@@ -164,6 +166,7 @@ class AppUserDetailUpdateSerializer(serializers.ModelSerializer):
             UserGroups.EMPLOYEE_GROUP:
                 self._get_employee_organizations
         }
+   # pylint: disable=missing-function-docstring
 
     def get_group(self, instance):
         if instance.is_staff:
@@ -188,10 +191,10 @@ class AppUserDetailUpdateSerializer(serializers.ModelSerializer):
             return {
                 'group': group
             }
-        except Group.DoesNotExist:
+        except Group.DoesNotExist as exc:
             raise serializers.ValidationError(
                 'Group of id={} does not exist. Available groups: {}'.format(
-                    group_name, [group.name for group in UserGroups]))
+                    group_name, [group.name for group in UserGroups])) from exc
 
     def get_authorized_locations(self, instance):
         locations = Location.objects.none()
@@ -208,9 +211,10 @@ class AppUserDetailUpdateSerializer(serializers.ModelSerializer):
             try:
                 location = Location.objects.get(id=location_name)
                 locations.append(location)
-            except Location.DoesNotExist:
+            except Location.DoesNotExist as exc:
                 raise serializers.ValidationError(
-                    'Location {} does not exist.'.format(location_name))
+                    'Location {} does not exist.'.format
+                    (location_name)) from exc
         return {
             'authorized_locations': locations
         }
@@ -230,16 +234,17 @@ class AppUserDetailUpdateSerializer(serializers.ModelSerializer):
                     instance, self.group_to_organizations_fn)(instance)
         return AppUserDetailOrganizationSerializer(
             organizations, many=True).data
+    # pylint: disable=missing-function-docstring
 
     def set_organization(self, organization_id):
         try:
             return {
                 'organization': Organization.objects.get(id=organization_id)
             }
-        except Organization.DoesNotExist:
+        except Organization.DoesNotExist as exc:
             raise serializers.ValidationError(
                 'Organization of id={} does not exist.'.format(
-                    organization_id))
+                    organization_id)) from exc
 
     def _get_organization_admin_organizations(self, instance):
         return instance.organization.get_descendants(include_self=True)

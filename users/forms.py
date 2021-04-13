@@ -1,8 +1,9 @@
-from django.db import models
-from django.contrib.auth.forms import UserCreationForm, UserChangeForm
-from django import forms
-from .models import AppUser
+# pylint: disable=missing-module-docstring
+from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.core.exceptions import ValidationError
+
+from .models import AppUser
+
 # from locations.models import Location
 
 

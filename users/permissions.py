@@ -1,9 +1,7 @@
-# permissions.py
+# pylint: disable=missing-module-docstring
 import copy
 
 from core.permissions import AppDjangoModelPermissions, UserGroups
-from django.contrib.auth.models import Group
-from rest_framework import permissions
 
 from .models import AppUser
 
@@ -15,6 +13,8 @@ USER_GROUP_PERMISSIONS = {
         AppUser: ['view', 'change'],
     },
 }
+
+# pylint: disable=missing-class-docstring
 
 
 class AppUsersListCreateDestroyPermission(AppDjangoModelPermissions):

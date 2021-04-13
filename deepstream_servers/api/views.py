@@ -3,11 +3,11 @@ from rest_framework import exceptions
 
 from core.permissions import UserGroups
 from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
+from deepstream_servers.api.serializers import DeepstreamServerSerializer
 from deepstream_servers.models import DeepstreamServer
 from deepstream_servers.permissions import (
     DeepstreamServersListCreateDestroyPermission,
     DeepstreamServersRetrieveUpdateDestroyPermission)
-from deepstream_servers.serializers import DeepstreamServerSerializer
 from deepstream_servers.utils import (get_servers_for_employee,
                                       get_servers_for_organization_admin)
 from locations.models import Block

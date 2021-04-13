@@ -1,7 +1,8 @@
+# pylint: disable=missing-module-docstring
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .forms import AppUserCreationForm, AppUserChangeForm
+from .forms import AppUserChangeForm, AppUserCreationForm
 from .models import AppUser
 
 

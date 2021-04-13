@@ -2,10 +2,10 @@
 
 from rest_framework import exceptions
 
+from cameras.api.serializers import CameraSerializer
 from cameras.models import Camera
 from cameras.permissions import (CamerasListCreateDestroyPermission,
                                  CamerasRetrieveUpdateDestroyPermission)
-from cameras.serializers import CameraSerializer
 from core.permissions import UserGroups
 from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
 from locations.models import Block

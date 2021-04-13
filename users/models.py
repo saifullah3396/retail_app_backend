@@ -1,10 +1,12 @@
+# pylint: disable=missing-module-docstring
 import uuid
-from django.db import models
-from django.contrib.auth.models import AbstractUser, UserManager
+
 from allauth.account.models import EmailAddress
-from backend import settings
+from django.contrib.auth.models import AbstractUser, UserManager
+from django.db import models
 
 
+# pylint: disable=missing-class-docstring
 class AppUserManager(UserManager):
     def create_user(self, username, email=None, password=None, **extra_fields):
         return self._create_user(username, email, password, **extra_fields)
