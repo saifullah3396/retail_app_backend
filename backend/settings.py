@@ -19,6 +19,9 @@ from dotenv import load_dotenv
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_URL = "http://0.0.0.0/"
 
+# load environment variables stored in .env for local development
+load_dotenv(os.path.join(BASE_DIR, '.env'))
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ['SECRET_KEY']
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
@@ -47,9 +50,6 @@ AMQP_SERVER_PORT = "5672"
 AMQP_USER = "retail_django_admin"
 AMQP_PASSWORD = "admin"
 AMQP_SERVER_VHOST = ""
-
-# load environment variables stored in .env for local development
-load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # application definition
 INSTALLED_APPS = [

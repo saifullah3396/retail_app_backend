@@ -24,5 +24,8 @@
     },
     "python.sortImports.args": [
         "--src=${workspaceFolder}"
+    ],
+    "python.autoComplete.extraPaths": [
+        "${workspaceFolder}"
     ]
 }
