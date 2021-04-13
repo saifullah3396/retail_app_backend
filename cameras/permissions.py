@@ -4,13 +4,10 @@ Defines the permissions used in this application.
 
 import copy
 
+from cameras.models import Camera
 from core.permissions import AppDjangoModelPermissions, UserGroups
 
-from .models import Camera
-
-"""
-Define the user group permissions for the Camera model.
-"""
+# Define the user group permissions for the Organization model.
 USER_GROUP_PERMISSIONS = {
     # add organization admin permissions on Camera
     UserGroups.ORGANIZATION_ADMIN_GROUP.name: {

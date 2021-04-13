@@ -1,17 +1,18 @@
 
-from core.utils import *
-from core.views import *
 from django.contrib.auth.models import Group
 from django_filters.rest_framework import DjangoFilterBackend
-from locations.api.serializers import *
-from locations.models import Location
-from locations.permissions import *
-from locations.utils import *
 from rest_framework import *
 from rest_framework import filters, pagination
 from rest_framework.generics import *
 from rest_framework.response import Response
 from rest_framework_jwt import authentication
+
+from core.utils import *
+from core.views import *
+from locations.api.serializers import *
+from locations.models import Location
+from locations.permissions import *
+from locations.utils import *
 
 
 class LocationsView:
@@ -84,8 +85,8 @@ class LocationsListCreateDestroyView(
     def _get_organization_admin_queryset(self):
         """
         For an organization admin, locations in all the organizations below
-        the user organization are returned. In case a list of ids is provided, the
-        locations are filtered further by ids.
+        the user organization are returned. In case a list of ids is provided,
+         the locations are filtered further by ids.
         """
 
         locations = get_locations_for_organization_admin(

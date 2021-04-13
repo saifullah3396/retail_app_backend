@@ -4,16 +4,18 @@ Defines the serializers used in the Cameras api.
 
 from rest_framework import serializers
 
-from ..models import Camera
+from cameras.models import Camera
 
 
+# pylint: disable=missing-class-docstring
 class CameraSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Camera
         fields = ('id', 'ip_addr', 'coords', 'block')
 
-    def to_representation(self, obj):
-        data = super().to_representation(obj)
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
         print('data', data)
 
         repr_data = {}

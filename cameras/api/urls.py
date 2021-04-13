@@ -3,8 +3,8 @@ Defines the urls for the views defined in the cameras api.
 """
 from django.urls import path
 
-from .views import (CamerasListCreateDestroyView,
-                    CamerasRetrieveUpdateDestroyView)
+from cameras.views import (CamerasListCreateDestroyView,
+                           CamerasRetrieveUpdateDestroyView)
 
 urlpatterns = [
     path(

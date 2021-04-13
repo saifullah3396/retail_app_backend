@@ -1,10 +1,10 @@
 {
-	"folders": [
-		{
-			"path": "."
-		}
+    "folders": [
+        {
+            "path": "."
+        }
     ],
     "settings": {
-        "python.pythonPath": "/home/sai/.virtualenvs/django-backend/bin/python",
+        "python.pythonPath": "~/.virtualenvs/django-backend/bin/python",
     }
 }

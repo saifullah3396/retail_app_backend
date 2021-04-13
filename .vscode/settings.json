@@ -1,13 +1,13 @@
 {
-    "python.pythonPath": "/home/sai/.virtualenvs/django-backend/bin/python",
     "python.linting.pylintEnabled": true,
     "python.linting.pycodestyleEnabled": false,
     "python.linting.enabled": true,
     "python.linting.pylintArgs": [
         "--max-line-length=80",
+        "--disable=E0401,django-not-configured",
         "--load-plugins=pylint_django",
-        "--django-settings-module=backend.settings"
     ],
+    "python.pythonPath": "~/.virtualenvs/django-backend/bin/python",
     "python.linting.pycodestyleArgs": [
         "--max-line-length=80",
     ],
@@ -17,12 +17,17 @@
     "prettier.tabWidth": 4,
     "prettier.useTabs": false,
     "files.trimTrailingWhitespace": true,
-    "editor.rulers": [ 80 ],
+    "editor.rulers": [
+        80
+    ],
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
         "source.organizeImports": true
     },
     "python.sortImports.args": [
         "--src=${workspaceFolder}"
+    ],
+    "python.autoComplete.extraPaths": [
+        "${workspaceFolder}"
     ]
 }

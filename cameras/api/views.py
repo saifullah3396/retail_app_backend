@@ -1,20 +1,20 @@
-from cameras.utils import *
+# pylint: disable=missing-module-docstring
+
+from rest_framework import exceptions
+
+from cameras.models import Camera
+from cameras.permissions import (CamerasListCreateDestroyPermission,
+                                 CamerasRetrieveUpdateDestroyPermission)
+from cameras.serializers import CameraSerializer
 from core.permissions import UserGroups
-from core.utils import *
-from core.views import *
-from django.contrib.auth.models import Group
-from django_filters.rest_framework import DjangoFilterBackend
+from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
 from locations.models import Block
-from locations.utils import *
-from rest_framework import generics
-from rest_framework.generics import ListAPIView, RetrieveAPIView
-
-from ..models import Camera
-from ..permissions import (CamerasListCreateDestroyPermission,
-                           CamerasRetrieveUpdateDestroyPermission)
-from .serializers import CameraSerializer
+from locations.utils import (get_cameras_for_employee,
+                             get_cameras_for_organization_admin,
+                             get_locations_for_organization_admin)
 
 
+# pylint: disable=missing-class-docstring
 class CameraView:
     ordering_fields = ['id']
     filterset_fields = {
@@ -51,13 +51,13 @@ class CamerasListCreateDestroyView(CoreListCreateDestroyView, CameraView):
     def _perform_create_by_organization_admin(self, serializer):
         try:
             block = Block.objects.get(self.request.data['block'])
-        except Exception as exceptions:
+        except Block.DoesNotExist as exc:
             raise exceptions.ValidationError(
                 {
                     'block': 'Block not found'
-                })
+                }) from exc
         locations = get_locations_for_organization_admin(
-            self.user, include_self=true)
+            self.user, include_self=True)
 
         if not locations.filter(id=block.floor.location.id):
             raise exceptions.ValidationError(

@@ -1,7 +1,7 @@
-from locations.models import Location
-from locations.utils import *
-
-from .models import Camera
+# pylint: disable=missing-module-docstring
+from cameras.models import Camera
+from locations.utils import (get_locations_for_employee,
+                             get_locations_for_organization_admin)
 
 
 def get_cameras_in_locations(locations):
@@ -20,4 +20,3 @@ def get_cameras_for_employee(user):
     """Returns all cameras that are authorized to an employee."""
     locations = get_locations_for_employee(user)
     return get_cameras_in_locations(locations)
-

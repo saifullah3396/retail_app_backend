@@ -4,11 +4,12 @@ Defines the serializers used in the Cameras api.
 
 from rest_framework import serializers
 
-from .models import Camera
+from cameras.models import Camera
 from locations.models import MeasurementFrame
 from locations.serializers import MeasurementFrameDetailSerializerDeepstream
 
 
+# pylint: disable=missing-class-docstring
 class CameraDetailSerializerDeepstream(serializers.ModelSerializer):
     class Meta:
         model = Camera
@@ -17,7 +18,9 @@ class CameraDetailSerializerDeepstream(serializers.ModelSerializer):
     measurement_frame = serializers.SerializerMethodField()
 
     def get_measurement_frame(self, camera):
-        # return all floors in this location
+        """
+        Return the frames to which camera is associated.
+        """
         try:
             measurement_frame = \
                 MeasurementFrame.objects.get(id=camera.measurement_frame.id)
@@ -26,8 +29,8 @@ class CameraDetailSerializerDeepstream(serializers.ModelSerializer):
         except MeasurementFrame.DoesNotExist:
             return None
 
-    def to_representation(self, obj):
-        data = super().to_representation(obj)
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
 
         repr_data = {}
         repr_data['id'] = data['id']

@@ -1,3 +1,4 @@
+# pylint: disable=missing-module-docstring
 import uuid
 
 from django.contrib.postgres.fields import ArrayField

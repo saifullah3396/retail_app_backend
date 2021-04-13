@@ -4,17 +4,18 @@ Defines the serializers used in the organizations api.
 
 from rest_framework import serializers
 
-from ..models import Organization
+from organizations.models import Organization
 
 
+# pylint: disable=missing-class-docstring
 class OrganizationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Organization
         fields = '__all__'
 
-    def to_representation(self, obj):
-        data = super().to_representation(obj)
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
         repr_data = {}
         repr_data['id'] = data['id']
         repr_data['name'] = data['name']
