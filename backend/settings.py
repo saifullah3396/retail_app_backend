@@ -9,28 +9,15 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
-import os
 import datetime
+import os
+
 import dj_database_url
 from dotenv import load_dotenv
 
-
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+# build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_URL = "http://0.0.0.0/"
-
-# AMQP Server IP address
-AMQP_SERVER_ADDRESS = "10.12.42.157"
-AMQP_SERVER_PORT = "5672"
-AMQP_USER = "retail_django_admin"
-AMQP_PASSWORD = "admin"
-AMQP_SERVER_VHOST = ""
-
-# load environment variables stored in .env
-load_dotenv(os.path.join(BASE_DIR, '.env'))
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ['SECRET_KEY']
@@ -54,9 +41,19 @@ CORS_ORIGIN_WHITELIST = (
     'http://localhost:3000',
 )
 
-# Application definition
+# AMQP Server configuration
+AMQP_SERVER_ADDRESS = "10.12.42.157"
+AMQP_SERVER_PORT = "5672"
+AMQP_USER = "retail_django_admin"
+AMQP_PASSWORD = "admin"
+AMQP_SERVER_VHOST = ""
 
+# load environment variables stored in .env for local development
+load_dotenv(os.path.join(BASE_DIR, '.env'))
+
+# application definition
 INSTALLED_APPS = [
+    # base django applications
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -66,21 +63,22 @@ INSTALLED_APPS = [
     'django_filters',
     'django_extensions',
 
-    # The following apps are required for rest registration
+    # applications used in rest registration
     'django.contrib.sites',
     'whitenoise.runserver_nostatic',
-
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-
-    'channels',
-
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
     'rest_auth',
     'rest_auth.registration',
+
+    # django channels required for live connections and streaming
+    'channels',
+
+    # our applications
     'core',
     'organizations',
     'locations',
@@ -92,6 +90,7 @@ INSTALLED_APPS = [
     'cameras'
 ]
 
+# application middlewares
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -104,8 +103,10 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
+# root url
 ROOT_URLCONF = 'backend.urls'
 
+# templates used by our applications
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -122,8 +123,11 @@ TEMPLATES = [
     },
 ]
 
+# wsgi and asgi application definitions
 WSGI_APPLICATION = 'backend.wsgi.application'
 ASGI_APPLICATION = 'backend.asgi.application'
+
+# definition of django channel layers
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_rabbitmq.core.RabbitmqChannelLayer',
@@ -136,9 +140,7 @@ CHANNEL_LAYERS = {
     },
 }
 
-# Database
-# https://docs.djangoproject.com/en/1.11/ref/settings/#databases
-
+# definition of our databases
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -147,86 +149,62 @@ DATABASES = {
     }
 }
 
-
+# database redifinition from url. This is useful for deployment
 DB_FROM_ENV = dj_database_url.config(conn_max_age=600)
 DATABASES['default'].update(DB_FROM_ENV)
 DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql_psycopg2'
 
-# User config
+# internationalization
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'Asia/Tashkent'
+USE_I18N = True
+USE_L10N = True
+USE_TZ = True
+
+# paths to static files (CSS, JavaScript, Images)
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'retail_app/static')]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# paths to media files
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
+
+# base user model config
 AUTH_USER_MODEL = "users.AppUser"
 
+# user authentication backends
 AUTHENTICATION_BACKENDS = [
-    # Needed to login by username in Django admin, regardless of `allauth`
+    # needed to login by username in Django admin, regardless of `allauth`
     'django.contrib.auth.backends.ModelBackend',
 
     # `allauth` specific authentication methods, such as login by e-mail
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-# Password validation
-# https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
-
+# password validators
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'NAME':
+            'django.contrib.auth.password_validation.'
+            'UserAttributeSimilarityValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'NAME':
+            'django.contrib.auth.password_validation.MinimumLengthValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        'NAME':
+            'django.contrib.auth.password_validation.CommonPasswordValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        'NAME':
+            'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/1.11/topics/i18n/
-
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'Asia/Tashkent'
-
-USE_I18N = True
-
-USE_L10N = True
-
-USE_TZ = True
-
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.11/howto/static-files/
-
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'retail_app/static')]
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-# REST framework settings
-REST_FRAMEWORK = {
-    # Use Django's standard `django.contrib.auth` permissions,
-    # or allow read-only access for unauthenticated users.
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.DjangoModelPermissions'
-    ],
-    # 'DEFAULT_RENDERER_CLASSES': [
-    #     'rest_framework.renderers.JSONRenderer',
-    # ],
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
-    ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 1,
-
-    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
-}
-
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = '/media/'
-
-# Email backend
+# email backend
 SEND_EMAIL_TO_FILE = False
 if SEND_EMAIL_TO_FILE:
     EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
@@ -246,6 +224,27 @@ ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 86400
 ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/accounts/email/'
 ACCOUNT_EMAIL_CONFIRMATION_HMAC = False
+
+# REST framework settings
+REST_FRAMEWORK = {
+    # use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.DjangoModelPermissions'
+    ],
+    # 'DEFAULT_RENDERER_CLASSES': [
+    #     'rest_framework.renderers.JSONRenderer',
+    # ],
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+    ),
+    'DEFAULT_PAGINATION_CLASS':
+        'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 1,
+
+    'DEFAULT_FILTER_BACKENDS':
+        ['django_filters.rest_framework.DjangoFilterBackend']
+}
 
 REST_AUTH_REGISTER_PERMISSION_CLASSES = [
     'rest_framework.permissions.IsAuthenticated',
@@ -304,12 +303,15 @@ STATICFILES_DIRS.append(
     os.path.join(REACT_APP_DIR, 'build', 'static'),
 )
 
+# definition of custom loggers used in our applications
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'format':
+                '{levelname} {asctime} {module} {process:d} {thread:d} '
+                '{message}',
             'style': '{',
         },
         'simple': {
@@ -317,13 +319,15 @@ LOGGING = {
             'style': '{',
         },
         'deepstream_manager_input_request_format': {
-            # pylint: disable=line-too-long
-            'format': '{levelname} {conn_protocol} {request} {url} {status} /{msg_protocol} {client} {message}',
+            'format':
+                '{levelname} {conn_protocol} {request} {url} {status} '
+                '/{msg_protocol} {client} {message}',
             'style': '{',
         },
         'deepstream_manager_output_request_format': {
-            # pylint: disable=line-too-long
-            'format': '{levelname} {conn_protocol} {request} {url} /{msg_protocol} {client} {message}',
+            'format':
+                '{levelname} {conn_protocol} {request} {url} '
+                '/{msg_protocol} {client} {message}',
             'style': '{',
         },
     },
