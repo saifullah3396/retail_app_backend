@@ -5,6 +5,8 @@
     "python.linting.enabled": true,
     "python.linting.pylintArgs": [
         "--max-line-length=80",
+        "--load-plugins=pylint_django",
+        "--django-settings-module=backend.settings"
     ],
     "python.linting.pycodestyleArgs": [
         "--max-line-length=80",

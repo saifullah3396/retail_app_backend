@@ -43,13 +43,13 @@ class Command(BaseCommand):
         for group_name in group_permissions:
 
             # create a new group
-            group, created = Group.objects.get_or_create(name=group_name)
+            group, _ = Group.objects.get_or_create(name=group_name)
 
             # loop models in group
             for model_cls in group_permissions[group_name]:
 
                 # loop permissions in group/model
-                for perm_index, perm_name in \
+                for _, perm_name in \
                         enumerate(group_permissions[group_name][model_cls]):
 
                     # generate permission name as Django would generate it
