@@ -1,5 +1,5 @@
-from django.conf.urls import url
-from django.urls import include, path, re_path
+# pylint: disable=missing-module-docstring
+from django.urls import include, path
 from rest_auth.views import PasswordResetConfirmView
 
 from .views import VerifyEmailView, django_rest_auth_null

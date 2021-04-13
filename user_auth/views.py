@@ -1,16 +1,19 @@
+# pylint: disable=missing-module-docstring
 from allauth.account.models import EmailConfirmation, EmailConfirmationHMAC
 from django.utils.translation import ugettext_lazy as _
 from rest_auth.registration.serializers import VerifyEmailSerializer
 from rest_framework import status
 from rest_framework.decorators import APIView, api_view
-from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 
+# pylint: disable=missing-function-docstring
 @api_view()
 def django_rest_auth_null():
     return Response(status=status.HTTP_400_BAD_REQUEST)
+
+# pylint: disable=missing-class-docstring
 
 
 class VerifyEmailView(APIView):
@@ -60,8 +63,8 @@ class VerifyEmailView(APIView):
                 queryset = self.get_queryset()
             try:
                 emailconfirmation = queryset.get(key=key.lower())
-            except EmailConfirmation.DoesNotExist:
-                raise EmailConfirmation.DoesNotExist
+            except EmailConfirmation.DoesNotExist as exc:
+                raise EmailConfirmation.DoesNotExist()from exc
         return emailconfirmation
 
     def get_queryset(self):

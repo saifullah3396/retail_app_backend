@@ -1,10 +1,12 @@
+# pylint: disable=missing-module-docstring
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.utils import build_absolute_uri
-from backend import settings
-from core.permissions import UserGroups
 from django.urls import reverse
 
+from core.permissions import UserGroups
 
+
+# pylint: disable=missing-class-docstring
 class AppAccountAdapter(DefaultAccountAdapter):
 
     def save_user(self, request, user, form, commit=True):
