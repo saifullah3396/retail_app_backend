@@ -8,9 +8,7 @@ from core.permissions import AppDjangoModelPermissions, UserGroups
 
 from .models import Organization
 
-"""
-Define the user group permissions for the Organization model.
-"""
+# Define the user group permissions for the Organization model.
 USER_GROUP_PERMISSIONS = {
     # add organization admin permissions on Organization
     UserGroups.ORGANIZATION_ADMIN_GROUP.name: {

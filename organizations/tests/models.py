@@ -3,33 +3,34 @@ Defines the test cases for models of this application.
 """
 
 from django.test import TestCase
-from django.urls import reverse
+
 from organizations.models import Organization
 
 
 class OrganizationModelTests(TestCase):
+    """
+    Test cases for organization models creation.
+    """
 
     def setUp(self):
         self.organization = Organization.objects.create(
             name='NUST',
-            desc='NUST University Description'
         )
 
         self.sub_organization = Organization.objects.create(
             name='SMME',
-            desc='SMME School Description',
             parent=self.organization
         )
 
     def test_model(self):
+        """Test case for making sure model is correctly defined."""
+
         # test details of the organization
         organization = Organization.objects.get(id=self.organization.id)
-        self.assertEquals(organization.name, 'NUST')
-        self.assertEquals(organization.desc, 'NUST University Description')
+        self.assertEqual(organization.name, 'NUST')
 
         # test details of the sub-organization made under organization
         sub_organization = Organization.objects.get(
             id=self.sub_organization.id)
-        self.assertEquals(sub_organization.name, 'SMME')
-        self.assertEquals(sub_organization.desc, 'SMME School Description')
-        self.assertEquals(sub_organization.parent.id, organization.id)
+        self.assertEqual(sub_organization.name, 'SMME')
+        self.assertEqual(sub_organization.parent.id, organization.id)

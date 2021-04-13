@@ -3,10 +3,12 @@ Defines the model of an organization
 """
 
 import uuid
+
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 
 
+# pylint: disable=pointless-string-statement
 class Organization(MPTTModel):
     """
     A heirarchical tree based model of an organization
