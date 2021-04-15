@@ -80,15 +80,16 @@ INSTALLED_APPS = [
     'channels',
 
     # our applications
+    'users',
+    'user_auth',
     'core',
     'organizations',
     'locations',
-    'users',
-    'user_auth',
+    'deepstream_servers',
+    'measurement_frames',
+    'cameras',
     'deepstream_manager',
     'frontend',
-    'deepstream_servers',
-    'cameras'
 ]
 
 # application middlewares
