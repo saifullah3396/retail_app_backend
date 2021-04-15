@@ -19,3 +19,4 @@ django_extensions
 ./django-rest-framework-jwt
 pylint_django
 pytest-django
+pytest-subtests
