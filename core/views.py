@@ -108,14 +108,6 @@ class CoreAPIView(GenericAPIView):
         else:
             return self._get_queryset_by_group()
 
-    def _perform_create_by_staff(self, serializer):
-        """
-        Implements perform_create for staff users.
-
-        To be implemented by the child class.
-        """
-        raise NotImplementedError()
-
 
 class CoreListCreateDestroyView(
         ListCreateAPIView, DestroyAPIView, CoreAPIView):
