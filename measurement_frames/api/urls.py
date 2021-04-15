@@ -4,9 +4,8 @@ Defines the urls for the views defined in the locations api.
 
 from django.urls import path
 
-from .views.measurement_frame_views import (
-    MeasurementFramesListCreateDestroyView,
-    MeasurementFramesRetrieveUpdateDestroyView)
+from .views import (MeasurementFramesListCreateDestroyView,
+                    MeasurementFramesRetrieveUpdateDestroyView)
 
 urlpatterns = [
     path(
