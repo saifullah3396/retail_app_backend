@@ -1,127 +1,179 @@
-# pylint: disable=missing-module-docstring
+
+"""
+Defines the REST API views for cameras models.
+"""
 
 from rest_framework import exceptions
 
-from cameras.api.serializers import CameraSerializer
+from cameras.api.serializers import (CameraDetailSerializer,
+                                     CameraListSerializer)
 from cameras.models import Camera
 from cameras.permissions import (CamerasListCreateDestroyPermission,
                                  CamerasRetrieveUpdateDestroyPermission)
-from cameras.utils import (get_cameras_for_employee,
-                           get_cameras_for_organization_admin,
-                           get_locations_for_organization_admin)
 from core.permissions import UserGroups
+from core.utils import (field_invalid_error, get_object_by_id,
+                        get_user_authorized_locations)
 from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
 from locations.models import Block
 
 
-# pylint: disable=missing-class-docstring
-class CameraView:
-    ordering_fields = ['id']
+class CamerasView:
+    """
+    Defines the base interface class for the cameras rest api views.
+    """
+    # pylint: disable=no-member
+
+    ordering_fields = ['ip_addr']
     filterset_fields = {
-        'id': ['exact'],
+        'ip_addr': ['exact', 'icontains'],
         'block__id': ['exact'],
     }
 
     def _get_model(self):
+        """
+        Returns the view model.
+        """
+
         return Camera
 
     def _order_by(self):
-        return 'id'
+        """
+        Returns the field with respect to which queries are to be ordered.
+        """
+        return 'ip_addr'
+
+    def _filter_cameras_with_locations(self, locations):
+        """
+        Returns all the cameras in the given locations set
+        """
+
+        # get all blocks in requested floor
+        cameras_in_locations = \
+            self._get_model().objects.filter(
+                block__floor__location__in=locations)
+
+        # filter with ids if present
+        id_list = self._get_id_list()
+        if id_list:
+            return self._filter_objects_by_id_list(
+                cameras_in_locations, id_list)
+
+        return cameras_in_locations
 
 
-class CamerasListCreateDestroyView(CoreListCreateDestroyView, CameraView):
+class CamerasListCreateDestroyView(
+        CoreListCreateDestroyView, CamerasView):
+    """
+    Defines the list-create-destroy view for Cameras.
+    """
 
     queryset = Camera.objects.none()
-    serializer_class = CameraSerializer
+    serializer_class = CameraListSerializer
     permission_classes = (CamerasListCreateDestroyPermission,)
 
     def _get_model(self):
+        """
+        Returns the view model.
+        """
 
-        return CameraView._get_model(self)
-
-    def _define_get_queryset_by_group_fn(self):
-
-        return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._get_organizations_admin_queryset,
-            UserGroups.EMPLOYEE_GROUP:
-                self._get_employee_queryset,
-        }
-
-    def _perform_create_by_organization_admin(self, serializer):
-        try:
-            block = Block.objects.get(self.request.data['block'])
-        except Block.DoesNotExist as exc:
-            raise exceptions.ValidationError(
-                {
-                    'block': 'Block not found'
-                }) from exc
-        locations = get_locations_for_organization_admin(
-            self.user, include_self=True)
-
-        if not locations.filter(id=block.floor.location.id):
-            raise exceptions.ValidationError(
-                {
-                    'block': 'User is not authorised'
-                })
-
-        serializer.save()
-
-    def _get_organizations_admin_queryset(self):
-        cameras = get_cameras_for_organization_admin(
-            self.request.user)
-
-        id_list = self._get_id_list()
-        if id_list:
-            return self._filter_objects_by_id_list(
-                cameras, id_list)
-
-        return cameras
-
-    def _get_employee_queryset(self):
-        cameras = get_cameras_for_employee(
-            self.request.user)
-        id_list = self._get_id_list()
-        if id_list:
-            return self._filter_objects_by_id_list(
-                cameras, id_list)
-        return cameras
-
-    def _define_perform_create_by_group_fn(self):
-
-        return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-            self._perform_create_by_organization_admin
-        }
+        return CamerasView._get_model(self)
 
     def _order_by(self):
-
-        return CameraView._order_by(self)
-
-
-class CamerasRetrieveUpdateDestroyView(
-        CoreRetrieveUpdateDestroyView, CameraView):
-    """
-    Defines the cameras retrieve-update-destroy view.
-    """
-
-    queryset = Camera.objects.none()  # Added for model permissions
-    serializer_class = CameraSerializer
-    permission_classes = (CamerasRetrieveUpdateDestroyPermission,)
-
-    def _get_model(self):
         """
-        Returns the model for this view
+        Returns the field with respect to which queries are to be ordered.
         """
-
-        return CameraView._get_model(self)
+        return CamerasView._order_by(self)
 
     def _define_get_queryset_by_group_fn(self):
         """
         Returns a dictionary mapping user group to get_queryset function
         that will be called if the request user is in that user group.
         """
+        return {
+            UserGroups.ORGANIZATION_ADMIN_GROUP:
+                self._get_organization_admin_queryset,
+            UserGroups.EMPLOYEE_GROUP:
+                self._get_employee_queryset,
+        }
 
+    def _define_perform_create_by_group_fn(self):
+        """
+        Returns a dictionary mapping user group to perform_create function
+        that will be called if the request user is in that user group.
+        """
+        return {
+            UserGroups.ORGANIZATION_ADMIN_GROUP:
+                self._perform_create_by_organization_admin
+        }
+
+    def _get_organization_admin_queryset(self):
+        """
+        For organization admin, all blocks are returned within the queried
+        floor/location as long as the location is authorized.
+        """
+
+        locations = get_user_authorized_locations(self.response.user)
+        return self._filter_cameras_with_locations(locations)
+
+    def _get_employee_queryset(self):
+        """
+        For employee, all blocks are returned within the queried
+        floor/location as long as the location is authorized.
+        """
+
+        locations = get_user_authorized_locations(self.response.user)
+        return self._filter_cameras_with_locations(locations)
+
+    def _perform_create_by_organization_admin(self, serializer):
+        """
+        For organization admin, the block is created within the queried
+        floor/location as long as the location is authorized.
+        """
+
+        # get block
+        block = get_object_by_id(
+            Block, self.request.data.get('block', None))
+
+        if not block:
+            raise exceptions.ValidationError(
+                {
+                    'block': field_invalid_error()
+                })
+
+        # see whether block location is within authorized locations
+        locations = get_user_authorized_locations(self.response.user)
+        if not locations.filter(id=block.floor.location.id).exists():
+            raise exceptions.ValidationError(
+                {
+                    'location': field_invalid_error()
+                })
+
+        # create floor in db
+        serializer.save()
+
+
+class CamerasRetrieveUpdateDestroyView(
+        CoreRetrieveUpdateDestroyView, CamerasView):
+    """
+    Defines the retrieve-update-destroy view for blocks.
+    """
+
+    queryset = Camera.objects.none()  # Added for model permissions
+    serializer_class = CameraDetailSerializer
+    permission_classes = (CamerasRetrieveUpdateDestroyPermission,)
+
+    def _get_model(self):
+        """
+        Returns the view model.
+        """
+
+        return CamerasView._get_model(self)
+
+    def _define_get_queryset_by_group_fn(self):
+        """
+        Returns a dictionary mapping user group to get_queryset function
+        that will be called if the request user is in that user group.
+        """
         return {
             UserGroups.ORGANIZATION_ADMIN_GROUP:
                 self._get_organization_admin_queryset,
@@ -141,17 +193,25 @@ class CamerasRetrieveUpdateDestroyView(
 
     def _get_organization_admin_queryset(self):
         """
-        Returns the get_queryset for organization admin user group
+        For organization admin, all blocks are returned within the queried
+        floor/location as long as the location is authorized.
         """
-        return get_cameras_for_organization_admin(
-            self.request.user)
+
+        locations = get_user_authorized_locations(self.response.user)
+        return self._filter_cameras_with_locations(locations)
 
     def _get_employee_queryset(self):
         """
-        Returns the get_queryset for employee user group
+        For employee, all blocks are returned within the queried
+        floor/location as long as the location is authorized.
         """
-        return get_cameras_for_employee(
-            self.request.user)
+
+        locations = get_user_authorized_locations(self.response.user)
+        return self._filter_cameras_with_locations(locations)
 
     def _perform_update_by_organization_admin(self, serializer):
+        """
+        For organization admin, the block is updated as long as it is within
+        the get queryset
+        """
         serializer.save()

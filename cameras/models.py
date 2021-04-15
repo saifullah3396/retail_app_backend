@@ -17,7 +17,7 @@ class Camera(models.Model):
     ip_addr = models.CharField(max_length=120)
 
     """ Coordinates of the camera in image """
-    coords = ArrayField(models.IntegerField(default=0), size=8, null=True)
+    coords = ArrayField(models.IntegerField(default=0), size=2, null=True)
 
     """ Coordinates of the reference points p0, p1, p2, p3 in frame """
     p0_coord_in_frame_x = models.IntegerField(default=0)
@@ -54,7 +54,7 @@ class Camera(models.Model):
 
     """ Frame with which the camera measurements are taken. """
     measurement_frame = models.ForeignKey(
-        'locations.MeasurementFrame',
+        'measurement_frames.MeasurementFrame',
         on_delete=models.PROTECT,
         null=True
     )

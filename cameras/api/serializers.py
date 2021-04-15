@@ -8,11 +8,16 @@ from cameras.models import Camera
 
 
 # pylint: disable=missing-class-docstring
-class CameraSerializer(serializers.ModelSerializer):
-
+class CameraListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Camera
         fields = ('id', 'ip_addr', 'coords', 'block')
+        extra_kwargs = {
+            'id': {'read_only': True},
+            'ip_addr': {'required': True},
+            'coords': {'required': True},
+            'block': {'required': True},
+        }
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -27,3 +32,12 @@ class CameraSerializer(serializers.ModelSerializer):
             }
         repr_data['block'] = data['block']
         return repr_data
+
+
+class CameraDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Camera
+        fields = ('id', 'ip_addr', 'coords', 'block')
+        extra_kwargs = {
+            'id': {'read_only': True},
+        }

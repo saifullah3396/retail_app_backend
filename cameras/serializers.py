@@ -5,8 +5,9 @@ Defines the serializers used in the Cameras api.
 from rest_framework import serializers
 
 from cameras.models import Camera
-from locations.models import MeasurementFrame
-from locations.serializers import MeasurementFrameDetailSerializerDeepstream
+from measurement_frames.models import MeasurementFrame
+from measurement_frames.serializers import \
+    MeasurementFrameDetailSerializerDeepstream
 
 
 # pylint: disable=missing-class-docstring
