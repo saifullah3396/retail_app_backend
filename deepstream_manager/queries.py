@@ -3,10 +3,11 @@ Defines the database queries that will be used around live data communication
 between deepstream and django
 """
 
-from deepstream_servers.models import DeepstreamLogEntry, DeepstreamServer
+from backend.settings import (AMQP_PASSWORD, AMQP_SERVER_ADDRESS,
+                              AMQP_SERVER_PORT, AMQP_USER)
 from cameras.models import Camera
 from cameras.serializers import CameraDetailSerializerDeepstream
-from backend.settings import AMQP_USER, AMQP_PASSWORD, AMQP_SERVER_ADDRESS, AMQP_SERVER_PORT
+from deepstream_servers.models import DeepstreamLogEntry, DeepstreamServer
 
 
 def create_deepstream_log_entry(message, server_id):

@@ -2,17 +2,12 @@
 Defines a websocket consumer for handling incoming connections
 """
 import json
-import time
 
 from channels.generic.websocket import AsyncWebsocketConsumer
 from rest_framework import status
 
-from deepstream_manager.utils import DeepstreamFrontendStreamerCommands as DFSC
-
-CONSUMER_STATE_INIT = {
-    "streaming": False,
-    "camera_ids": []
-}
+from deepstream_manager.utils import \
+    DeepstreamFrontendStreamerMsgProtocol as MessageProtocol
 
 
 class DeepstreamFrontendStreamer(AsyncWebsocketConsumer):
@@ -21,19 +16,23 @@ class DeepstreamFrontendStreamer(AsyncWebsocketConsumer):
     to handle streaming of live data to the clients.
     """
 
+    # pylint: disable=attribute-defined-outside-init
     async def connect(self):
         """
         Handles incoming websocket connections.
         """
 
         # initialize state to default
-        self.state = CONSUMER_STATE_INIT.copy()
+        self.state = {
+            "streaming": False,
+            "camera_ids": []
+        }
 
         # define command type to function map
-        self.CMD_TO_FN_MAP = {
-            DFSC.START_STREAMING: self.cmd_start_streaming,
-            DFSC.STOP_STREAMING: self.cmd_stop_streaming,
-            DFSC.CHANGE_CAMERA_IDS: self.cmd_change_camera_ids
+        self.cmd_to_fn_map = {
+            MessageProtocol.START_STREAMING: self.cmd_start_streaming,
+            MessageProtocol.STOP_STREAMING: self.cmd_stop_streaming,
+            MessageProtocol.CHANGE_CAMERA_IDS: self.cmd_change_camera_ids
         }
 
         # get the group_id from the url. Group id in our case would be the
@@ -51,31 +50,34 @@ class DeepstreamFrontendStreamer(AsyncWebsocketConsumer):
         # accept the connection
         await self.accept()
 
-    async def disconnect(self, close_code):
+    async def disconnect(self, code):
         """
         Gets called when the client is disconnected.
         """
-        pass
 
-    async def send_response(self, status, data={}, error={}):
+    async def send_response(self, status_code, data=None, error=None):
         """
         Sends a response JSON object to the frontend client.
         """
 
-        if bool(data):
+        if data:
             # if there is data, only send data to the websocket client
             await self.send(text_data=json.dumps({
-                "status": status,
+                "status": status_code,
                 "data": data
             }))
-        elif bool(error):
+        elif error:
             # if there is error send error to the websocket client
             await self.send(text_data=json.dumps({
-                "status": status,
+                "status": status_code,
                 "error": error
             }))
+        else:
+            await self.send(text_data=json.dumps({
+                "status": status_code
+            }))
 
-    async def receive(self, text_data):
+    async def receive(self, text_data=None, bytes_data=None):
         """
         Validates the data received and performs the required action based on
         the input.
@@ -84,8 +86,8 @@ class DeepstreamFrontendStreamer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
         if await self.validate_data(data):
             command = data['command']
-            if command in self.CMD_TO_FN_MAP:
-                await self.CMD_TO_FN_MAP[command](data)
+            if command in self.cmd_to_fn_map:
+                await self.cmd_to_fn_map[command](data)
 
     async def validate_data(self, data):
         """
@@ -100,8 +102,8 @@ class DeepstreamFrontendStreamer(AsyncWebsocketConsumer):
             )
             return False
 
-        if data['command'] == DFSC.START_STREAMING or \
-                data['command'] == DFSC.CHANGE_CAMERA_IDS:
+        if data['command'] == MessageProtocol.START_STREAMING or \
+                data['command'] == MessageProtocol.CHANGE_CAMERA_IDS:
             if "camera_ids" not in data:
                 await self.send_response(
                     status.HTTP_400_BAD_REQUEST,
@@ -131,7 +133,7 @@ class DeepstreamFrontendStreamer(AsyncWebsocketConsumer):
             data=self.state
         )
 
-    async def cmd_stop_streaming(self, data):
+    async def cmd_stop_streaming(self):
         """
         Command for stopping data streaming on this connection based on input
         data.
