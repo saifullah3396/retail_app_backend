@@ -1,4 +1,6 @@
-# pylint: disable=missing-module-docstring
+"""
+Defines the REST api views for deepstream servers.
+"""
 from rest_framework import exceptions
 
 from core.permissions import UserGroups
@@ -14,34 +16,49 @@ from locations.models import Block
 from locations.utils import get_locations_for_organization_admin
 
 
-# pylint: disable=missing-class-docstring
 class DeepstreamServerView:
+    """
+    Defines the base class for the deepstream servers rest api views.
+    """
+
     ordering_fields = ['id', 'ip_addr', 'block', 'camera']
 
     def _get_model(self):
         """
-        Returns the get queryset.
+        Returns the view model.
         """
         return DeepstreamServer
 
     def _order_by(self):
+        """
+        Returns the field with respect to which queries are to be ordered.
+        """
         return 'id'
 
 
 class DeepstreamServersListCreateDestroyView(CoreListCreateDestroyView,
                                              DeepstreamServerView):
+    """
+    Defines the organizations retrieve-update-destroy view.
+    """
     queryset = DeepstreamServer.objects.none()
     serializer_class = DeepstreamServerSerializer
     permission_classes = (DeepstreamServersListCreateDestroyPermission,)
 
     def _get_model(self):
+        """
+        Returns the view model.
+        """
         return DeepstreamServerView._get_model(self)
 
     def _define_get_queryset_by_group_fn(self):
-
+        """
+        Returns a dictionary mapping user group to get_queryset function
+        that will be called if the request user is in that user group.
+        """
         return {
             UserGroups.ORGANIZATION_ADMIN_GROUP:
-            self._get_organizations_admin_queryset,
+                self._get_organizations_admin_queryset,
             UserGroups.EMPLOYEE_GROUP:
                 self._get_employee_queryset,
         }
