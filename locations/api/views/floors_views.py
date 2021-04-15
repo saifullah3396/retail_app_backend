@@ -1,19 +1,25 @@
+"""
+Defines the REST API views for floors models.
+"""
 
-from core.utils import *
-from core.views import *
-from django.contrib.auth.models import Group
-from django_filters.rest_framework import DjangoFilterBackend
-from locations.api.serializers import *
+from rest_framework import exceptions
+
+from core.permissions import UserGroups
+from core.utils import field_invalid_error, get_user_authorized_locations
+from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
+from locations.api.serializers import (FloorDetailSerializer,
+                                       FloorListSerializer)
 from locations.models import Floor, Location
-from locations.permissions import *
-from rest_framework import *
-from rest_framework import filters, pagination
-from rest_framework.generics import *
-from rest_framework.response import Response
-from rest_framework_jwt import authentication
+from locations.permissions import (FloorsListCreateDestroyPermission,
+                                   FloorsRetrieveUpdateDestroyPermission)
 
 
 class FloorsView:
+    """
+    Defines the base interface class for the floors rest api views.
+    """
+    # pylint: disable=no-member
+
     ordering_fields = ['id', 'number']
     filterset_fields = {
         'number': ['exact'],
@@ -32,35 +38,10 @@ class FloorsView:
         """
         return 'number'
 
-    def _get_queryset_by_staff(self):
-        """
-        Returns all the floors within any provided location for staff users.
-        """
-        uuid = self.kwargs.get('location_id')
-        location = self._get_location_by_uuid(uuid)
-        return self._filter_floors_with_location(location)
-
-    def _get_organizations_tree(self, organization):
-        """
-        Returns the organizations descendents tree given the request type and
-        organzation.
-        """
-        return self.organizations_tree_wrt_request[self.request.method](
-            organization)
-
-    def _get_location_by_uuid(self, uuid):
-        try:
-            return Location.objects.get(id=uuid)
-        except Location.DoesNotExist:
-            raise exceptions.ValidationError(
-                "Queried location does not exist.")
-
-    def _get_floors_in_location(self, location):
-        return Floor.objects.filter(location=location)
-
-    def _filter_floors_with_location(self, location):
+    def _filter_floors_with_locations(self, locations):
         # get all floors of the requested location
-        floors_in_location = self._get_floors_in_location(location)
+        floors_in_location = \
+            self._get_model().objects.filter(location__in=locations)
 
         # filter with ids if present
         id_list = self._get_id_list()
@@ -80,15 +61,6 @@ class FloorsListCreateDestroyView(CoreListCreateDestroyView, FloorsView):
     serializer_class = FloorListSerializer
     permission_classes = (FloorsListCreateDestroyPermission,)
 
-    # Define the mapping from request type to query that returns the
-    # organizations tree that is used in the requests.
-    organizations_tree_wrt_request = {
-        'GET': lambda organization: organization.get_descendants(
-            include_self=True),
-        'POST': lambda organization: organization.get_descendants(
-            include_self=True),
-    }
-
     def _get_model(self):
         """
         Returns the model of this view
@@ -101,12 +73,6 @@ class FloorsListCreateDestroyView(CoreListCreateDestroyView, FloorsView):
         Returns the field with respect to which queries are to be ordered.
         """
         return FloorsView._order_by(self)
-
-    def _get_queryset_by_staff(self):
-        """
-        Returns all the floors within any provided location for staff users.
-        """
-        return FloorsView._get_queryset_by_staff(self)
 
     def _define_get_queryset_by_group_fn(self):
         """
@@ -132,27 +98,12 @@ class FloorsListCreateDestroyView(CoreListCreateDestroyView, FloorsView):
 
     def _get_organization_admin_queryset(self):
         """
-        For organization admin, all floors are returned within the queried
-        location as long as the location is within the organization
-        descendents.
+        For organization admin, all floors are returned as long as the
+        floor location is authorized to the user.
         """
 
-        # get location uid
-        uuid = self.kwargs.get('location_id')
-
-        # get the location
-        location = self._get_location_by_uuid(uuid)
-
-        # get organizations tree of this admin
-        organizations_tree = self._get_organizations_tree(
-            self.request.user.organization)
-
-        # see if the organization of the location is within descendents of
-        # the organization of this admin.
-        if not organizations_tree.exists(location.organization):
-            raise exceptions.ValidationError("Invalid location provided.")
-
-        return self._filter_floors_with_location(location)
+        locations = get_user_authorized_locations(self.response.user)
+        return self._filter_floors_with_locations(locations)
 
     def _get_employee_queryset(self):
         """
@@ -161,44 +112,23 @@ class FloorsListCreateDestroyView(CoreListCreateDestroyView, FloorsView):
         employee.
         """
 
-        # get location uid
-        uuid = self.kwargs.get('location_id')
-
-        # get the location
-        location = self._get_location_by_uuid(uuid)
-
-        # see if the organization of the location and the employee match
-        if location.organization != self.user.organization:
-            raise exceptions.ValidationError("Invalid location provided.")
-
-        # see if the location is within employees 'authorized_locations'
-        if location not in self.user.authorized_locations:
-            raise exceptions.ValidationError(
-                "Unauthorized location requested.")
-
-        return self._filter_floors_with_location(location)
+        # get all locations authorized to user
+        locations = get_user_authorized_locations(self.response.user)
+        return self._filter_floors_with_locations(locations)
 
     def _perform_create_by_organization_admin(self, serializer):
         """
-        For organization admin, the floor is created within the queried
-        location as long as the location is within the organization
-        descendents.
+        For organization admin, the floor is created as long as the
+        floor location is authorized to the user.
         """
 
-        # get location uid
-        uuid = self.kwargs.get('location_id')
-
-        # get the location
-        location = self._get_location_by_uuid(uuid)
-
-        # get organizations tree of this admin
-        organizations_tree = self._get_organizations_tree(
-            self.request.user.organization)
-
-        # see if the organization of the location is within descendents of
-        # the organization of this admin.
-        if not organizations_tree.exists(location.organization):
-            raise exceptions.ValidationError("Invalid location provided.")
+        # get all locations authorized to user
+        locations = get_user_authorized_locations(self.response.user)
+        if not locations.filter(id=self.request.data.get('location', None)):
+            raise exceptions.ValidationError(
+                {
+                    'location': field_invalid_error()
+                })
 
         # create floor in db
         serializer.save()
@@ -212,21 +142,7 @@ class FloorsRetrieveUpdateDestroyView(
 
     queryset = Location.objects.none()  # Added for model permissions
     serializer_class = FloorDetailSerializer
-    permission_classes = (LocationsRetrieveUpdateDestroyPermission,)
-
-    # Define the mapping from request type to query that returns the
-    # organizations tree that is used in the requests.
-    organizations_tree_wrt_request = {
-        'GET': lambda organization: organization.get_descendants(
-            include_self=True),
-        'POST': lambda organization: organization.get_descendants(
-            include_self=True),
-        'PATCH': lambda organization: organization.get_descendants(
-            include_self=True),
-        'DELETE': lambda organization: organization.get_descendants(
-            include_self=True
-        )
-    }
+    permission_classes = (FloorsRetrieveUpdateDestroyPermission,)
 
     def _get_model(self):
         """
@@ -234,12 +150,6 @@ class FloorsRetrieveUpdateDestroyView(
         """
 
         return FloorsView._get_model(self)
-
-    def _get_queryset_by_staff(self):
-        """
-        Returns all the floors within any provided location for staff users.
-        """
-        return FloorsView._get_queryset_by_staff(self)
 
     def _define_get_queryset_by_group_fn(self):
         """
@@ -258,34 +168,16 @@ class FloorsRetrieveUpdateDestroyView(
         Returns a dictionary mapping user group to perform_update function
         that will be called if the request user is in that user group.
         """
-        return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._perform_update_by_organization_admin
-        }
+        return {}
 
     def _get_organization_admin_queryset(self):
         """
-        For organization admin, all floors are returned within the queried
-        location as long as the location is within the organization
-        descendents.
+        For organization admin, all floors are returned as long as the
+        floor location is authorized to the user.
         """
 
-        # get location uid
-        uuid = self.kwargs.get('location_id')
-
-        # get the location
-        location = self._get_location_by_uuid(uuid)
-
-        # get organizations tree of this admin
-        organizations_tree = self._get_organizations_tree(
-            self.request.user.organization)
-
-        # see if the organization of the location is within descendents of
-        # the organization of this admin.
-        if not organizations_tree.exists(location.organization):
-            raise exceptions.ValidationError("Invalid location provided.")
-
-        return self._filter_floors_with_location(location)
+        locations = get_user_authorized_locations(self.response.user)
+        return self._filter_floors_with_locations(locations)
 
     def _get_employee_queryset(self):
         """
@@ -294,22 +186,13 @@ class FloorsRetrieveUpdateDestroyView(
         employee.
         """
 
-        # get location uid
-        uuid = self.kwargs.get('location_id')
-
-        # get the location
-        location = self._get_location_by_uuid(uuid)
-
-        # see if the organization of the location and the employee match
-        if location.organization != self.user.organization:
-            raise exceptions.ValidationError("Invalid location provided.")
-
-        # see if the location is within employees 'authorized_locations'
-        if location not in self.user.authorized_locations:
-            raise exceptions.ValidationError(
-                "Unauthorized location requested.")
-
-        return self._filter_floors_with_location(location)
+        locations = get_user_authorized_locations(self.response.user)
+        return self._filter_floors_with_locations(locations)
 
     def _perform_update_by_organization_admin(self, serializer):
+        """
+        For organization admin, the floor is updated as long as it is within
+        the get queryset
+        """
+
         serializer.save()

@@ -1,21 +1,25 @@
 
-from django.contrib.auth.models import Group
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import *
-from rest_framework import filters, pagination
-from rest_framework.generics import *
-from rest_framework.response import Response
-from rest_framework_jwt import authentication
+"""
+Defines the REST API views for locations models.
+"""
 
-from core.utils import *
-from core.views import *
-from locations.api.serializers import *
+from rest_framework import exceptions
+
+from core.permissions import UserGroups
+from core.utils import field_invalid_error
+from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
+from locations.api.serializers import (LocationDetailSerializer,
+                                       LocationListSerializer)
 from locations.models import Location
-from locations.permissions import *
-from locations.utils import *
+from locations.permissions import (LocationsListCreateDestroyPermission,
+                                   LocationsRetrieveUpdateDestroyPermission)
 
 
 class LocationsView:
+    """
+    Defines the base interface class for the locations rest api views.
+    """
+
     ordering_fields = ['id', 'name']
     filterset_fields = {
         'name': ['exact', 'icontains'],
@@ -24,14 +28,14 @@ class LocationsView:
 
     def _get_model(self):
         """
-        Returns the get queryset for staff users.
+        Returns the view model.
         """
 
         return Location
 
     def _order_by(self):
         """
-        Returns the field with respect to which queries are to be ordered.
+        Returns the default ordering field.
         """
         return 'name'
 
@@ -86,11 +90,13 @@ class LocationsListCreateDestroyView(
         """
         For an organization admin, locations in all the organizations below
         the user organization are returned. In case a list of ids is provided,
-         the locations are filtered further by ids.
+        the locations are filtered further by ids.
         """
 
-        locations = get_locations_for_organization_admin(
-            self.request.user, include_self=True)
+        organizations_tree = self.request.user.organization.get_descendants(
+            include_self=True)
+        locations = self._get_model().objects.filter(
+            organization__in=organizations_tree)
 
         id_list = self._get_id_list()
         if id_list:
@@ -104,8 +110,7 @@ class LocationsListCreateDestroyView(
         For an employee, only authorized_locations are returned. If ids are
         provided, locations are further filtered by the them.
         """
-        locations = get_locations_for_employee(
-            self.request.user, include_self=True)
+        locations = self.request.user.authorized_locations.all()
         id_list = self._get_id_list()
         if id_list:
             return self._filter_objects_by_id_list(
@@ -125,7 +130,7 @@ class LocationsListCreateDestroyView(
         if not descendents.filter(id=self.request.data['organization']):
             raise exceptions.ValidationError(
                 {
-                    'organization': 'Invalid value.'
+                    'organization': field_invalid_error()
                 })
 
         # create organization in db
@@ -175,15 +180,33 @@ class LocationsRetrieveUpdateDestroyView(
         """
         Returns the get_queryset for organization admin user group
         """
-        return get_locations_for_organization_admin(
-            self.request.user, include_self=True)
+        organizations_tree = self.request.user.organization.get_descendants(
+            include_self=True)
+        return self._get_model().objects.filter(
+            organization__in=organizations_tree)
 
     def _get_employee_queryset(self):
         """
         Returns the get_queryset for employee user group
         """
-        return get_locations_for_employee(
-            self.request.user, include_self=True)
+        return self.request.user.authorized_locations.all()
 
     def _perform_update_by_organization_admin(self, serializer):
+        """
+        For organization admin, the location is updated as long as it is within
+        the get queryset
+        """
+
+        if 'organization' in self.request.data:
+            # see if new requested organization is within users organization
+            # tree
+            descendents = self.request.user.organization.get_descendants(
+                include_self=True)
+            if not descendents.filter(
+                    id=self.request.data.get('organization', None)):
+                raise exceptions.ValidationError(
+                    {
+                        'organization': field_invalid_error()
+                    })
+
         serializer.save()
