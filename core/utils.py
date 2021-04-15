@@ -126,3 +126,27 @@ def get_user_authorized_locations(user, use_authorized_locations=False):
         return Location.objects.filter(
             organization__in=organizations_tree)
 
+
+def get_object_by_id(model, object_id):
+    """
+    Returns the model for given id
+    """
+    try:
+        return model.objects.get(id=object_id)
+    except model.DoesNotExist:
+        return None
+
+
+def field_not_found_error():
+    """Generates error message for when a field does not exist."""
+    return "Field not found."
+
+
+def field_required_error():
+    """Generates error message for when a field is required."""
+    return "This is a required field."
+
+
+def field_invalid_error():
+    """Generates error message for when a field is invalid."""
+    return "Invalid field."
