@@ -6,6 +6,7 @@ from django.contrib.auth.models import Group
 from rest_framework import exceptions, serializers
 
 from core.permissions import UserGroups
+from locations.models import Location
 
 MAC_ADDRESS_VALIDATOR_REGEX = '([0-9a-fA-F]{2}[:]){5}([0-9a-fA-F]{2})'
 
@@ -108,3 +109,20 @@ def exclude_queryset_by_id_list(query_set, id_list):
     Filters a queryset by excluding the given list of ids
     """
     return query_set.exclude(id__in=id_list)
+
+
+def get_user_authorized_locations(user, use_authorized_locations=False):
+    """
+    Returns the users authorized locations
+    """
+    if user.is_staff:
+        Location.objects.all()
+
+    if use_authorized_locations:
+        return user.authorized_locations.all()
+    else:
+        organizations_tree = user.organization.get_descendants(
+            include_self=True)
+        return Location.objects.filter(
+            organization__in=organizations_tree)
+
