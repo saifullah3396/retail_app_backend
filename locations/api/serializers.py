@@ -60,8 +60,9 @@ class BlockDetailSerializer(serializers.ModelSerializer):
         """
         Returns the absolute url of the block floor map.
         """
-        return self.context.get('request').\
-            build_absolute_uri(block.floor_map.url)
+        if block.floor_map and hasattr(block.floor_map, 'url'):
+            return self.context.get('request').\
+                build_absolute_uri(block.floor_map.url)
 
     def get_floor_map_resolution(self, block):
         """
