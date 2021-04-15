@@ -7,6 +7,7 @@ from rest_framework import exceptions, serializers
 
 from core.permissions import UserGroups
 from locations.models import Location
+from organizations.models import Organization
 
 MAC_ADDRESS_VALIDATOR_REGEX = '([0-9a-fA-F]{2}[:]){5}([0-9a-fA-F]{2})'
 
@@ -111,6 +112,22 @@ def exclude_queryset_by_id_list(query_set, id_list):
     return query_set.exclude(id__in=id_list)
 
 
+def get_user_authorized_organizations(user):
+    """
+    Returns the users authorized locations
+    """
+    if user.is_staff:
+        Organization.objects.all()
+
+    if is_organization_admin(user):
+        organizations_tree = user.organization.get_descendants(
+            include_self=True)
+        return Location.objects.filter(
+            organization__in=organizations_tree)
+    elif is_employee(user):
+        return [user.organization]
+
+
 def get_user_authorized_locations(user, use_authorized_locations=False):
     """
     Returns the users authorized locations
@@ -140,6 +157,11 @@ def get_object_by_id(model, object_id):
 def field_not_found_error():
     """Generates error message for when a field does not exist."""
     return "Field not found."
+
+
+def field_with_id_not_found_error(field_id):
+    """Generates error message for when a field does not exist."""
+    return "Field with id={} not found.".format(field_id)
 
 
 def field_required_error():
