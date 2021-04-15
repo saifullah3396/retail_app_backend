@@ -18,3 +18,4 @@ django_extensions
 ./django-rest-auth
 ./django-rest-framework-jwt
 pylint_django
+pytest-django
