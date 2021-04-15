@@ -65,7 +65,7 @@ class OrganizationCreateTests(TestsBase):
                             'parent': None
                         },
                         'user': 'org_1_admin_user',
-                        'status': status.HTTP_403_FORBIDDEN
+                        'status': status.HTTP_400_BAD_REQUEST
                     },
                     {   # create org by sub-org-admin, forbidden
                         'test_name': 'create_org_by_sub_org_admin',
@@ -74,7 +74,7 @@ class OrganizationCreateTests(TestsBase):
                             'parent': None
                         },
                         'user': 'sub_org_11_admin_user',
-                        'status': status.HTTP_403_FORBIDDEN
+                        'status': status.HTTP_400_BAD_REQUEST
                     },
                     {   # create org by employee, forbidden
                         'test_name': 'create_org_by_employee',
@@ -152,7 +152,7 @@ class OrganizationCreateTests(TestsBase):
                             'parent': self.orgs['org_1'].id
                         },
                         'user': 'sub_org_11_admin_user',
-                        'status': status.HTTP_403_FORBIDDEN
+                        'status': status.HTTP_400_BAD_REQUEST
                     },
                     {   # create sub-org by another admin,
                         # forbidden if org doesn't match
@@ -162,7 +162,7 @@ class OrganizationCreateTests(TestsBase):
                             'parent': self.orgs['org_1'].id
                         },
                         'user': 'org_2_admin_user',
-                        'status': status.HTTP_403_FORBIDDEN
+                        'status': status.HTTP_400_BAD_REQUEST
                     },
                     {   # create sub-org by another admin, org matches, okay
                         'test_name': 'create_sub_org_in_org_2_by_org_2_admin',

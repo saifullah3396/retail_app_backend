@@ -78,7 +78,8 @@ class OrganizationDeleteByIdListTests(TestsBase):
                         'user': 'staff_user',
                         'status': status.HTTP_200_OK
                     },
-                    {   # delete org by id, okay for staff
+                    {   # delete org by id, okay for staff, but since these
+                        # organizations are protected, they won't be deleted.
                         'test_name': 'delete_multiple_orgs_by_id_by_staff',
                         'data': {
                             "id": [
@@ -86,7 +87,7 @@ class OrganizationDeleteByIdListTests(TestsBase):
                                 self.orgs['org_5_for_deletion'].id]
                         },
                         'user': 'staff_user',
-                        'status': status.HTTP_200_OK
+                        'status': status.HTTP_400_BAD_REQUEST
                     },
                 ]
             }

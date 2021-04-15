@@ -63,11 +63,12 @@ class OrganizationDeleteTests(TestsBase):
                         'status': status.HTTP_403_FORBIDDEN
                     },
                     {   # delete org by id, okay for staff -> at the end so org
-                        # remains for other test cases
+                        # remains for other test cases, but this organization
+                        # will be protected and will return a bad request.
                         'test_name': 'delete_org_4_by_id_by_staff',
                         'args': [self.orgs['org_4_for_deletion'].id],
                         'user': 'staff_user',
-                        'status': status.HTTP_200_OK
+                        'status': status.HTTP_400_BAD_REQUEST
                     },
                 ]
             },
