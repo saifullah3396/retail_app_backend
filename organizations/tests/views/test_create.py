@@ -38,6 +38,12 @@ class OrganizationCreateTests(TestsBase):
                 'type': 'post',
                 'path_name': 'organizations_list_create_delete',
                 'request': [
+                    {   # create org without any data, okay for staff
+                        'test_name': 'create_org_by_staff',
+                        'data': {},
+                        'user': 'staff_user',
+                        'status': status.HTTP_400_BAD_REQUEST,
+                    },
                     {   # create org, okay for staff
                         'test_name': 'create_org_by_staff',
                         'data': {
