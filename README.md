@@ -58,7 +58,7 @@ Create a new user for development:
 createuser --interactive
 
 Output:
-Enter name of role to add: <user-name>
+Enter name of role to add: admin
 Shall the new role be a superuser? (y/n) n
 Shall the new role be allowed to create databases? (y/n) y
 Shall the new role be allowed to create more new roles? (y/n) n
@@ -67,13 +67,13 @@ Shall the new role be allowed to create more new roles? (y/n) n
 Create a new database:
 
 ```
-createdb <database-name>
+createdb retail_db
 ```
 
 Update the postgresql configuration for the new user by adding the following line to `pg_hba.conf` file in `/etc/postgresql/`.
 
 ```
-local   all             user-name                 trust
+local   all             admin                 trust
 ```
 
 Restart the postgresql server:
@@ -90,8 +90,8 @@ Update the `DATABASE` variable in `backend/settings.py` as follows:
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': '<database-name>',
-        'USER': '<user-name>',
+        'NAME': 'retail_db',
+        'USER': 'admin',
     }
 }
 ```
@@ -114,4 +114,18 @@ Create a new django admin user
 
 ```
 python manage.py createsuperuser
+```
+
+You should use the following configuration:
+
+```
+Username: admin
+Email address: admin@admin.com
+Password:
+Password (again):
+The password is too similar to the username.
+This password is too short. It must contain at least 8 characters.
+This password is too common.
+Bypass password validation and create user anyway? [y/N]: y
+Superuser created successfully.
 ```

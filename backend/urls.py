@@ -1,7 +1,6 @@
 """
-Base url config for our application.
+Defines the base url configuration for our application.
 """
-
 
 from django.conf.urls.static import static
 from django.contrib import admin

@@ -144,8 +144,8 @@ CHANNEL_LAYERS = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'retail-app',
-        'USER': 'sai',
+        'NAME': 'retail_db',
+        'USER': 'admin',
     }
 }
 
