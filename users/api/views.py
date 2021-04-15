@@ -29,7 +29,7 @@ class AppUsersView:
 
     def _get_model(self):
         """
-        Returns the get queryset for staff users.
+        Returns the view model.
         """
 
         return AppUser
@@ -69,9 +69,8 @@ class AppUsersListCreateDestroyView(
 
     def _get_model(self):
         """
-        Returns the get queryset for staff users.
+        Returns the view model.
         """
-
         return AppUsersView._get_model(self)
 
     def _order_by(self):
@@ -162,7 +161,7 @@ class AppUsersRetrieveUpdateDestroyView(
 
     def _get_model(self):
         """
-        Returns the get queryset for staff users.
+        Returns the view model.
         """
 
         return AppUsersView._get_model(self)
