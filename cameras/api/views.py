@@ -6,12 +6,12 @@ from cameras.api.serializers import CameraSerializer
 from cameras.models import Camera
 from cameras.permissions import (CamerasListCreateDestroyPermission,
                                  CamerasRetrieveUpdateDestroyPermission)
+from cameras.utils import (get_cameras_for_employee,
+                           get_cameras_for_organization_admin,
+                           get_locations_for_organization_admin)
 from core.permissions import UserGroups
 from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
 from locations.models import Block
-from locations.utils import (get_cameras_for_employee,
-                             get_cameras_for_organization_admin,
-                             get_locations_for_organization_admin)
 
 
 # pylint: disable=missing-class-docstring

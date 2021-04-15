@@ -16,7 +16,6 @@ class CameraSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        print('data', data)
 
         repr_data = {}
         repr_data['id'] = data['id']
@@ -27,5 +26,4 @@ class CameraSerializer(serializers.ModelSerializer):
                 "y": data['coords'][1]
             }
         repr_data['block'] = data['block']
-        print(repr_data)
         return repr_data

@@ -25,9 +25,10 @@ class DiagnosticsDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DeepstreamDiagnostics
-        fields = ('id', 'deepstream_server', 'cpu_utilization',
-                  'gpu_utilization', 'memory_usage',
-                  'gpu_memory_usage', 'temperature', 'received_at')
+        fields = (
+            'id', 'deepstream_server', 'cpu_utilization',
+            'gpu_utilization', 'memory_usage',
+            'gpu_memory_usage', 'temperature', 'received_at')
 
 
 class DeepstreamServerDetailSerializer(serializers.ModelSerializer):
