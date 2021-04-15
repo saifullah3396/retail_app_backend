@@ -41,8 +41,7 @@ class LocationDeleteByIdListTests(TestsBase):
                         'test_name': 'delete_location_by_staff',
                         'data': {
                             'id': [
-                                self.locations['location_1_org_1'].id,
-                                self.locations['location_2_org_1'].id]
+                                self.locations['location_1_sub_1_org_1'].id]
                         },
                         'user': 'staff_user',
                         'status': status.HTTP_200_OK
@@ -51,11 +50,19 @@ class LocationDeleteByIdListTests(TestsBase):
                         'test_name': 'delete_dup_location_by_staff',
                         'data': {
                             'id': [
-                                self.locations['location_1_org_1'].id,
-                                self.locations['location_2_org_1'].id]
+                                self.locations['location_1_sub_1_org_1'].id]
                         },
                         'user': 'staff_user',
                         'status': status.HTTP_404_NOT_FOUND
+                    },
+                    {   # protected delete by staff, bad
+                        'test_name': 'delete_dup_location_by_staff',
+                        'data': {
+                            'id': [
+                                self.locations['location_1_org_1'].id]
+                        },
+                        'user': 'staff_user',
+                        'status': status.HTTP_400_BAD_REQUEST
                     },
                     {   # delete location by org-admin, okay
                         'test_name': 'delete_location_org_admin_2_in_org_2',
@@ -72,7 +79,7 @@ class LocationDeleteByIdListTests(TestsBase):
                             'delete_location_org_admin_1_in_sub_1_org_1',
                         'data': {
                             'id': [
-                                self.locations['location_1_sub_1_org_1'].id]
+                                self.locations['location_2_sub_1_org_1'].id]
                         },
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_200_OK

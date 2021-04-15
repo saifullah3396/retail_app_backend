@@ -35,6 +35,12 @@ class LocationCreateTests(TestsBase):
                 'type': 'post',
                 'path_name': 'locations_list_create_delete',
                 'request': [
+                    {   # create location without any data, bad
+                        'test_name': 'create_location_by_staff',
+                        'data': {},
+                        'user': 'staff_user',
+                        'status': status.HTTP_400_BAD_REQUEST,
+                    },
                     {   # create location, okay for staff
                         'test_name': 'create_location_by_staff',
                         'data': {
