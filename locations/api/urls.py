@@ -10,9 +10,6 @@ from .views.floors_views import (FloorsListCreateDestroyView,
                                  FloorsRetrieveUpdateDestroyView)
 from .views.locations_views import (LocationsListCreateDestroyView,
                                     LocationsRetrieveUpdateDestroyView)
-from .views.measurement_frame_views import (
-    MeasurementFrameListCreateDestroyView,
-    MeasurementFrameRetrieveUpdateDestroyView)
 
 urlpatterns = [
     path(
@@ -24,30 +21,19 @@ urlpatterns = [
         LocationsRetrieveUpdateDestroyView.as_view(),
         name='locations_retrieve_update_delete'),
     path(
-        '<uuid:location_id>/floors/',
+        'floors/',
         FloorsListCreateDestroyView.as_view(),
         name='floors_list_create_delete'),
     path(
-        '<uuid:location_id>/floors/<pk>',
+        '/floors/<pk>',
         FloorsRetrieveUpdateDestroyView.as_view(),
         name='floors_retrieve_update_delete'),
     path(
-        '<uuid:location_id>/floors/<uuid:floor_id>/blocks/',
+        'blocks/',
         BlocksListCreateDestroyView.as_view(),
         name='blocks_list_create_delete'),
     path(
-        '<uuid:location_id>/floors/<uuid:floor_id>/blocks/<pk>',
+        'blocks/<pk>',
         BlocksRetrieveUpdateDestroyView.as_view(),
         name='blocks_retrieve_update_delete'),
-
-    path(
-        '<uuid:location_id>/floors/<uuid:floor_id>/blocks/'
-        '<uuid:block_id>/frames/',
-        MeasurementFrameListCreateDestroyView.as_view(),
-        name='measurement_frame_list_create_delete'),
-    path(
-        '<uuid:location_id>/floors/<uuid:floor_id>/blocks/'
-        '<uuid:block_id>/frames/<pk>',
-        MeasurementFrameRetrieveUpdateDestroyView.as_view(),
-        name='measurement_frame_retrieve_update_delete'),
 ]
