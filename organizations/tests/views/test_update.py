@@ -1,25 +1,28 @@
 """
 Defines the unit tests related to 'update' api requests for this application.
 """
-import copy
 
-from core.tests import TestsBase
-from django.urls import include, path, reverse
+from django.urls import include, path
 from rest_framework import status
 
+from core.tests import TestsBase
 
+
+# pylint: disable=line-too-long
 class OrganizationUpdateTests(TestsBase):
     """
     Defines unit tests for 'update' api requests for views defined
     at 'organizations/' url.
+
+    Attributes:
+        api_urlpatterns: Api url patterns used in this test unit.
+        urlpatterns: Complete url pattern used in this test unit.
     """
 
-    """Define the api url patterns used in this test unit."""
     api_urlpatterns = [
         path('organizations/', include('organizations.api.urls')),
     ]
 
-    """Define the the complete url pattern used in this test unit."""
     urlpatterns = [
         path('api/v1/', include(api_urlpatterns)),
     ]

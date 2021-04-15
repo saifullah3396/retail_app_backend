@@ -1,19 +1,23 @@
-from core.utils import *
-from core.views import *
-from django.contrib.auth.models import Group
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import *
-from rest_framework import filters, pagination
-from rest_framework.generics import *
-from rest_framework.response import Response
-from rest_framework_jwt import authentication
+"""
+Defines the REST API views for organizations models.
+"""
 
-from ..models import Organization
-from ..permissions import *
-from .serializers import OrganizationSerializer
+from rest_framework import exceptions
+
+from core.permissions import UserGroups
+from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
+from organizations.api.serializers import OrganizationSerializer
+from organizations.models import Organization
+from organizations.permissions import (
+    OrganizationsListCreateDestroyPermission,
+    OrganizationsRetrieveUpdateDestroyPermission)
 
 
 class OrganizationsView:
+    """
+    Defines the base class for the organizations rest api views.
+    """
+
     ordering_fields = ['id', 'name']
     filterset_fields = {
         'name': ['exact', 'icontains'],
@@ -31,14 +35,6 @@ class OrganizationsView:
         Returns the field with respect to which queries are to be ordered.
         """
         return 'name'
-
-    def _get_organizations_tree(self, organization):
-        """
-        Returns the organizations descendents tree given the request type and
-        organzation.
-        """
-        return self.organizations_tree_wrt_request[self.request.method](
-            organization)
 
 
 class OrganizationsListCreateDestroyView(
@@ -100,8 +96,9 @@ class OrganizationsListCreateDestroyView(
         organizations tree is filtered further by ids.
         """
         id_list = self._get_id_list()
-        organizations_tree = self._get_organizations_tree(
-            self.request.user.organization)
+        organizations_tree = \
+            self.organizations_tree_wrt_request[self.request.method](
+                self.request.user.organization)
 
         # get the organization tree of the user if its an admin
         if id_list:
@@ -190,7 +187,8 @@ class OrganizationsRetrieveUpdateDestroyView(
         """
         Returns the get_queryset for organization admin user group
         """
-        return self._get_organizations_tree(self.request.user.organization)
+        return self.organizations_tree_wrt_request[self.request.method](
+            self.request.user.organization)
 
     def _get_employee_queryset(self):
         """
