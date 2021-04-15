@@ -6,11 +6,11 @@ from django.contrib.auth.models import Group
 from rest_framework import serializers
 
 from core.permissions import UserGroups
-from core.utils import WritableSerializerMethodField, get_fn_by_group
+from core.utils import (WritableSerializerMethodField, field_invalid_error,
+                        field_not_found_error, field_with_id_not_found_error,
+                        get_fn_by_group, get_user_authorized_locations,
+                        get_user_authorized_organizations)
 from locations.models import Location
-from locations.utils import (get_locations_for_employee,
-                             get_locations_for_organization_admin,
-                             get_locations_for_staff)
 from organizations.models import Organization
 from users.models import AppUser
 
@@ -38,7 +38,7 @@ class AppUserListSerializer(serializers.ModelSerializer):
         """
 
         if instance.is_staff:
-            return "SUPER_USER_GROUP"
+            return 'SUPER_USER_GROUP'
 
         for group in UserGroups:
             group = instance.groups.filter(name=group.name)
@@ -71,25 +71,12 @@ class AppUserDetailLocationSerializer(serializers.ModelSerializer):
 
 
 class AppUserDetailRetrieveSerializer(serializers.ModelSerializer):
-    group = serializers.SerializerMethodField()
-    authorized_locations = serializers.SerializerMethodField()
-    organization = serializers.SerializerMethodField()
+    group = serializers.SerializerMethodField(read_only=True)
+    authorized_locations = serializers.SerializerMethodField(read_only=True)
+    organization = serializers.SerializerMethodField(read_only=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.group_to_locations_fn = {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                lambda instance: get_locations_for_organization_admin(
-                    instance, include_self=True),
-            UserGroups.EMPLOYEE_GROUP: get_locations_for_employee
-        }
-
-        self.group_to_organizations_fn = {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                lambda instance: instance.organization.get_descendants(
-                    include_self=True),
-            UserGroups.EMPLOYEE_GROUP: lambda instance: [instance.organization]
-        }
 
     def get_group(self, instance):
         """
@@ -97,7 +84,7 @@ class AppUserDetailRetrieveSerializer(serializers.ModelSerializer):
         """
 
         if instance.is_staff:
-            return "SUPER_USER_GROUP"
+            return 'SUPER_USER_GROUP'
 
         for group in UserGroups:
             group = instance.groups.filter(name=group.name)
@@ -109,12 +96,7 @@ class AppUserDetailRetrieveSerializer(serializers.ModelSerializer):
         Returns details of all the locations authorized to this user.
         """
 
-        locations = Location.objects.none()
-        if instance.is_staff:
-            locations = get_locations_for_staff()
-        else:
-            locations = \
-                get_fn_by_group(instance, self.group_to_locations_fn)(instance)
+        locations = get_user_authorized_locations(instance)
         return AppUserDetailLocationSerializer(locations, many=True).data
 
     def get_organization(self, instance):
@@ -122,13 +104,7 @@ class AppUserDetailRetrieveSerializer(serializers.ModelSerializer):
         Returns details of all the organizations authorized to this user.
         """
 
-        organizations = Organization.objects.none()
-        if instance.is_staff:
-            organizations = Organization.objects.all()
-        else:
-            organizations = \
-                get_fn_by_group(
-                    instance, self.group_to_organizations_fn)(instance)
+        organizations = get_user_authorized_organizations(instance)
         return AppUserDetailOrganizationSerializer(
             organizations, many=True).data
 
@@ -144,46 +120,27 @@ class AppUserDetailRetrieveSerializer(serializers.ModelSerializer):
             'group',
             'authorized_locations',
             'organization']
+        extra_kwargs = {
+            'id': {'read_only': True},
+            'username': {'read_only': True},
+            'email': {'read_only': True},
+            'first_name': {'read_only': True},
+            'last_name': {'read_only': True},
+            'is_staff': {'read_only': True},
+            'group': {'read_only': True},
+            'authorized_locations': {'read_only': True},
+            'organization': {'read_only': True}
+        }
 
 
 class AppUserDetailUpdateSerializer(serializers.ModelSerializer):
-    group = WritableSerializerMethodField(
-        deserializer_field=serializers.CharField(required=False))
-    organization = WritableSerializerMethodField(
-        deserializer_field=serializers.UUIDField(required=False))
-    authorized_locations = WritableSerializerMethodField(
-        deserializer_field=serializers.ListField(
-            child=serializers.UUIDField(), required=False))
+    group = serializers.CharField(required=False)
+    organization = serializers.UUIDField(required=False)
+    authorized_locations = serializers.ListField(
+        child=serializers.UUIDField(), required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.group_to_locations_fn = {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                lambda instance: get_locations_for_organization_admin(
-                    instance, include_self=True),
-            UserGroups.EMPLOYEE_GROUP: get_locations_for_employee
-        }
-
-        self.group_to_organizations_fn = {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                lambda instance: instance.organization.get_descendants(
-                    include_self=True),
-            UserGroups.EMPLOYEE_GROUP:
-                lambda instance: instance.organization
-        }
-
-    def get_group(self, instance):
-        """
-        Returns the name of the user group assigned to this user.
-        """
-
-        if instance.is_staff:
-            return "SUPER_USER_GROUP"
-
-        for group in UserGroups:
-            group = instance.groups.filter(name=group.name)
-            if group.exists():
-                return group.first().name
 
     def set_group(self, group_name):
         """
@@ -196,29 +153,18 @@ class AppUserDetailUpdateSerializer(serializers.ModelSerializer):
             if group.name not in user_groups:
                 raise serializers.ValidationError(
                     {
-                        "group": "Can only be assigned one of the following "
-                        "{}".format(user_groups)
+                        'group': field_invalid_error()
                     }
                 )
             return {
                 'group': group
             }
         except Group.DoesNotExist as exc:
-            raise serializers.ValidationError(
-                'Group of id={} does not exist. Available groups: {}'.format(
-                    group_name, [group.name for group in UserGroups])) from exc
-
-    def get_authorized_locations(self, instance):
-        """
-        Returns details of all the locations authorized to this user.
-        """
-        locations = Location.objects.none()
-        if instance.is_staff:
-            locations = get_locations_for_staff()
-        else:
-            locations = \
-                get_fn_by_group(instance, self.group_to_locations_fn)(instance)
-        return AppUserDetailLocationSerializer(locations, many=True).data
+            raise serializers.ValidationError({
+                {
+                    'group': field_not_found_error()
+                }
+            }) from exc
 
     def set_authorized_locations(self, location_ids):
         """
@@ -226,29 +172,18 @@ class AppUserDetailUpdateSerializer(serializers.ModelSerializer):
         """
 
         locations = []
-        for location_name in location_ids:
+        for location_id in location_ids:
             try:
-                location = Location.objects.get(id=location_name)
+                location = Location.objects.get(id=location_id)
                 locations.append(location)
             except Location.DoesNotExist as exc:
-                raise serializers.ValidationError(
-                    'Location {} does not exist.'.format
-                    (location_name)) from exc
+                raise serializers.ValidationError({
+                    'authorized_locations':
+                        field_with_id_not_found_error(location_id)
+                }) from exc
         return {
             'authorized_locations': locations
         }
-
-    def get_organization(self, instance):
-        """
-        Returns details of all the organizations authorized to this user.
-        """
-        organizations = Organization.objects.none()
-        if not instance.is_staff:
-            organizations = \
-                get_fn_by_group(
-                    instance, self.group_to_organizations_fn)(instance)
-        return AppUserDetailOrganizationSerializer(
-            organizations, many=True).data
 
     def set_organization(self, organization_id):
         """
@@ -259,9 +194,9 @@ class AppUserDetailUpdateSerializer(serializers.ModelSerializer):
                 'organization': Organization.objects.get(id=organization_id)
             }
         except Organization.DoesNotExist as exc:
-            raise serializers.ValidationError(
-                'Organization of id={} does not exist.'.format(
-                    organization_id)) from exc
+            raise serializers.ValidationError({
+                'organization': field_with_id_not_found_error(organization_id)
+            }) from exc
 
     def update(self, instance, validated_data):
         """
@@ -296,3 +231,23 @@ class AppUserDetailUpdateSerializer(serializers.ModelSerializer):
             'group',
             'authorized_locations',
             'organization']
+        extra_kwargs = {
+            'id': {'read_only': True},
+            'username': {'read_only': True},
+            'email': {'read_only': True},
+            'is_staff': {'read_only': True},
+        }
+
+
+class AppUserDetailOrganizationAdminUpdateSerializer(AppUserDetailUpdateSerializer):
+    group = serializers.CharField(required=False)
+    organization = serializers.UUIDField(required=False)
+    authorized_locations = serializers.ListField(
+        child=serializers.UUIDField(), required=False)
+
+
+class AppUserDetailEmployeeUpdateSerializer(AppUserDetailUpdateSerializer):
+    group = serializers.CharField(required=False, read_only=True)
+    organization = serializers.UUIDField(required=False, read_only=True)
+    authorized_locations = serializers.ListField(
+        child=serializers.UUIDField(), required=False, read_only=True)

@@ -27,7 +27,7 @@ class FloorsView:
 
     def _get_model(self):
         """
-        Returns the get queryset for staff users.
+        Returns the view model.
         """
 
         return Floor

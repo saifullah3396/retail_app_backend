@@ -25,7 +25,7 @@ urlpatterns = [
         FloorsListCreateDestroyView.as_view(),
         name='floors_list_create_delete'),
     path(
-        '/floors/<pk>',
+        'floors/<pk>',
         FloorsRetrieveUpdateDestroyView.as_view(),
         name='floors_retrieve_update_delete'),
     path(

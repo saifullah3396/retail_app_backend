@@ -68,7 +68,7 @@ class BlocksListCreateDestroyView(CoreListCreateDestroyView, BlocksView):
 
     def _get_model(self):
         """
-        Returns the get queryset for staff users.
+        Returns the view model.
         """
 
         return BlocksView._get_model(self)
@@ -159,7 +159,7 @@ class BlocksRetrieveUpdateDestroyView(
 
     def _get_model(self):
         """
-        Returns the get queryset for staff users.
+        Returns the view model.
         """
 
         return BlocksView._get_model(self)

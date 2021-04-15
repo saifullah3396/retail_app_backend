@@ -6,6 +6,7 @@ from rest_framework import exceptions, serializers, status
 from rest_framework.response import Response
 
 from core.permissions import UserGroups
+from core.utils import is_employee, is_organization_admin
 from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
 from locations.models import Location
 from users.api.serializers import (AppUserDetailRetrieveSerializer,
@@ -143,7 +144,12 @@ class AppUsersRetrieveUpdateDestroyView(
         if self.request.method == 'GET':
             return AppUserDetailRetrieveSerializer
         if self.request.method == 'PUT' or self.request.method == 'PATCH':
-            return AppUserDetailUpdateSerializer
+            if self.request.user.is_staff:
+                return AppUserDetailUpdateSerializer
+            elif is_organization_admin(self.request.user):
+                return AppUserDetailOrganizationAdminUpdateSerializer
+            elif is_employee(self.request.user):
+                return AppUserDetailEmployeeUpdateSerializer
         return AppUserDetailRetrieveSerializer
 
     # Define the mapping from request type to query that returns the
@@ -232,13 +238,14 @@ class AppUsersRetrieveUpdateDestroyView(
         # make sure user to be updated is within the admin's authorization
         request_user_organizations = request_user.organization.get_descendants(
             include_self=True)
-        if app_user_to_update.organization not in request_user_organizations:
+        if not request_user_organizations.filter(
+                id=app_user_to_update.organization.id).exists():
             raise exceptions.ValidationError(
                 "Invalid user id.")
 
         to_organization = data.get('organization', None)
-        if to_organization is not None and \
-                to_organization not in request_user_organizations:
+        if to_organization and not request_user_organizations.filter(
+                id=to_organization.id).exists():
             raise exceptions.ValidationError({
                 "organization": "Invalid field."
             })
@@ -272,18 +279,5 @@ class AppUsersRetrieveUpdateDestroyView(
         # make sure employee is only able to update himself
         if request_user is not app_user_to_update:
             raise exceptions.PermissionDenied()
-
-        # make sure employee cannot update the organization,
-        # authorized_locations and the user groups
-        error = {}
-        request_invalid = False
-        invalid_inputs = ['authorized_locations', 'organizations', 'group']
-        for field in invalid_inputs:
-            if data.get(field, None) is not None:
-                error[field] = "Not authorized to update this field."
-                request_invalid = True
-
-        if request_invalid:
-            raise exceptions.ValidationError(error)
 
         serializer.save()

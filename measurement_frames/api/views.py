@@ -20,7 +20,7 @@ from measurement_frames.permissions import (
 
 class MeasurementFramesView:
     """
-    Defines the base interface class for the floors rest api views.
+    Defines the base interface class for the cameras rest api views.
     """
     # pylint: disable=no-member
 
@@ -31,7 +31,7 @@ class MeasurementFramesView:
 
     def _get_model(self):
         """
-        Returns the get queryset for staff users.
+        Returns the view model.
         """
 
         return MeasurementFrame
@@ -73,7 +73,7 @@ class MeasurementFramesListCreateDestroyView(
 
     def _get_model(self):
         """
-        Returns the get queryset for staff users.
+        Returns the view model.
         """
 
         return MeasurementFramesView._get_model(self)
@@ -164,7 +164,7 @@ class MeasurementFramesRetrieveUpdateDestroyView(
 
     def _get_model(self):
         """
-        Returns the get queryset for staff users.
+        Returns the view model.
         """
 
         return MeasurementFramesView._get_model(self)
