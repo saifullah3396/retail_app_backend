@@ -2,6 +2,7 @@
 Defines the core REST API views on which all other application views will be
 based.
 """
+from django.db.models import ProtectedError
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import exceptions, filters, pagination, status
 from rest_framework.generics import (DestroyAPIView, GenericAPIView,
@@ -185,7 +186,13 @@ class CoreListCreateDestroyView(
         instance = self.get_queryset()
         if not instance:
             raise exceptions.NotFound()
-        self.perform_destroy(instance)
+
+        try:
+            self.perform_destroy(instance)
+        except ProtectedError as error:
+            return Response(data={
+                "error": str(error)},
+                status=status.HTTP_400_BAD_REQUEST)
         return Response(data={
             "msg": "Object(s) deleted successfully."},
             status=status.HTTP_200_OK)
@@ -253,7 +260,12 @@ class CoreRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView, CoreAPIView):
         on deletion of item.
         """
 
-        _ = super().delete(request, *args, **kwargs)
+        try:
+            _ = super().destroy(request, *args, **kwargs)
+        except ProtectedError as error:
+            return Response(data={
+                "error": str(error)},
+                status=status.HTTP_400_BAD_REQUEST)
         return Response(data={
             "msg": "Object(s) deleted successfully."},
             status=status.HTTP_200_OK)
