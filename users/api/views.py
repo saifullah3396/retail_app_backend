@@ -1,4 +1,7 @@
-# pylint: disable=missing-module-docstring
+"""
+Defines the REST API views for users models.
+"""
+
 from rest_framework import exceptions, serializers, status
 from rest_framework.response import Response
 
@@ -13,8 +16,11 @@ from users.permissions import (AppUsersListCreateDestroyPermission,
                                AppUsersRetrieveUpdateDestroyPermission)
 
 
-# pylint: disable=missing-class-docstring
 class AppUsersView:
+    """
+    Defines the base class for the organizations rest api views.
+    """
+
     ordering_fields = ['id', 'username']
     filterset_fields = {
         'username': ['exact', 'icontains'],
@@ -34,15 +40,6 @@ class AppUsersView:
         """
         return 'first_name'
 
-    def _get_organizations_tree(self, organization):
-        """
-        Returns the organizations descendents tree given the request type and
-        organzation.
-        """
-        return self.organizations_tree_wrt_request[self.request.method](
-            organization)
-# pylint: disable=missing-function-docstring
-
     def _get_users_in_organizations(self, organizations):
         """
         Returns all users which present within the given organizations
@@ -54,7 +51,7 @@ class AppUsersView:
 class AppUsersListCreateDestroyView(
         CoreListCreateDestroyView, AppUsersView):
     """
-    Defines the organizations list-create-destroy view.
+    Defines the users list-create-destroy view.
     """
 
     queryset = AppUser.objects.none()
@@ -106,10 +103,10 @@ class AppUsersListCreateDestroyView(
         organization are returned. In case a list of ids is provided, the
         users are filtered further by ids.
         """
-        print("_get_organization_admin_queryset")
         id_list = self._get_id_list()
-        organizations_tree = self._get_organizations_tree(
-            self.request.user.organization)
+        organizations_tree = \
+            self.organizations_tree_wrt_request[self.request.method](
+                self.request.user.organization)
 
         # get all users in the organizations tree
         users_in_tree = self._get_users_in_organizations(
@@ -138,9 +135,12 @@ class AppUsersRetrieveUpdateDestroyView(
 
     queryset = AppUser.objects.none()  # Added for model permissions
     permission_classes = (AppUsersRetrieveUpdateDestroyPermission,)
-# pylint: disable=missing-function-docstring
 
     def get_serializer_class(self):
+        """
+        Returns separate serializer classes for get/put/patch requests.
+        """
+
         if self.request.method == 'GET':
             return AppUserDetailRetrieveSerializer
         if self.request.method == 'PUT' or self.request.method == 'PATCH':
@@ -171,8 +171,8 @@ class AppUsersRetrieveUpdateDestroyView(
         """
         Implements the customized get_queryset functionalty.
         """
-        pk = self.kwargs.get('pk')
-        if pk == "me":
+        primary_key = self.kwargs.get('pk')
+        if primary_key == "self":
             self.kwargs['pk'] = self.request.user.id
             return self._get_model().objects.filter(id=self.request.user.id)
         else:
@@ -207,9 +207,11 @@ class AppUsersRetrieveUpdateDestroyView(
         """
         Returns the get_queryset for organization admin user group
         """
+
         # get all organizations under this users organization
-        organizations_tree = self._get_organizations_tree(
-            self.request.user.organization)
+        organizations_tree = \
+            self.organizations_tree_wrt_request[self.request.method](
+                self.request.user.organization)
 
         # get all users in the tree
         users_in_tree = self._get_users_in_organizations(

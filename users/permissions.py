@@ -1,4 +1,7 @@
-# pylint: disable=missing-module-docstring
+"""
+Defines the permissions used in this application.
+"""
+
 import copy
 
 from core.permissions import AppDjangoModelPermissions, UserGroups
@@ -14,10 +17,11 @@ USER_GROUP_PERMISSIONS = {
     },
 }
 
-# pylint: disable=missing-class-docstring
-
 
 class AppUsersListCreateDestroyPermission(AppDjangoModelPermissions):
+    """
+    Permissions required on the AppUserListCreateDestroyView
+    """
 
     def __init__(self):
         self.perms_map = copy.deepcopy(self.perms_map)
@@ -25,6 +29,9 @@ class AppUsersListCreateDestroyPermission(AppDjangoModelPermissions):
 
 
 class AppUsersRetrieveUpdateDestroyPermission(AppDjangoModelPermissions):
+    """
+    Permissions required on the AppUserRetrieveUpdateDestroyView
+    """
 
     def __init__(self):
         self.perms_map = copy.deepcopy(self.perms_map)

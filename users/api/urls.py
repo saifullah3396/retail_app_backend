@@ -1,4 +1,7 @@
-# pylint: disable=missing-module-docstring
+"""
+Defines the urls for the views defined in the users api.
+"""
+
 from django.urls import path
 
 from users.api.views import (AppUsersListCreateDestroyView,

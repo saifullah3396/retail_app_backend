@@ -11,6 +11,7 @@ class Command(create_groups_base.Command):
     """
     A command to generate organization related groups and their permissions
     """
+
     def get_group_permissions(self):
         """
         Defines groups and their respective permissions
