@@ -9,6 +9,7 @@ import uuid
 from django.db import models
 
 
+# pylint: disable=pointless-string-statement
 class DensityHistogram(models.Model):
     """
     A model of a single density histogram (Heatmap) associated with a block
@@ -33,10 +34,10 @@ class DensityHistogram(models.Model):
         """
         Creates binary data from a numpy array matrix
         """
-        data = base64.b64encode(pickle.dumps(arr))
+        self.data = base64.b64encode(pickle.dumps(arr))
 
     def get_data_as_np_arr(self):
         """
         Creates a numpy array matrix from binary data
         """
-        return pickle.loads(base64.b64decode(data))
+        return pickle.loads(base64.b64decode(self.data))
