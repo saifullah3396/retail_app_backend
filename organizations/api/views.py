@@ -5,8 +5,10 @@ Defines the REST API views for organizations models.
 from rest_framework import exceptions
 
 from core.permissions import UserGroups
+from core.utils import field_invalid_error, field_required_error
 from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
-from organizations.api.serializers import OrganizationSerializer
+from organizations.api.serializers import (OrganizationDetailSerializer,
+                                           OrganizationListSerializer)
 from organizations.models import Organization
 from organizations.permissions import (
     OrganizationsListCreateDestroyPermission,
@@ -15,7 +17,7 @@ from organizations.permissions import (
 
 class OrganizationsView:
     """
-    Defines the base class for the organizations rest api views.
+    Defines the base interface class for the organizations rest api views.
     """
 
     ordering_fields = ['id', 'name']
@@ -25,14 +27,14 @@ class OrganizationsView:
 
     def _get_model(self):
         """
-        Returns the get queryset for staff users.
+        Returns the view model.
         """
 
         return Organization
 
     def _order_by(self):
         """
-        Returns the field with respect to which queries are to be ordered.
+        Returns the default ordering field.
         """
         return 'name'
 
@@ -44,7 +46,7 @@ class OrganizationsListCreateDestroyView(
     """
 
     queryset = Organization.objects.none()
-    serializer_class = OrganizationSerializer
+    serializer_class = OrganizationListSerializer
     permission_classes = (OrganizationsListCreateDestroyPermission,)
 
     # Define the mapping from request type to query that returns the
@@ -53,12 +55,14 @@ class OrganizationsListCreateDestroyView(
     organizations_tree_wrt_request = {
         'GET': lambda organization: organization.get_descendants(
             include_self=True),
+        'POST': lambda organization: organization.get_descendants(
+            include_self=True),
         'DELETE': lambda organization: organization.get_descendants()
     }
 
     def _get_model(self):
         """
-        Returns the get queryset for staff users.
+        Returns the view model.
         """
 
         return OrganizationsView._get_model(self)
@@ -117,14 +121,20 @@ class OrganizationsListCreateDestroyView(
 
         # an organization cannot be created without a parent id
         if 'parent' not in self.request.data:
-            raise exceptions.PermissionDenied()
+            raise exceptions.ValidationError({
+                'parent': field_required_error()
+            })
 
         # see if the parent of requested organization is within descendents
         # of the current user.
-        descendents = self.request.user.organization.get_descendants(
-            include_self=True)
-        if not descendents.filter(id=self.request.data.get('parent', None)):
-            raise exceptions.PermissionDenied()
+        organizations_tree = \
+            self.organizations_tree_wrt_request[self.request.method](
+                self.request.user.organization)
+        if not organizations_tree.filter(
+                id=self.request.data.get('parent', None)).exists():
+            raise exceptions.ValidationError({
+                'parent': field_invalid_error()
+            })
 
         # create organization in db
         serializer.save()
@@ -137,7 +147,7 @@ class OrganizationsRetrieveUpdateDestroyView(
     """
 
     queryset = Organization.objects.none()  # Added for model permissions
-    serializer_class = OrganizationSerializer
+    serializer_class = OrganizationDetailSerializer
     permission_classes = (OrganizationsRetrieveUpdateDestroyPermission,)
 
     # Define the mapping from request type to query that returns the
@@ -155,7 +165,7 @@ class OrganizationsRetrieveUpdateDestroyView(
 
     def _get_model(self):
         """
-        Returns the get queryset for staff users.
+        Returns the view model.
         """
 
         return OrganizationsView._get_model(self)
@@ -198,4 +208,7 @@ class OrganizationsRetrieveUpdateDestroyView(
             id=self.request.user.organization.id)
 
     def _perform_update_by_organization_admin(self, serializer):
+        """
+        Performs update on organization as long as it is in the get_queryset.
+        """
         serializer.save()
