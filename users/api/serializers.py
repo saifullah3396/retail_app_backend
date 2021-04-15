@@ -1,5 +1,5 @@
 """
-Defines the serializers for application user registration/authentication.
+Defines the serializers used in user REST api views.
 """
 
 from django.contrib.auth.models import Group
