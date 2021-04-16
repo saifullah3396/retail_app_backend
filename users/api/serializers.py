@@ -6,10 +6,14 @@ from django.contrib.auth.models import Group
 from rest_framework import serializers
 
 from core.permissions import UserGroups
-from core.utils import (WritableSerializerMethodField, field_invalid_error,
-                        field_not_found_error, field_with_id_not_found_error,
-                        get_fn_by_group, get_user_authorized_locations,
-                        get_user_authorized_organizations)
+from core.utils import (field_invalid_error, field_not_found_error,
+                        field_with_id_not_found_error,
+                        get_employee_authorized_locations,
+                        get_employee_authorized_organizations, get_fn_by_group,
+                        get_organization_admin_authorized_locations,
+                        get_organization_admin_authorized_organizations,
+                        get_staff_authorized_locations,
+                        get_staff_authorized_organizations)
 from locations.models import Location
 from organizations.models import Organization
 from users.models import AppUser
@@ -78,6 +82,19 @@ class AppUserDetailRetrieveSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.group_to_locations_fn = {
+            UserGroups.ORGANIZATION_ADMIN_GROUP:
+                get_organization_admin_authorized_locations,
+            UserGroups.EMPLOYEE_GROUP:
+                get_employee_authorized_locations
+        }
+
+        self.group_to_organizations_fn = {
+            UserGroups.ORGANIZATION_ADMIN_GROUP:
+                get_organization_admin_authorized_organizations,
+            UserGroups.EMPLOYEE_GROUP: get_employee_authorized_organizations
+        }
+
     def get_group(self, instance):
         """
         Returns the name of the user group assigned to this user.
@@ -96,7 +113,12 @@ class AppUserDetailRetrieveSerializer(serializers.ModelSerializer):
         Returns details of all the locations authorized to this user.
         """
 
-        locations = get_user_authorized_locations(instance)
+        locations = Location.objects.none()
+        if instance.is_staff:
+            locations = get_staff_authorized_locations()
+        else:
+            locations = \
+                get_fn_by_group(instance, self.group_to_locations_fn)(instance)
         return AppUserDetailLocationSerializer(locations, many=True).data
 
     def get_organization(self, instance):
@@ -104,7 +126,13 @@ class AppUserDetailRetrieveSerializer(serializers.ModelSerializer):
         Returns details of all the organizations authorized to this user.
         """
 
-        organizations = get_user_authorized_organizations(instance)
+        organizations = Organization.objects.none()
+        if instance.is_staff:
+            organizations = get_staff_authorized_organizations()
+        else:
+            organizations = \
+                get_fn_by_group(
+                    instance, self.group_to_organizations_fn)(instance)
         return AppUserDetailOrganizationSerializer(
             organizations, many=True).data
 
@@ -239,7 +267,8 @@ class AppUserDetailUpdateSerializer(serializers.ModelSerializer):
         }
 
 
-class AppUserDetailOrganizationAdminUpdateSerializer(AppUserDetailUpdateSerializer):
+class AppUserDetailOrganizationAdminUpdateSerializer(
+        AppUserDetailUpdateSerializer):
     group = serializers.CharField(required=False)
     organization = serializers.UUIDField(required=False)
     authorized_locations = serializers.ListField(

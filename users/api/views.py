@@ -9,9 +9,11 @@ from core.permissions import UserGroups
 from core.utils import is_employee, is_organization_admin
 from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
 from locations.models import Location
-from users.api.serializers import (AppUserDetailRetrieveSerializer,
-                                   AppUserDetailUpdateSerializer,
-                                   AppUserListSerializer)
+from users.api.serializers import (
+    AppUserDetailEmployeeUpdateSerializer,
+    AppUserDetailOrganizationAdminUpdateSerializer,
+    AppUserDetailRetrieveSerializer, AppUserDetailUpdateSerializer,
+    AppUserListSerializer)
 from users.models import AppUser
 from users.permissions import (AppUsersListCreateDestroyPermission,
                                AppUsersRetrieveUpdateDestroyPermission)
@@ -272,7 +274,6 @@ class AppUsersRetrieveUpdateDestroyView(
         serializer.save()
 
     def _perform_update_by_employee(self, serializer):
-        data = serializer.validated_data()
         request_user = self.request.user
         app_user_to_update = self.get_object()
 

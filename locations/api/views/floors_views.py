@@ -5,7 +5,8 @@ Defines the REST API views for floors models.
 from rest_framework import exceptions
 
 from core.permissions import UserGroups
-from core.utils import field_invalid_error, get_user_authorized_locations
+from core.utils import (field_invalid_error, get_employee_authorized_locations,
+                        get_organization_admin_authorized_locations)
 from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
 from locations.api.serializers import (FloorDetailSerializer,
                                        FloorListSerializer)
@@ -102,7 +103,8 @@ class FloorsListCreateDestroyView(CoreListCreateDestroyView, FloorsView):
         floor location is authorized to the user.
         """
 
-        locations = get_user_authorized_locations(self.response.user)
+        locations = get_organization_admin_authorized_locations(
+            self.response.user)
         return self._filter_floors_with_locations(locations)
 
     def _get_employee_queryset(self):
@@ -113,7 +115,7 @@ class FloorsListCreateDestroyView(CoreListCreateDestroyView, FloorsView):
         """
 
         # get all locations authorized to user
-        locations = get_user_authorized_locations(self.response.user)
+        locations = get_employee_authorized_locations(self.response.user)
         return self._filter_floors_with_locations(locations)
 
     def _perform_create_by_organization_admin(self, serializer):
@@ -123,7 +125,8 @@ class FloorsListCreateDestroyView(CoreListCreateDestroyView, FloorsView):
         """
 
         # get all locations authorized to user
-        locations = get_user_authorized_locations(self.response.user)
+        locations = \
+            get_organization_admin_authorized_locations(self.response.user)
         if not locations.filter(id=self.request.data.get('location', None)):
             raise exceptions.ValidationError(
                 {
@@ -176,7 +179,8 @@ class FloorsRetrieveUpdateDestroyView(
         floor location is authorized to the user.
         """
 
-        locations = get_user_authorized_locations(self.response.user)
+        locations = get_organization_admin_authorized_locations(
+            self.response.user)
         return self._filter_floors_with_locations(locations)
 
     def _get_employee_queryset(self):
@@ -186,7 +190,7 @@ class FloorsRetrieveUpdateDestroyView(
         employee.
         """
 
-        locations = get_user_authorized_locations(self.response.user)
+        locations = get_employee_authorized_locations(self.response.user)
         return self._filter_floors_with_locations(locations)
 
     def _perform_update_by_organization_admin(self, serializer):

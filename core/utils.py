@@ -112,36 +112,48 @@ def exclude_queryset_by_id_list(query_set, id_list):
     return query_set.exclude(id__in=id_list)
 
 
-def get_user_authorized_organizations(user):
+def get_staff_authorized_organizations():
     """
-    Returns the users authorized locations
+    Returns the locations authorized to staff user
     """
-    if user.is_staff:
-        Organization.objects.all()
-
-    if is_organization_admin(user):
-        organizations_tree = user.organization.get_descendants(
-            include_self=True)
-        return Location.objects.filter(
-            organization__in=organizations_tree)
-    elif is_employee(user):
-        return [user.organization]
+    Organization.objects.all()
 
 
-def get_user_authorized_locations(user, use_authorized_locations=False):
+def get_organization_admin_authorized_organizations(user, include_self=True):
     """
-    Returns the users authorized locations
+    Returns the locations authorized to organization admin user
     """
-    if user.is_staff:
-        Location.objects.all()
+    return user.organization.get_descendants(include_self=include_self)
 
-    if use_authorized_locations:
-        return user.authorized_locations.all()
-    else:
-        organizations_tree = user.organization.get_descendants(
-            include_self=True)
-        return Location.objects.filter(
-            organization__in=organizations_tree)
+
+def get_employee_authorized_organizations(user):
+    """
+    Returns the locations authorized to employee user
+    """
+    return [user.organization]
+
+
+def get_staff_authorized_locations():
+    """
+    Returns the locations authorized to staff user
+    """
+    Location.objects.all()
+
+
+def get_organization_admin_authorized_locations(user, include_self=True):
+    """
+    Returns the locations authorized to organization admin user
+    """
+    organizations_tree = user.organization.get_descendants(
+        include_self=include_self)
+    return Location.objects.filter(organization__in=organizations_tree)
+
+
+def get_employee_authorized_locations(user):
+    """
+    Returns the locations authorized to employee user
+    """
+    return user.authorized_locations.all()
 
 
 def get_object_by_id(model, object_id):

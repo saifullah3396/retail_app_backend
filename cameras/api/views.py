@@ -11,8 +11,9 @@ from cameras.models import Camera
 from cameras.permissions import (CamerasListCreateDestroyPermission,
                                  CamerasRetrieveUpdateDestroyPermission)
 from core.permissions import UserGroups
-from core.utils import (field_invalid_error, get_object_by_id,
-                        get_user_authorized_locations)
+from core.utils import (field_invalid_error, get_employee_authorized_locations,
+                        get_object_by_id,
+                        get_organization_admin_authorized_locations)
 from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
 from locations.models import Block
 
@@ -112,7 +113,8 @@ class CamerasListCreateDestroyView(
         floor/location as long as the location is authorized.
         """
 
-        locations = get_user_authorized_locations(self.response.user)
+        locations = get_organization_admin_authorized_locations(
+            self.response.user)
         return self._filter_cameras_with_locations(locations)
 
     def _get_employee_queryset(self):
@@ -121,7 +123,7 @@ class CamerasListCreateDestroyView(
         floor/location as long as the location is authorized.
         """
 
-        locations = get_user_authorized_locations(self.response.user)
+        locations = get_employee_authorized_locations(self.response.user)
         return self._filter_cameras_with_locations(locations)
 
     def _perform_create_by_organization_admin(self, serializer):
@@ -141,7 +143,8 @@ class CamerasListCreateDestroyView(
                 })
 
         # see whether block location is within authorized locations
-        locations = get_user_authorized_locations(self.response.user)
+        locations = get_organization_admin_authorized_locations(
+            self.response.user)
         if not locations.filter(id=block.floor.location.id).exists():
             raise exceptions.ValidationError(
                 {
@@ -197,7 +200,8 @@ class CamerasRetrieveUpdateDestroyView(
         floor/location as long as the location is authorized.
         """
 
-        locations = get_user_authorized_locations(self.response.user)
+        locations = get_organization_admin_authorized_locations(
+            self.response.user)
         return self._filter_cameras_with_locations(locations)
 
     def _get_employee_queryset(self):
@@ -206,7 +210,7 @@ class CamerasRetrieveUpdateDestroyView(
         floor/location as long as the location is authorized.
         """
 
-        locations = get_user_authorized_locations(self.response.user)
+        locations = get_employee_authorized_locations(self.response.user)
         return self._filter_cameras_with_locations(locations)
 
     def _perform_update_by_organization_admin(self, serializer):

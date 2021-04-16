@@ -6,7 +6,8 @@ Defines the REST API views for locations models.
 from rest_framework import exceptions
 
 from core.permissions import UserGroups
-from core.utils import field_invalid_error
+from core.utils import (field_invalid_error, get_employee_authorized_locations,
+                        get_organization_admin_authorized_locations)
 from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
 from locations.api.serializers import (LocationDetailSerializer,
                                        LocationListSerializer)
@@ -19,6 +20,7 @@ class LocationsView:
     """
     Defines the base interface class for the locations rest api views.
     """
+    # pylint: disable=no-member
 
     ordering_fields = ['id', 'name']
     filterset_fields = {
@@ -38,6 +40,17 @@ class LocationsView:
         Returns the default ordering field.
         """
         return 'name'
+
+    def _filter_locations(self, locations):
+        """
+        Filter input locations by id list.
+        """
+        id_list = self._get_id_list()
+        if id_list:
+            return self._filter_objects_by_id_list(
+                locations, id_list)
+
+        return locations
 
 
 class LocationsListCreateDestroyView(
@@ -93,29 +106,17 @@ class LocationsListCreateDestroyView(
         the locations are filtered further by ids.
         """
 
-        organizations_tree = self.request.user.organization.get_descendants(
-            include_self=True)
-        locations = self._get_model().objects.filter(
-            organization__in=organizations_tree)
-
-        id_list = self._get_id_list()
-        if id_list:
-            return self._filter_objects_by_id_list(
-                locations, id_list)
-
-        return locations
+        locations = get_organization_admin_authorized_locations(
+            self.request.user)
+        return self._filter_locations(locations)
 
     def _get_employee_queryset(self):
         """
         For an employee, only authorized_locations are returned. If ids are
         provided, locations are further filtered by the them.
         """
-        locations = self.request.user.authorized_locations.all()
-        id_list = self._get_id_list()
-        if id_list:
-            return self._filter_objects_by_id_list(
-                locations, id_list)
-        return locations
+        locations = get_employee_authorized_locations(self.request.user)
+        return self._filter_locations(locations)
 
     def _perform_create_by_organization_admin(self, serializer):
         """

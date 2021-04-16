@@ -260,6 +260,7 @@ class CoreRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView, CoreAPIView):
         on deletion of item.
         """
 
+        # pylint: disable=no-member
         try:
             _ = super().destroy(request, *args, **kwargs)
         except ProtectedError as error:

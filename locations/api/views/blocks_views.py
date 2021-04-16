@@ -5,8 +5,9 @@ Defines the REST API views for floors models.
 from rest_framework import exceptions
 
 from core.permissions import UserGroups
-from core.utils import (field_invalid_error, get_object_by_id,
-                        get_user_authorized_locations)
+from core.utils import (field_invalid_error, get_employee_authorized_locations,
+                        get_object_by_id,
+                        get_organization_admin_authorized_locations)
 from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
 from locations.api.serializers import (BlockDetailSerializer,
                                        BlockListSerializer)
@@ -107,7 +108,8 @@ class BlocksListCreateDestroyView(CoreListCreateDestroyView, BlocksView):
         floor/location as long as the location is authorized.
         """
 
-        locations = get_user_authorized_locations(self.response.user)
+        locations = get_organization_admin_authorized_locations(
+            self.response.user)
         return self._filter_blocks_with_locations(locations)
 
     def _get_employee_queryset(self):
@@ -116,7 +118,7 @@ class BlocksListCreateDestroyView(CoreListCreateDestroyView, BlocksView):
         floor/location as long as the location is authorized.
         """
 
-        locations = get_user_authorized_locations(self.response.user)
+        locations = get_employee_authorized_locations(self.response.user)
         return self._filter_blocks_with_locations(locations)
 
     def _perform_create_by_organization_admin(self, serializer):
@@ -136,7 +138,8 @@ class BlocksListCreateDestroyView(CoreListCreateDestroyView, BlocksView):
                 })
 
         # see whether block location is within authorized locations
-        locations = get_user_authorized_locations(self.response.user)
+        locations = get_organization_admin_authorized_locations(
+            self.response.user)
         if not locations.filter(id=floor.location.id).exists():
             raise exceptions.ValidationError(
                 {
@@ -192,7 +195,8 @@ class BlocksRetrieveUpdateDestroyView(
         floor/location as long as the location is authorized.
         """
 
-        locations = get_user_authorized_locations(self.response.user)
+        locations = get_organization_admin_authorized_locations(
+            self.response.user)
         return self._filter_blocks_with_locations(locations)
 
     def _get_employee_queryset(self):
@@ -201,7 +205,7 @@ class BlocksRetrieveUpdateDestroyView(
         floor/location as long as the location is authorized.
         """
 
-        locations = get_user_authorized_locations(self.response.user)
+        locations = get_employee_authorized_locations(self.response.user)
         return self._filter_blocks_with_locations(locations)
 
     def _perform_update_by_organization_admin(self, serializer):
