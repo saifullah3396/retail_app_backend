@@ -34,7 +34,7 @@ class FloorListSerializer(serializers.ModelSerializer):
 
         # get all floors in location
         floors = Floor.objects.filter(location=location).order_by('number')
-        if floors and number != floors[0].number + 1:
+        if floors and number != floors.last().number + 1:
             raise exceptions.ValidationError(detail={
                 "number": "Please add an intermediate floor value."
             }, code=status.HTTP_400_BAD_REQUEST)

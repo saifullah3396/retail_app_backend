@@ -104,7 +104,7 @@ class FloorsListCreateDestroyView(CoreListCreateDestroyView, FloorsView):
         """
 
         locations = get_organization_admin_authorized_locations(
-            self.response.user)
+            self.request.user)
         return self._filter_floors_with_locations(locations)
 
     def _get_employee_queryset(self):
@@ -115,7 +115,7 @@ class FloorsListCreateDestroyView(CoreListCreateDestroyView, FloorsView):
         """
 
         # get all locations authorized to user
-        locations = get_employee_authorized_locations(self.response.user)
+        locations = get_employee_authorized_locations(self.request.user)
         return self._filter_floors_with_locations(locations)
 
     def _perform_create_by_organization_admin(self, serializer):
@@ -126,7 +126,7 @@ class FloorsListCreateDestroyView(CoreListCreateDestroyView, FloorsView):
 
         # get all locations authorized to user
         locations = \
-            get_organization_admin_authorized_locations(self.response.user)
+            get_organization_admin_authorized_locations(self.request.user)
         if not locations.filter(id=self.request.data.get('location', None)):
             raise exceptions.ValidationError(
                 {
@@ -180,7 +180,7 @@ class FloorsRetrieveUpdateDestroyView(
         """
 
         locations = get_organization_admin_authorized_locations(
-            self.response.user)
+            self.request.user)
         return self._filter_floors_with_locations(locations)
 
     def _get_employee_queryset(self):
@@ -190,7 +190,7 @@ class FloorsRetrieveUpdateDestroyView(
         employee.
         """
 
-        locations = get_employee_authorized_locations(self.response.user)
+        locations = get_employee_authorized_locations(self.request.user)
         return self._filter_floors_with_locations(locations)
 
     def _perform_update_by_organization_admin(self, serializer):

@@ -114,7 +114,7 @@ class CamerasListCreateDestroyView(
         """
 
         locations = get_organization_admin_authorized_locations(
-            self.response.user)
+            self.request.user)
         return self._filter_cameras_with_locations(locations)
 
     def _get_employee_queryset(self):
@@ -123,7 +123,7 @@ class CamerasListCreateDestroyView(
         floor/location as long as the location is authorized.
         """
 
-        locations = get_employee_authorized_locations(self.response.user)
+        locations = get_employee_authorized_locations(self.request.user)
         return self._filter_cameras_with_locations(locations)
 
     def _perform_create_by_organization_admin(self, serializer):
@@ -144,7 +144,7 @@ class CamerasListCreateDestroyView(
 
         # see whether block location is within authorized locations
         locations = get_organization_admin_authorized_locations(
-            self.response.user)
+            self.request.user)
         if not locations.filter(id=block.floor.location.id).exists():
             raise exceptions.ValidationError(
                 {
@@ -201,7 +201,7 @@ class CamerasRetrieveUpdateDestroyView(
         """
 
         locations = get_organization_admin_authorized_locations(
-            self.response.user)
+            self.request.user)
         return self._filter_cameras_with_locations(locations)
 
     def _get_employee_queryset(self):
@@ -210,7 +210,7 @@ class CamerasRetrieveUpdateDestroyView(
         floor/location as long as the location is authorized.
         """
 
-        locations = get_employee_authorized_locations(self.response.user)
+        locations = get_employee_authorized_locations(self.request.user)
         return self._filter_cameras_with_locations(locations)
 
     def _perform_update_by_organization_admin(self, serializer):
