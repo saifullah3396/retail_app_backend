@@ -329,6 +329,16 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             'floor_2_location_1': {
                 'number': 2, 'location': 'location_1_org_1'},
         }
+
+        self.floors_location_1_sub_1_org_1_dict = {
+            'floor_0_location_1_sub_1_org_1': {
+                'number': 0, 'location': 'location_1_sub_1_org_1'},
+            'floor_1_location_1_sub_1_org_1': {
+                'number': 1, 'location': 'location_1_sub_1_org_1'},
+            'floor_2_location_1_sub_1_org_1': {
+                'number': 2, 'location': 'location_1_sub_1_org_1'},
+        }
+
         self.floors = self.create_floors(
             floors_dict, self.locations)
 
