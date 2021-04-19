@@ -42,7 +42,7 @@ class Floor(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     """Floor number."""
-    number = models.IntegerField(default=0)
+    number = models.PositiveIntegerField()
 
     """Location with which this floor is associated."""
     location = models.ForeignKey(

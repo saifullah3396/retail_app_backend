@@ -2,7 +2,7 @@
 Defines the serializers used in the locations api.
 """
 
-from rest_framework import serializers
+from rest_framework import serializers, exceptions, status
 
 from locations.models import Block, Floor, Location
 
@@ -24,10 +24,22 @@ class FloorListSerializer(serializers.ModelSerializer):
         model = Floor
         fields = ('id', 'number', 'location',)
         extra_kwargs = {
-            'id': {'read_only': True},
             'number': {'required': True},
             'location': {'required': True},
         }
+
+    def create(self, validated_data):
+        location = validated_data.get('location')
+        number = validated_data.get('number')
+
+        # get all floors in location
+        floors = Floor.objects.filter(location=location).order_by('number')
+        if floors and number != floors[0].number + 1:
+            raise exceptions.ValidationError(detail={
+                "number": "Please add an intermediate floor value."
+            }, code=status.HTTP_400_BAD_REQUEST)
+
+        return super().create(validated_data)
 
 
 class BlockListSerializer(serializers.ModelSerializer):
@@ -87,9 +99,10 @@ class FloorDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Floor
-        fields = ('id', 'number', 'blocks')
+        fields = ('id', 'number', 'blocks', 'location')
         extra_kwargs = {
-            'number': {'read_only': True}
+            'number': {'read_only': True},
+            'location': {'read_only': True}
         }
 
 
