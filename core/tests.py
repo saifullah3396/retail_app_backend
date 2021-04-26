@@ -2,13 +2,17 @@
 Defines the base functionality for unit tests generation for our applications.
 """
 
+
+from django.conf import settings as django_settings
 from django.contrib.auth.models import Group
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.urls import reverse
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase, URLPatternsTestCase
 from rest_framework_jwt.settings import api_settings
 
+from backend.settings import MEDIA_ROOT
 from locations.models import Block, Floor, Location
 from organizations.models import Organization
 from users.models import AppUser
@@ -212,6 +216,15 @@ class TestsBase(APITestCase, URLPatternsTestCase):
                 tokens[user_name] = Token.objects.create(user=users[user_name])
                 tokens[user_name].save()
         return users, tokens
+
+    def get_test_floor_map_image(self):
+        """
+        Returns an uploaded test image.
+        """
+        return SimpleUploadedFile(
+            "test_image.png",
+            content=open("{}/maps/wing_l.png".format(MEDIA_ROOT), 'rb').read(),
+            content_type='image/png')
 
     def setUp(self):
         """
