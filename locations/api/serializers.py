@@ -2,7 +2,7 @@
 Defines the serializers used in the locations api.
 """
 
-from rest_framework import serializers, exceptions, status
+from rest_framework import exceptions, serializers, status
 
 from locations.models import Block, Floor, Location
 
@@ -45,28 +45,11 @@ class FloorListSerializer(serializers.ModelSerializer):
 class BlockListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Block
-        fields = ('id', 'name', 'floor_map',
-                  'pixels_to_mm_x', 'pixels_to_m_y', 'floor')
-        extra_kwargs = {
-            'id': {'read_only': True},
-            'name': {'required': True},
-            'floor_map': {'required': True},
-            'pixels_to_mm_x': {'required': True},
-            'pixels_to_m_y': {'required': True},
-            'floor': {'required': True},
-        }
+        fields = ('id', 'name', 'floor')
 
 
-class BlockDetailSerializer(serializers.ModelSerializer):
+class BlockCreateSerializer(serializers.ModelSerializer):
     floor_map_url = serializers.SerializerMethodField(read_only=True)
-    floor_map_resolution = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = Block
-        fields = ('id', 'name', 'floor_map_url', 'floor_map_resolution')
-        extra_kwargs = {
-            'id': {'read_only': True},
-        }
 
     def get_floor_map_url(self, block):
         """
@@ -76,14 +59,35 @@ class BlockDetailSerializer(serializers.ModelSerializer):
             return self.context.get('request').\
                 build_absolute_uri(block.floor_map.url)
 
-    def get_floor_map_resolution(self, block):
-        """
-        Generates a floor map resolution method field.
-        """
-        return {
-            "x": block.pixels_to_m_x,
-            "y": block.pixels_to_m_y
+    class Meta:
+        model = Block
+        fields = ('id', 'name', 'floor_map', 'floor_map_url',
+                  'pixels_to_m_x', 'pixels_to_m_y', 'floor')
+        extra_kwargs = {
+            'name': {'required': True},
+            'floor_map': {'required': True, 'write_only': True},
+            'floor_map_url': {'required': True, 'read_only': True},
+            'pixels_to_m_x': {'required': True},
+            'pixels_to_m_y': {'required': True},
+            'floor': {'required': True},
         }
+
+
+class BlockDetailSerializer(serializers.ModelSerializer):
+    floor_map_url = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Block
+        fields = ('id', 'name', 'floor_map_url',
+                  'pixels_to_m_x', 'pixels_to_m_y', 'floor')
+
+    def get_floor_map_url(self, block):
+        """
+        Returns the absolute url of the block floor map.
+        """
+        if block.floor_map and hasattr(block.floor_map, 'url'):
+            return self.context.get('request').\
+                build_absolute_uri(block.floor_map.url)
 
 
 class FloorDetailSerializer(serializers.ModelSerializer):
