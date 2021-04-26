@@ -2,6 +2,7 @@
 Defines the base functionality for unit tests generation for our applications.
 """
 
+import tempfile
 
 from django.conf import settings as django_settings
 from django.contrib.auth.models import Group
@@ -230,6 +231,9 @@ class TestsBase(APITestCase, URLPatternsTestCase):
         """
         Sets up the test database with example values for different models
         """
+        # set media root to temp file
+        django_settings.MEDIA_ROOT = tempfile.mkdtemp()
+
         # generate test groups
         groups_list = [
             e.name for e in UserGroups]
