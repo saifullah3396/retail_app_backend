@@ -2,6 +2,7 @@
 Defines the core REST API views on which all other application views will be
 based.
 """
+
 from django.db.models import ProtectedError
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import exceptions, filters, pagination, status
@@ -67,7 +68,7 @@ class CoreAPIView(GenericAPIView):
         """
         Returns the list of ids based on different request types.
         """
-            return self.request.query_params.getlist('id')
+        return self.request.query_params.getlist('id')
 
     def _filter_objects_by_id_list(self, objects, id_list):
         """
