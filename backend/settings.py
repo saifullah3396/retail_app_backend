@@ -85,10 +85,10 @@ INSTALLED_APPS = [
     'core',
     'organizations',
     'locations',
-    'deepstream_servers',
     'measurement_frames',
-    'cameras',
-    'deepstream_manager',
+    # 'deepstream_servers',
+    # 'cameras',
+    # 'deepstream_manager',
     'frontend',
 ]
 
