@@ -2,6 +2,7 @@
 Defines the REST API views for floors models.
 """
 
+
 from rest_framework import exceptions
 
 from core.permissions import UserGroups
@@ -9,7 +10,8 @@ from core.utils import (field_invalid_error, get_employee_authorized_locations,
                         get_object_by_id,
                         get_organization_admin_authorized_locations)
 from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
-from locations.api.serializers import (BlockDetailSerializer,
+from locations.api.serializers import (BlockCreateSerializer,
+                                       BlockDetailSerializer,
                                        BlockListSerializer)
 from locations.models import Block, Floor
 from locations.permissions import (BlocksListCreateDestroyPermission,
@@ -67,6 +69,16 @@ class BlocksListCreateDestroyView(CoreListCreateDestroyView, BlocksView):
     serializer_class = BlockListSerializer
     permission_classes = (BlocksListCreateDestroyPermission,)
 
+    def get_serializer_class(self):
+        """
+        Returns separate serializer classes for get/put/patch requests.
+        """
+
+        if self.request.method == 'GET':
+            return BlockListSerializer
+        elif self.request.method == 'POST':
+            return BlockCreateSerializer
+
     def _get_model(self):
         """
         Returns the view model.
@@ -110,7 +122,8 @@ class BlocksListCreateDestroyView(CoreListCreateDestroyView, BlocksView):
 
         locations = get_organization_admin_authorized_locations(
             self.request.user)
-        return self._filter_blocks_with_locations(locations)
+        blocks = self._filter_blocks_with_locations(locations)
+        return blocks
 
     def _get_employee_queryset(self):
         """
