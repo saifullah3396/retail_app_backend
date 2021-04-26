@@ -16,6 +16,7 @@ from rest_framework_jwt.settings import api_settings
 
 from backend.settings import MEDIA_ROOT
 from locations.models import Block, Floor, Location
+from measurement_frames.models import MeasurementFrame
 from organizations.models import Organization
 from users.models import AppUser
 
@@ -150,6 +151,33 @@ class TestsBase(APITestCase, URLPatternsTestCase):
                 floor=floors.get(mapping['floor']))
             blocks[block_name].save()
         return blocks
+
+    def create_frames(self, frames_dict, blocks):
+        """
+        Creates new frames in the test database according to input
+        frames dictionary mapping frames to blocks
+
+        :param frames_dict: Dict of frames, for example
+            {
+                'frame_1_block_0_floor_0_location_1': {
+                    'block': 'block_0_floor_0_location_1'},
+                ...
+                'frame_1_block_1_floor_0_location_1': {
+                    'block': 'block_1_floor_0_location_1'},
+                'frame_1_block_n_floor_0_location_1': {
+                    'block': 'block_2_floor_0_location_1'},
+            }
+        """
+        frames = {}
+        for (name, mapping) in frames_dict.items():
+            frames[name] = MeasurementFrame(
+                name=mapping['name'],
+                pixel_pose_x=mapping['pixel_pose_x'],
+                pixel_pose_y=mapping['pixel_pose_y'],
+                pixel_pose_theta=mapping['pixel_pose_theta'],
+                block=blocks.get(mapping['block']))
+            frames[name].save()
+        return frames
 
     def create_users(self, users_dict, groups, orgs, locations):
         """
@@ -533,6 +561,67 @@ class TestsBase(APITestCase, URLPatternsTestCase):
 
         # generate blocks in database
         self.blocks = self.create_blocks(self.bs_names, self.floors)
+
+        # generate measurement frames in database
+        self.mfs_b1_f0_l1_o1_names = {
+            'mf0_b1_f0_l1_o1': {
+                'name': "mf0",
+                'pixel_pose_x': 200,
+                'pixel_pose_y': 100,
+                'pixel_pose_theta': 90,
+                'block': 'b1_f0_l1_o1'
+            },
+            'mf1_b1_f0_l1_o1': {
+                'name': "mf1",
+                'pixel_pose_x': 200,
+                'pixel_pose_y': 100,
+                'pixel_pose_theta': 90,
+                'block': 'b1_f0_l1_o1'
+            },
+        }
+
+        self.mfs_b1_f0_l1_o2_names = {
+            'mf0_b1_f0_l1_o2': {
+                'name': "mf0",
+                'pixel_pose_x': 200,
+                'pixel_pose_y': 100,
+                'pixel_pose_theta': 90,
+                'block': 'b1_f0_l1_o2'
+            },
+            'mf1_b1_f0_l1_o2': {
+                'name': "mf1",
+                'pixel_pose_x': 200,
+                'pixel_pose_y': 100,
+                'pixel_pose_theta': 90,
+                'block': 'b1_f0_l1_o2'
+            },
+        }
+
+        self.mfs_b1_f0_l1_sub1_o1_names = {
+            'mf0_b1_f0_l1_sub1_o1': {
+                'name': "mf0",
+                'pixel_pose_x': 200,
+                'pixel_pose_y': 100,
+                'pixel_pose_theta': 90,
+                'block': 'b1_f0_l1_sub1_o1'
+            },
+            'mf1_b1_f0_l1_sub1_o1': {
+                'name': "mf1",
+                'pixel_pose_x': 200,
+                'pixel_pose_y': 100,
+                'pixel_pose_theta': 90,
+                'block': 'b1_f0_l1_sub1_o1'
+            },
+        }
+
+        self.mfs_names = {
+            **self.mfs_b1_f0_l1_o1_names,
+            **self.mfs_b1_f0_l1_o2_names,
+            **self.mfs_b1_f0_l1_sub1_o1_names,
+        }
+
+        # generate blocks in database
+        self.frames = self.create_frames(self.mfs_names, self.blocks)
 
         # make a list of users with respective properties
         self.users_dict = {
