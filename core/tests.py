@@ -9,6 +9,7 @@ from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.urls import reverse
+from django.utils.http import urlencode
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase, URLPatternsTestCase
 from rest_framework_jwt.settings import api_settings
@@ -662,13 +663,22 @@ class TestsBase(APITestCase, URLPatternsTestCase):
         for request in config['request']:
             with self.subTest(request=request, test_name=config['test_name']):
                 if 'args' in request:
-                    url = reverse(path_name, args=request['args'])
+                    url = reverse(path_name, kwargs=request['args'])
                 else:
                     url = reverse(path_name)
 
+                query_params = None
+                if 'query_params' in request:
+                    query_params = urlencode(request['query_params'])
+                    url = '{}?{}'.format(url, query_params)
+
                 data = None
+                data_format = 'json'
                 if 'data' in request:
                     data = request['data']
+
+                if 'data_format' in request:
+                    data_format = request['data_format']
 
                 response_check = None
                 if 'response_check' in request:
@@ -680,6 +690,7 @@ class TestsBase(APITestCase, URLPatternsTestCase):
                     self.tokens[request['user']],
                     request['status'],
                     config['type'],
+                    data_format=data_format,
                     response_check=response_check)
 
     def call_api(
@@ -689,6 +700,7 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             token,
             status_code,
             api_type,
+            data_format='json',
             response_check=None,
             debug=True):
         """
@@ -720,7 +732,7 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             response = rest_fn(
                 url,
                 data=data,
-                format='json',
+                format=data_format,
                 HTTP_AUTHORIZATION=auth_string)
         else:
             response = rest_fn(
