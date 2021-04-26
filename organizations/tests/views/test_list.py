@@ -40,29 +40,26 @@ class OrganizationListTests(TestsBase):
                 'request': [
                     {   # get org list by staff
                         'test_name': 'get_org_1_list_by_staff',
-                        'args': None,
                         'user': 'staff_user',
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data['results']),
-                                len(self.orgs_list)+len(self.sub_orgs_dict))
+                                len(self.os_names)+len(self.subs_names))
                         )
                     },
                     {   # get org list by org admin
                         'test_name': 'get_org_list_by_org_1_admin',
-                        'args': None,
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data['results']),
-                                1+len(self.org_1_sub_orgs))
+                                1+len(self.subs_o1_names))
                         )
                     },
                     {   # get org list by sub-org admin
                         'test_name': 'get_org_list_by_sub_org_1_admin',
-                        'args': None,
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
@@ -71,24 +68,21 @@ class OrganizationListTests(TestsBase):
                     },
                     {   # get org list by another org admin
                         'test_name': 'get_org_list_by_sub_org_2_admin',
-                        'args': None,
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data['results']),
-                                1+len(self.org_2_sub_orgs))
+                                1+len(self.subs_o2_names))
                         )
                     },
                     {   # get org list by org employee
                         'test_name': 'get_org_list_by_employee',
-                        'args': None,
                         'user': 'employee_user',
                         'status': status.HTTP_403_FORBIDDEN,
                     },
                     {   # get org list by org other user
                         'test_name': 'get_org_list_by_employee',
-                        'args': None,
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN
                     }

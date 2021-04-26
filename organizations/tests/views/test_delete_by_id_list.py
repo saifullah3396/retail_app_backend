@@ -41,51 +41,45 @@ class OrganizationDeleteByIdListTests(TestsBase):
                 'request': [
                     {   # delete orgs by id, forbidden for organization admin
                         'test_name': 'delete_multiple_org_by_id_by_org_1_admin',
-                        'data': {
-                            "id": [
-                                self.orgs['org_4_for_deletion'].id,
-                                self.orgs['org_5_for_deletion'].id]
-                        },
+                        'query_params': [
+                            ('id', self.orgs['o4_for_deletion'].id),
+                            ('id', self.orgs['o5_for_deletion'].id)
+                        ],
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
                     {   # delete sub-orgs by id, okay for organization admin
                         'test_name': 'delete_multiple_sub_orgs_2_by_id_by_org_2_admin',
-                        'data': {
-                            "id": [
-                                self.orgs['sub_4_org_2_for_deletion'].id]
-                        },
+                        'query_params': [
+                            ('id', self.orgs['sub4_o2_for_deletion'].id)
+                        ],
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_200_OK
                     },
                     {   # delete sub-orgs by id, forbidden for other
                         # organization admin
                         'test_name': 'delete_multiple_sub_orgs_1_by_id_by_org_2_admin',
-                        'data': {
-                            "id": [
-                                self.orgs['sub_3_org_1_for_deletion'].id]
-                        },
+                        'query_params': [
+                            ('id', self.orgs['sub3_o1_for_deletion'].id)
+                        ],
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
                     {   # delete sub-org by id, okay for staff
                         'test_name': 'delete_multiple_sub_orgs_2_by_id_by_staff',
-                        'args': None,
-                        'data': {
-                            "id": [
-                                self.orgs['sub_3_org_1_for_deletion'].id]
-                        },
+                        'query_params': [
+                            ('id', self.orgs['sub3_o1_for_deletion'].id)
+                        ],
                         'user': 'staff_user',
                         'status': status.HTTP_200_OK
                     },
                     {   # delete org by id, okay for staff, but since these
                         # organizations are protected, they won't be deleted.
                         'test_name': 'delete_multiple_orgs_by_id_by_staff',
-                        'data': {
-                            "id": [
-                                self.orgs['org_4_for_deletion'].id,
-                                self.orgs['org_5_for_deletion'].id]
-                        },
+                        'query_params': [
+                            ('id', self.orgs['o4_for_deletion'].id),
+                            ('id', self.orgs['o5_for_deletion'].id)
+                        ],
                         'user': 'staff_user',
                         'status': status.HTTP_400_BAD_REQUEST
                     },

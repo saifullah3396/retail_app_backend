@@ -68,7 +68,6 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_org_by_org_admin',
                         'data': {
                             'name': 'test_3_organization',
-                            'parent': None
                         },
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_400_BAD_REQUEST
@@ -77,7 +76,6 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_org_by_sub_org_admin',
                         'data': {
                             'name': 'test_4_organization',
-                            'parent': None
                         },
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_400_BAD_REQUEST
@@ -109,7 +107,7 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_sub_org_in_org_1_by_staff',
                         'data': {
                             'name': 'test_12_sub_org_in_org_1',
-                            'parent': self.orgs['org_1'].id
+                            'parent': self.orgs['o1'].id
                         },
                         'user': 'staff_user',
                         'status': status.HTTP_201_CREATED,
@@ -122,7 +120,7 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_dup_sub_org_in_org_1_by_staff',
                         'data': {
                             'name': 'test_12_sub_org_in_org_1',
-                            'parent': self.orgs['org_1'].id
+                            'parent': self.orgs['o1'].id
                         },
                         'user': 'staff_user',
                         'status': status.HTTP_400_BAD_REQUEST
@@ -132,7 +130,7 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_sub_org_in_org_1_by_org_1_admin',
                         'data': {
                             'name': 'test_34_sub_org_in_org_1',
-                            'parent': self.orgs['org_1'].id
+                            'parent': self.orgs['o1'].id
                         },
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_201_CREATED,
@@ -145,7 +143,7 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_dup_sub_org_in_org_1_by_org_1_admin',
                         'data': {
                             'name': 'test_34_sub_org_in_org_1',
-                            'parent': self.orgs['org_1'].id
+                            'parent': self.orgs['o1'].id
                         },
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_400_BAD_REQUEST
@@ -155,7 +153,7 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_sub_org_in_org_1_by_sub_1_org_1_admin',
                         'data': {
                             'name': 'test_5_sub_org_in_org_1',
-                            'parent': self.orgs['org_1'].id
+                            'parent': self.orgs['o1'].id
                         },
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_400_BAD_REQUEST
@@ -165,7 +163,7 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_sub_org_in_org_1_by_org_2_admin',
                         'data': {
                             'name': 'test_6_sub_org_in_org_1',
-                            'parent': self.orgs['org_1'].id
+                            'parent': self.orgs['o1'].id
                         },
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_400_BAD_REQUEST
@@ -174,7 +172,7 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_sub_org_in_org_2_by_org_2_admin',
                         'data': {
                             'name': 'test_7_sub_org_in_org_2',
-                            'parent': self.orgs['org_2'].id
+                            'parent': self.orgs['o2'].id
                         },
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_201_CREATED,
@@ -187,7 +185,7 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_sub_org_in_org_1_by_employee',
                         'data': {
                             'name': 'test_8_sub_org_in_org_1',
-                            'parent': self.orgs['org_1'].id
+                            'parent': self.orgs['o1'].id
                         },
                         'user': 'employee_user',
                         'status': status.HTTP_403_FORBIDDEN
@@ -196,7 +194,7 @@ class OrganizationCreateTests(TestsBase):
                         'test_name': 'create_sub_org_in_org_1_by_other_user',
                         'data': {
                             'name': 'test_9_sub_org_in_org_1',
-                            'parent': self.orgs['org_1'].id
+                            'parent': self.orgs['o1'].id
                         },
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN
