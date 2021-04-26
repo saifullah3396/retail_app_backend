@@ -1,5 +1,5 @@
 """
-Defines the urls for the views defined in the locations api.
+Defines the urls for the views defined in the api.
 """
 
 from django.urls import path
@@ -11,9 +11,9 @@ urlpatterns = [
     path(
         '',
         MeasurementFramesListCreateDestroyView.as_view(),
-        name='measurement_frame_list_create_delete'),
+        name='frames_list_create_delete'),
     path(
         '<pk>',
         MeasurementFramesRetrieveUpdateDestroyView.as_view(),
-        name='measurement_frame_retrieve_update_delete'),
+        name='frames_retrieve_update_delete'),
 ]

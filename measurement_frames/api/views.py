@@ -148,7 +148,7 @@ class MeasurementFramesListCreateDestroyView(
         if not locations.filter(id=block.floor.location.id).exists():
             raise exceptions.ValidationError(
                 {
-                    'location': field_invalid_error()
+                    'block': field_invalid_error()
                 })
 
         # create floor in db

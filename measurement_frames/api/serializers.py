@@ -14,7 +14,6 @@ class MeasurementFrameListSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'pixel_pose_x',
                   'pixel_pose_y', 'pixel_pose_theta', 'block')
         extra_kwargs = {
-            'id': {'read_only': True},
             'name': {'required': True},
             'pixel_pose_x': {'required': True},
             'pixel_pose_y': {'required': True},
@@ -29,6 +28,5 @@ class MeasurementFrameDetailSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'pixel_pose_x',
                   'pixel_pose_y', 'pixel_pose_theta', 'block')
         extra_kwargs = {
-            'id': {'read_only': True},
             'block': {'read_only': True},
         }

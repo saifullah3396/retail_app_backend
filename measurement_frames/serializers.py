@@ -1,5 +1,5 @@
 """
-Defines the serializers used in the Locations api.
+Defines the serializers used in the api.
 """
 
 from rest_framework import serializers
