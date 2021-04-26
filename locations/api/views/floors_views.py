@@ -136,6 +136,10 @@ class FloorsListCreateDestroyView(CoreListCreateDestroyView, FloorsView):
         # create floor in db
         serializer.save()
 
+    def delete(self, request, *args, **kwargs):
+        """Removes the ability to delete floors by a list of ids."""
+        raise exceptions.PermissionDenied()
+
 
 class FloorsRetrieveUpdateDestroyView(
         CoreRetrieveUpdateDestroyView, FloorsView):
@@ -193,10 +197,27 @@ class FloorsRetrieveUpdateDestroyView(
         locations = get_employee_authorized_locations(self.request.user)
         return self._filter_floors_with_locations(locations)
 
-    def _perform_update_by_organization_admin(self, serializer):
+    def perform_destroy(self, instance):
         """
-        For organization admin, the floor is updated as long as it is within
-        the get queryset
+        Implements the customized destroy functionalty for a floor
         """
+        # get all floors in this floor's location
+        floors = Floor.objects.filter(location=instance.location).order_by('number')
+        if instance.number != floors.last().number:
+            raise exceptions.ValidationError(
+                "Cannot be deleted. Higher floors depend on this floor.")
 
-        serializer.save()
+        # pylint: disable=no-member
+        super().perform_destroy(instance)
+
+    def put(self, request, *args, **kwargs):
+        """
+        Removes functionality to call PUT on a floor
+        """
+        raise exceptions.PermissionDenied()
+
+    def patch(self, request, *args, **kwargs):
+        """
+        Removes functionality to call PATCH on a floor
+        """
+        raise exceptions.PermissionDenied()
