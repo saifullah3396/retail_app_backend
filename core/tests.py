@@ -47,7 +47,7 @@ class TestsBase(APITestCase, URLPatternsTestCase):
         """
         Creates new organizations with given name list in the test database
 
-        :param org_names: List of organization names ['org_1',...'org_n']
+        :param org_names: List of organization names ['o1',...'org_n']
         """
         orgs = {}
         for org_name in org_names:
@@ -61,7 +61,7 @@ class TestsBase(APITestCase, URLPatternsTestCase):
         mapping sub-organizations to organizations in the test database
         :param sub_org_dict: Dict of sub_organization, for example
             {
-                'sub_org_1: 'org_1',
+                'sub_org_1: 'o1',
                 ...
                 'sub_org_n': 'org_n'
             }
@@ -80,9 +80,9 @@ class TestsBase(APITestCase, URLPatternsTestCase):
 
         :param locations_dict: Dict of locations, for example
             {
-                'location_1': 'org_1',
+                'location_1': 'o1',
                 ...
-                'location_2': 'org_2',
+                'location_2': 'o2',
                 'location_n': 'sub_org_n',
             }
         """
@@ -94,24 +94,24 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             locations[location_name].save()
         return locations
 
-    def create_floors(self, floors_dict, locations):
+    def create_floors(self, fs_names, locations):
         """
         Creates new floors in the test database according to input
         floors dictionary mapping floors to locations
 
-        :param floors_dict: Dict of floors, for example
+        :param fs_names: Dict of floors, for example
             {
                 'floor_0_location_1': {
-                    'number': 0, 'location': 'location_1_org_1'},
+                    'number': 0, 'location': 'l1_o1'},
                 ...
                 'floor_1_location_1': {
-                    'number': 1, 'location': 'location_1_org_1'},
+                    'number': 1, 'location': 'l1_o1'},
                 'floor_n_location_1': {
-                    'number': n, 'location': 'location_1_org_1'},
+                    'number': n, 'location': 'l1_o1'},
             }
         """
         floors = {}
-        for (floor_name, mapping) in floors_dict.items():
+        for (floor_name, mapping) in fs_names.items():
             floors[floor_name] = Floor(
                 number=mapping['number'],
                 location=locations.get(mapping['location']))
@@ -137,7 +137,10 @@ class TestsBase(APITestCase, URLPatternsTestCase):
         blocks = {}
         for (block_name, mapping) in blocks_dict.items():
             blocks[block_name] = Block(
-                name=block_name,
+                name=mapping['name'],
+                pixels_to_m_x=mapping['pixels_to_m_x'],
+                pixels_to_m_y=mapping['pixels_to_m_y'],
+                floor_map=mapping['floor_map'],
                 floor=floors.get(mapping['floor']))
             blocks[block_name].save()
         return blocks
@@ -152,7 +155,7 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             {
                 'user_1': {
                     'group': 'group_1',
-                    'organization': 'org_1',
+                    'organization': 'o1',
                     'sub_organization': 'sub_org_1',
                 },
                 ...
@@ -171,11 +174,11 @@ class TestsBase(APITestCase, URLPatternsTestCase):
         For employees, authorized_locations must be provided like this:
         'employee_user': {
                     'group': 'employee',
-                    'organization': 'org_1',
+                    'organization': 'o1',
                     'sub_organization': 'sub_org_1',
                     'authorized_locations': [
-                        'location_1_sub_1_org_1',
-                        'location_2_sub_1_org_1'
+                        'l1_sub1_o1',
+                        'l2_sub1_o1'
                     ]
                 },
         """
@@ -221,139 +224,297 @@ class TestsBase(APITestCase, URLPatternsTestCase):
         self.groups = self.create_groups(groups_list)
 
         # generate test organizations
-        self.orgs_list = [
-            'org_1',
-            'org_2',
-            'org_3',
-            'org_4_for_deletion',
-            'org_5_for_deletion']
+        self.os_names = [
+            'o1',
+            'o2',
+            'o3',
+            'o4_for_deletion',
+            'o5_for_deletion']
 
         # generate organizations in database
-        self.orgs = self.create_orgs(self.orgs_list)
+        self.orgs = self.create_orgs(self.os_names)
 
         # generate sub organizations of org_1
-        self.org_1_sub_orgs = {
-            'sub_1_org_1': 'org_1',
-            'sub_2_org_1': 'org_1',
-            'sub_3_org_1_for_deletion': 'org_1',
-            'sub_4_org_1_for_deletion': 'org_1',
-            'sub_5_org_1_for_deletion': 'org_1',
+        self.subs_o1_names = {
+            'sub1_o1': 'o1',
+            'sub2_o1': 'o1',
+            'sub3_o1_for_deletion': 'o1',
+            'sub4_o1_for_deletion': 'o1',
+            'sub5_o1_for_deletion': 'o1',
         }
 
         # generate sub organizations of org_2
-        self.org_2_sub_orgs = {
-            'sub_1_org_2': 'org_2',
-            'sub_2_org_2': 'org_2',
-            'sub_3_org_2': 'org_2',
-            'sub_4_org_2_for_deletion': 'org_2',
-            'sub_5_org_2_for_deletion': 'org_2',
+        self.subs_o2_names = {
+            'sub1_o2': 'o2',
+            'sub2_o2': 'o2',
+            'sub3_o2': 'o2',
+            'sub4_o2_for_deletion': 'o2',
+            'sub5_o2_for_deletion': 'o2',
         }
 
         # generate sub organizations of org_3
-        self.org_3_sub_orgs = {
-            'sub_1_org_3': 'org_3',
-            'sub_2_org_3': 'org_3',
-            'sub_3_org_3_for_deletion': 'org_3',
+        self.subs_o3_names = {
+            'sub1_o3': 'o3',
+            'sub2_o3': 'o3',
+            'sub3_o3_for_deletion': 'o3',
         }
 
         # generate sub organizations of org_4
-        self.org_4_sub_orgs = {
-            'sub_1_org_4': 'org_4_for_deletion'
+        self.subs_o4_names = {
+            'sub1_o4': 'o4_for_deletion'
         }
 
         # generate sub organizations dictionary
-        self.sub_orgs_dict = {
-            **self.org_1_sub_orgs,
-            **self.org_2_sub_orgs,
-            **self.org_3_sub_orgs,
-            **self.org_4_sub_orgs,
+        self.subs_names = {
+            **self.subs_o1_names,
+            **self.subs_o2_names,
+            **self.subs_o3_names,
+            **self.subs_o4_names,
         }
 
         # update organizations list with sub_organizations in database
-        self.orgs.update(self.create_sub_orgs(self.sub_orgs_dict, self.orgs))
+        self.orgs.update(self.create_sub_orgs(self.subs_names, self.orgs))
 
         # generate locations of org_1
-        self.org_1_locations = {
-            'location_1_org_1': 'org_1',
-            'location_2_org_1': 'org_1',
-            'location_3_org_1': 'org_1',
-            'location_4_org_1': 'org_1',
-            'location_5_org_1': 'org_1',
+        self.ls_o1_names = {
+            'l1_o1': 'o1',
+            'l2_o1': 'o1',
+            'l3_o1': 'o1',
+            'l4_o1': 'o1',
+            'l5_o1': 'o1',
         }
 
         # generate locations of sub_1_org_1
-        self.sub_1_org_1_locations = {
-            'location_1_sub_1_org_1': 'sub_1_org_1',
-            'location_2_sub_1_org_1': 'sub_1_org_1',
-            'location_3_sub_1_org_1': 'sub_1_org_1',
-            'location_4_sub_1_org_1': 'sub_1_org_1',
+        self.ls_sub1_o1_names = {
+            'l1_sub1_o1': 'sub1_o1',
+            'l2_sub1_o1': 'sub1_o1',
+            'l3_sub1_o1': 'sub1_o1',
+            'l4_sub1_o1': 'sub1_o1',
         }
 
         # generate locations of org_2
-        self.org_2_locations = {
-            'location_1_org_2': 'org_2',
-            'location_2_org_2': 'org_2',
-            'location_3_org_2': 'org_2',
+        self.ls_o2_names = {
+            'l1_o2': 'o2',
+            'l2_o2': 'o2',
+            'l3_o2': 'o2',
+            'l4_o2': 'o2',
         }
 
         # generate locations of sub_1_org_2
-        self.sub_1_org_2_locations = {
-            'location_1_sub_1_org_2': 'sub_1_org_2',
-            'location_2_sub_1_org_2': 'sub_1_org_2',
+        self.ls_sub1_o2_names = {
+            'l1_sub1_o2': 'sub1_o2',
+            'l2_sub1_o2': 'sub1_o2',
         }
 
         # generate locations of org_3
-        self.org_3_locations = {
-            'location_1_org_3': 'org_3',
-            'location_2_org_3': 'org_3',
+        self.ls_o3_names = {
+            'l1_o3': 'o3',
+            'l2_o3': 'o3',
         }
 
         # generate locations dictionary
-        self.locations_dict = {
-            **self.org_1_locations,
-            **self.sub_1_org_1_locations,
-            **self.org_2_locations,
-            **self.sub_1_org_2_locations,
-            **self.org_3_locations,
+        self.ls_names = {
+            **self.ls_o1_names,
+            **self.ls_sub1_o1_names,
+            **self.ls_o2_names,
+            **self.ls_sub1_o2_names,
+            **self.ls_o3_names,
         }
 
         # generate locations in database
-        self.locations = self.create_locations(self.locations_dict, self.orgs)
+        self.locations = self.create_locations(self.ls_names, self.orgs)
 
         # generate test floors
-        floors_dict = {
-            'floor_0_location_1': {
-                'number': 0, 'location': 'location_1_org_1'},
-            'floor_1_location_1': {
-                'number': 1, 'location': 'location_1_org_1'},
-            'floor_2_location_1': {
-                'number': 2, 'location': 'location_1_org_1'},
+        self.fs_l1_o1_names = {
+            'f0_l1_o1': {
+                'number': 0, 'location': 'l1_o1'},
+            'f1_l1_o1': {
+                'number': 1, 'location': 'l1_o1'},
+            'f2_l1_o1': {
+                'number': 2, 'location': 'l1_o1'},
+            'f3_l1_o1_for_deletion': {
+                'number': 3, 'location': 'l1_o1'},
+            'f4_l1_o1_for_deletion': {
+                'number': 4, 'location': 'l1_o1'},
         }
 
-        self.floors_location_1_sub_1_org_1_dict = {
-            'floor_0_location_1_sub_1_org_1': {
-                'number': 0, 'location': 'location_1_sub_1_org_1'},
-            'floor_1_location_1_sub_1_org_1': {
-                'number': 1, 'location': 'location_1_sub_1_org_1'},
-            'floor_2_location_1_sub_1_org_1': {
-                'number': 2, 'location': 'location_1_sub_1_org_1'},
+        self.fs_l1_sub1_o1_names = {
+            'f0_l1_sub1_o1': {
+                'number': 0, 'location': 'l1_sub1_o1'},
+            'f1_l1_sub1_o1': {
+                'number': 1, 'location': 'l1_sub1_o1'},
+            'f2_l1_sub1_o1': {
+                'number': 2, 'location': 'l1_sub1_o1'},
+            'f3_l1_sub1_o1': {
+                'number': 3, 'location': 'l1_sub1_o1'},
+            'f4_l1_sub1_o1': {
+                'number': 4, 'location': 'l1_sub1_o1'},
+        }
+
+        self.fs_l1_o2_names = {
+            'f0_l1_o2': {
+                'number': 0, 'location': 'l1_o2'},
+            'f1_l1_o2': {
+                'number': 1, 'location': 'l1_o2'},
+            'f2_l1_o2': {
+                'number': 2, 'location': 'l1_o2'},
+        }
+
+        self.fs_l1_sub1_o2_names = {
+            'f0_l1_sub1_o2': {
+                'number': 0, 'location': 'l1_sub1_o2'},
+        }
+
+        self.fs_names = {
+            **self.fs_l1_o1_names,
+            **self.fs_l1_sub1_o1_names,
+            **self.fs_l1_o2_names,
+            **self.fs_l1_sub1_o2_names,
         }
 
         self.floors = self.create_floors(
-            floors_dict, self.locations)
+            self.fs_names, self.locations)
 
         # generate test blocks
-        blocks_dict = {
-            'block_0_floor_0_location_1': {
-                'floor': 'floor_0_location_1'},
-            'block_1_floor_0_location_1': {
-                'floor': 'floor_0_location_1'},
-            'block_2_floor_0_location_1': {
-                'floor': 'floor_0_location_1'},
+        self.bs_f0_l1_o1_names = {
+            'b1_f0_l1_o1': {
+                'name': 'b1',
+                'pixels_to_m_x': 40,
+                'pixels_to_m_y': 40,
+                'floor_map': self.get_test_floor_map_image(),
+                'floor': 'f0_l1_o1'},
+            'b2_f0_l1_o1': {
+                'name': 'b2',
+                'pixels_to_m_x': 40,
+                'pixels_to_m_y': 40,
+                'floor_map': self.get_test_floor_map_image(),
+                'floor': 'f0_l1_o1'},
+            'b3_f0_l1_o1_for_deletion': {
+                'name': 'b3',
+                'pixels_to_m_x': 40,
+                'pixels_to_m_y': 40,
+                'floor_map': self.get_test_floor_map_image(),
+                'floor': 'f0_l1_o1'},
+            'b4_f0_l1_o1_for_deletion': {
+                'name': 'b4',
+                'pixels_to_m_x': 40,
+                'pixels_to_m_y': 40,
+                'floor_map': self.get_test_floor_map_image(),
+                'floor': 'f0_l1_o1'},
+            'b5_f0_l1_o1_for_deletion': {
+                'name': 'b5',
+                'pixels_to_m_x': 40,
+                'pixels_to_m_y': 40,
+                'floor_map': self.get_test_floor_map_image(),
+                'floor': 'f0_l1_o1'},
+            'b6_f0_l1_o1_for_deletion': {
+                'name': 'b6',
+                'pixels_to_m_x': 40,
+                'pixels_to_m_y': 40,
+                'floor_map': self.get_test_floor_map_image(),
+                'floor': 'f0_l1_o1'},
+        }
+
+        self.bs_f1_l1_o1_names = {
+            'b1_f1_l1_o1': {
+                'name': 'b1',
+                'pixels_to_m_x': 40,
+                'pixels_to_m_y': 40,
+                'floor_map': self.get_test_floor_map_image(),
+                'floor': 'f1_l1_o1'},
+            'b2_f1_l1_o1': {
+                'name': 'b2',
+                'pixels_to_m_x': 40,
+                'pixels_to_m_y': 40,
+                'floor_map': self.get_test_floor_map_image(),
+                'floor': 'f1_l1_o1'},
+        }
+
+        self.bs_f0_l1_sub1_o1_names = {
+            'b1_f0_l1_sub1_o1': {
+                'name': 'b1',
+                'pixels_to_m_x': 40,
+                'pixels_to_m_y': 40,
+                'floor_map': self.get_test_floor_map_image(),
+                'floor': 'f0_l1_sub1_o1'},
+            'b2_f0_l1_sub1_o1': {
+                'name': 'b2',
+                'pixels_to_m_x': 40,
+                'pixels_to_m_y': 40,
+                'floor_map': self.get_test_floor_map_image(),
+                'floor': 'f0_l1_sub1_o1'},
+            'b3_f0_l1_sub1_o1_for_deletion': {
+                'name': 'b3',
+                'pixels_to_m_x': 40,
+                'pixels_to_m_y': 40,
+                'floor_map': self.get_test_floor_map_image(),
+                'floor': 'f0_l1_sub1_o1'},
+            'b4_f0_l1_sub1_o1_for_deletion': {
+                'name': 'b4',
+                'pixels_to_m_x': 40,
+                'pixels_to_m_y': 40,
+                'floor_map': self.get_test_floor_map_image(),
+                'floor': 'f0_l1_sub1_o1'},
+            'b5_f0_l1_sub1_o1_for_deletion': {
+                'name': 'b5',
+                'pixels_to_m_x': 40,
+                'pixels_to_m_y': 40,
+                'floor_map': self.get_test_floor_map_image(),
+                'floor': 'f0_l1_sub1_o1'},
+        }
+
+        self.bs_f0_l1_o2_names = {
+            'b1_f0_l1_o2': {
+                'name': 'b1',
+                'pixels_to_m_x': 40,
+                'pixels_to_m_y': 40,
+                'floor_map': self.get_test_floor_map_image(),
+                'floor': 'f0_l1_o2'},
+            'b2_f0_l1_o2_for_deletion': {
+                'name': 'b2',
+                'pixels_to_m_x': 40,
+                'pixels_to_m_y': 40,
+                'floor_map': self.get_test_floor_map_image(),
+                'floor': 'f0_l1_o2'},
+            'b3_f0_l1_o2_for_deletion': {
+                'name': 'b3',
+                'pixels_to_m_x': 40,
+                'pixels_to_m_y': 40,
+                'floor_map': self.get_test_floor_map_image(),
+                'floor': 'f0_l1_o2'},
+        }
+
+        self.bs_f0_l1_sub1_o2_names = {
+            'b1_f0_l1_sub1_o2': {
+                'name': 'b1',
+                'pixels_to_m_x': 40,
+                'pixels_to_m_y': 40,
+                'floor_map': self.get_test_floor_map_image(),
+                'floor': 'f0_l1_sub1_o2'},
+            'b2_f0_l1_sub1_o2_for_deletion': {
+                'name': 'b2',
+                'pixels_to_m_x': 40,
+                'pixels_to_m_y': 40,
+                'floor_map': self.get_test_floor_map_image(),
+                'floor': 'f0_l1_sub1_o2'},
+            'b3_f0_l1_sub1_o2_for_deletion': {
+                'name': 'b3',
+                'pixels_to_m_x': 40,
+                'pixels_to_m_y': 40,
+                'floor_map': self.get_test_floor_map_image(),
+                'floor': 'f0_l1_sub1_o2'},
+        }
+
+        self.bs_names = {
+            **self.bs_f0_l1_o1_names,
+            **self.bs_f1_l1_o1_names,
+            **self.bs_f0_l1_sub1_o1_names,
+            **self.bs_f0_l1_o2_names,
+            **self.bs_f0_l1_sub1_o2_names
         }
 
         # generate blocks in database
-        self.blocks = self.create_blocks(blocks_dict, self.floors)
+        self.blocks = self.create_blocks(self.bs_names, self.floors)
 
         # make a list of users with respective properties
         self.users_dict = {
