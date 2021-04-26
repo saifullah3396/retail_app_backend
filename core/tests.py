@@ -521,54 +521,54 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             'staff_user': 'staff',
             'org_1_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'org_1',
+                'organization': 'o1',
             },
             'org_2_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'org_2',
+                'organization': 'o2',
             },
             'org_3_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'org_3',
+                'organization': 'o3',
             },
             'org_4_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'org_4_for_deletion',
+                'organization': 'o4_for_deletion',
             },
             'sub_org_11_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'sub_1_org_1',
+                'organization': 'sub1_o1',
             },
             'sub_org_12_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'sub_1_org_2',
+                'organization': 'sub1_o2',
             },
             'sub_org_21_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'sub_2_org_1',
+                'organization': 'sub2_o1',
             },
             'sub_org_22_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'sub_2_org_2',
+                'organization': 'sub2_o2',
             },
             'sub_org_13_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'sub_1_org_3',
+                'organization': 'sub1_o3',
             },
             'sub_org_23_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'sub_2_org_3',
+                'organization': 'sub2_o3',
             },
             'sub_org_14_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'sub_1_org_4',
+                'organization': 'sub1_o4',
             },
             'employee_user': {
                 'group': UserGroups.EMPLOYEE_GROUP.name,
-                'organization': 'sub_1_org_1',
+                'organization': 'sub1_o1',
                 'authorized_locations': [
-                    'location_1_sub_1_org_1',
-                    'location_2_sub_1_org_1'
+                    'l1_sub1_o1',
+                    'l2_sub1_o1'
                 ]
             },
             'other_user': {
