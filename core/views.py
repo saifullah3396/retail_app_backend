@@ -67,10 +67,7 @@ class CoreAPIView(GenericAPIView):
         """
         Returns the list of ids based on different request types.
         """
-        if self.request.method == "GET":
             return self.request.query_params.getlist('id')
-        else:
-            return self.request.data.get('id')
 
     def _filter_objects_by_id_list(self, objects, id_list):
         """
