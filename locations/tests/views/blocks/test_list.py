@@ -9,7 +9,7 @@ from core.tests import TestsBase
 
 
 # pylint: disable=pointless-string-statement
-class LocationListTests(TestsBase):
+class BlockListTests(TestsBase):
     """
     Defines unit tests for 'list' api requests for views defined
     at 'locations/' url.
@@ -17,7 +17,7 @@ class LocationListTests(TestsBase):
 
     """Define the api url patterns used in this test unit."""
     api_urlpatterns = [
-        path('locations/', include('locations.api.urls')),
+        path('locations/blocks/', include('locations.api.urls')),
     ]
 
     """Define the the complete url pattern used in this test unit."""
@@ -29,63 +29,76 @@ class LocationListTests(TestsBase):
         """
         Sets up the test cases.
         """
-        super(LocationListTests, self).setUp()
+        super(BlockListTests, self).setUp()
         self.test = [
             {
-                'test_name': 'get_locations_list',
+                'test_name': 'get_blocks_list',
                 'type': 'get',
-                'path_name': 'locations_list_create_delete',
+                'path_name': 'blocks_list_create_delete',
                 'request': [
-                    {   # get locations list by staff
+                    {   # get blocks list by staff
+                        'test_name': 'get_blocks_list_by_staff',
+                        'args': None,
                         'user': 'staff_user',
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(
                                     data.get('results', None)),
-                                len(self.ls_names))
+                                len(self.bs_names))
                         )
                     },
-                    {    # get locations list by org admin
+                    {    # get blocks list by org admin
+                        'test_name': 'get_blocks_list_by_org1_admin',
+                        'args': None,
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.ls_o1_names) +
-                                len(self.ls_sub1_o1_names))
+                                len(self.bs_f0_l1_o1_names) +
+                                len(self.bs_f1_l1_o1_names) +
+                                len(self.bs_f0_l1_sub1_o1_names))
                         )
                     },
-                    {   # get locations list by sub-org admin
+                    {   # get blocks list by sub-org admin
+                        'test_name': 'get_blocks_list_by_sub1_org1_admin',
+                        'args': None,
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.ls_sub1_o1_names))
+                                len(self.bs_f0_l1_sub1_o1_names))
                         )
                     },
-                    {   # get locations list by another org admin
+                    {   # get blocks list by another org admin
+                        'test_name': 'get_blocks_list_by_org2_admin',
+                        'args': None,
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.ls_o2_names) +
-                                len(self.ls_sub1_o2_names))
+                                len(self.bs_f0_l1_o2_names) +
+                                len(self.bs_f0_l1_sub1_o2_names))
                         )
                     },
-                    {   # get locations list by employee, okay
+                    {   # get blocks list by employee, okay
+                        'test_name': 'get_blocks_list_by_employee',
+                        'args': None,
                         'user': 'employee_user',
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.users_dict['employee_user']
-                                    ['authorized_locations']))
+                                len(self.bs_f0_l1_sub1_o1_names)
+                            )
                         )
                     },
-                    {   # get locations list by random user, forbidden
+                    {   # get blocks list by random user, forbidden
+                        'test_name': 'get_blocks_list_by_other_user',
+                        'args': None,
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN
                     }

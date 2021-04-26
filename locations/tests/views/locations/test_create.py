@@ -45,7 +45,7 @@ class LocationCreateTests(TestsBase):
                         'test_name': 'create_location_by_staff',
                         'data': {
                             'name': 'My location',
-                            'organization': self.orgs['org_1'].id
+                            'organization': self.orgs['o1'].id
                         },
                         'user': 'staff_user',
                         'status': status.HTTP_201_CREATED,
@@ -65,7 +65,7 @@ class LocationCreateTests(TestsBase):
                     {   # create location with wrong info, bad
                         'test_name': 'create_location_by_staff',
                         'data': {
-                            'organization': self.orgs['org_1'].id
+                            'organization': self.orgs['o1'].id
                         },
                         'user': 'staff_user',
                         'status': status.HTTP_400_BAD_REQUEST,
@@ -74,7 +74,7 @@ class LocationCreateTests(TestsBase):
                         'test_name': 'create_dup_location_by_staff',
                         'data': {
                             'name': 'My location',
-                            'organization': self.orgs['org_1'].id
+                            'organization': self.orgs['o1'].id
                         },
                         'user': 'staff_user',
                         'status': status.HTTP_400_BAD_REQUEST
@@ -83,7 +83,7 @@ class LocationCreateTests(TestsBase):
                         'test_name': 'create_location_org_admin_1_in_org_1',
                         'data': {
                             'name': 'My location 1',
-                            'organization': self.orgs['org_1'].id
+                            'organization': self.orgs['o1'].id
                         },
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_201_CREATED,
@@ -97,7 +97,7 @@ class LocationCreateTests(TestsBase):
                             'create_location_org_admin_1_in_sub_1_org_1',
                         'data': {
                             'name': 'My location 2',
-                            'organization': self.orgs['sub_1_org_1'].id
+                            'organization': self.orgs['sub1_o1'].id
                         },
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_201_CREATED,
@@ -111,7 +111,7 @@ class LocationCreateTests(TestsBase):
                         'test_name': 'create_location_org_admin_1_in_org_2',
                         'data': {
                             'name': 'My location 3',
-                            'organization': self.orgs['org_2'].id
+                            'organization': self.orgs['o2'].id
                         },
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_400_BAD_REQUEST
@@ -122,7 +122,7 @@ class LocationCreateTests(TestsBase):
                             'create_location_org_admin_1_in_sub_1_org_2',
                         'data': {
                             'name': 'My location 4',
-                            'organization': self.orgs['sub_1_org_2'].id
+                            'organization': self.orgs['sub1_o2'].id
                         },
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_400_BAD_REQUEST
@@ -131,7 +131,7 @@ class LocationCreateTests(TestsBase):
                         'test_name': 'create_location_sub_org_admin_1_in_org_1',
                         'data': {
                             'name': 'My location 5',
-                            'organization': self.orgs['org_1'].id
+                            'organization': self.orgs['o1'].id
                         },
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_400_BAD_REQUEST
@@ -141,7 +141,7 @@ class LocationCreateTests(TestsBase):
                             'create_location_sub_org_admin_1_in_sub_1_org_1',
                         'data': {
                             'name': 'My location 6',
-                            'organization': self.orgs['sub_1_org_1'].id
+                            'organization': self.orgs['sub1_o1'].id
                         },
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_201_CREATED,

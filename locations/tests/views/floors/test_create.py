@@ -46,7 +46,7 @@ class FloorCreateTests(TestsBase):
                         'test_name': 'create_floor_by_staff_not_unique',
                         'data': {
                             'number': 0,
-                            'location': self.locations['location_1_org_1'].id
+                            'location': self.locations['l1_o1'].id
                         },
                         'user': 'staff_user',
                         'status': status.HTTP_400_BAD_REQUEST,
@@ -56,7 +56,7 @@ class FloorCreateTests(TestsBase):
                         'test_name': 'create_floor_by_staff_no_floor_in_between',
                         'data': {
                             'number': 4,
-                            'location': self.locations['location_1_org_1'].id
+                            'location': self.locations['l1_o1'].id
                         },
                         'user': 'staff_user',
                         'status': status.HTTP_400_BAD_REQUEST,
@@ -66,7 +66,7 @@ class FloorCreateTests(TestsBase):
                         'test_name': 'create_floor_by_staff',
                         'data': {
                             'number': 3,
-                            'location': self.locations['location_1_org_1'].id
+                            'location': self.locations['l1_o1'].id
                         },
                         'user': 'staff_user',
                         'status': status.HTTP_201_CREATED,
@@ -75,7 +75,7 @@ class FloorCreateTests(TestsBase):
                                 {
                                     'number': 3,
                                     'location':
-                                        self.locations['location_1_org_1'].id
+                                        self.locations['l1_o1'].id
                                 }, data)
                         )
                     },
@@ -83,7 +83,7 @@ class FloorCreateTests(TestsBase):
                         'test_name': 'create_floor_org_admin_1_in_org_1',
                         'data': {
                             'number': 4,
-                            'location': self.locations['location_1_org_1'].id
+                            'location': self.locations['l1_o1'].id
                         },
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_201_CREATED,
@@ -92,25 +92,26 @@ class FloorCreateTests(TestsBase):
                                 {
                                     'number': 4,
                                     'location':
-                                        self.locations['location_1_org_1'].id
+                                        self.locations['l1_o1'].id
                                 }, data)
                         )
                     },
                     {   # create floor by org-admin in lower tree, okay
+                        # location_1_sub_1_org_1 has floors 0, 1, 2, 3, 4
                         'test_name':
                             'create_floor_org_admin_1_in_sub_1_org_1',
                         'data': {
-                            'number': 0,
-                            'location': self.locations['location_1_sub_1_org_1'].id
+                            'number': 5,
+                            'location': self.locations['l1_sub1_o1'].id
                         },
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_201_CREATED,
                         'response_check': lambda test, data: (
                             test.assertDictContainsSubset(
                                 {
-                                    'number': 0,
+                                    'number': 5,
                                     'location':
-                                        self.locations['location_1_sub_1_org_1'].id
+                                        self.locations['l1_sub1_o1'].id
                                 }, data)
                         )
                     },
@@ -119,7 +120,7 @@ class FloorCreateTests(TestsBase):
                         'test_name': 'create_floor_org_admin_1_in_org_2',
                         'data': {
                             'number': 0,
-                            'location': self.locations['location_1_org_2'].id
+                            'location': self.locations['l1_o2'].id
                         },
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_400_BAD_REQUEST
@@ -130,7 +131,7 @@ class FloorCreateTests(TestsBase):
                             'create_floor_org_admin_1_in_sub_1_org_2',
                         'data': {
                             'number': 0,
-                            'location': self.locations['location_1_sub_1_org_2'].id
+                            'location': self.locations['l1_sub1_o2'].id
                         },
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_400_BAD_REQUEST
@@ -139,17 +140,17 @@ class FloorCreateTests(TestsBase):
                         'test_name': 'create_floor_sub_org_admin_1_in_org_1',
                         'data': {
                             'number': 0,
-                            'location': self.locations['location_1_org_1'].id
+                            'location': self.locations['l1_o1'].id
                         },
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_400_BAD_REQUEST
                     },
-                    {   # create floor by sub-org-admin in own tree, bad
+                    {   # create floor by sub-org-admin in own tree, okay
                         'test_name':
                             'create_floor_sub_org_admin_1_in_sub_1_org_1',
                         'data': {
                             'number': 0,
-                            'location': self.locations['location_2_sub_1_org_1'].id
+                            'location': self.locations['l2_sub1_o1'].id
                         },
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_201_CREATED,
@@ -158,7 +159,7 @@ class FloorCreateTests(TestsBase):
                                 {
                                     'number': 0,
                                     'location':
-                                        self.locations['location_2_sub_1_org_1'].id
+                                        self.locations['l2_sub1_o1'].id
                                 }, data)
                         )
                     },
@@ -166,7 +167,7 @@ class FloorCreateTests(TestsBase):
                         'test_name': 'create_floor_employee_user',
                         'data': {
                             'number': 0,
-                            'location': self.locations['location_1_org_1'].id
+                            'location': self.locations['l1_o1'].id
                         },
                         'user': 'employee_user',
                         'status': status.HTTP_403_FORBIDDEN
@@ -175,7 +176,7 @@ class FloorCreateTests(TestsBase):
                         'test_name': 'create_floor_other_user',
                         'data': {
                             'number': 0,
-                            'location': self.locations['location_1_org_1'].id
+                            'location': self.locations['l1_o1'].id
                         },
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN

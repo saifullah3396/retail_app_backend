@@ -39,7 +39,7 @@ class LocationUpdateTests(TestsBase):
                     {
                         # update location 1 org 1 by staff, okay
                         'test_name': 'update_location_1_org_1_by_staff',
-                        'args': [self.locations['location_1_org_1'].id],
+                        'args': {'pk': self.locations['l1_o1'].id},
                         'user': 'staff_user',
                         'data': {
                             'name': 'location_1_org_1_updated',
@@ -53,7 +53,7 @@ class LocationUpdateTests(TestsBase):
                     },
                     {   # update location_1_org_1 by id by org_1 admin, okay
                         'test_name': 'update_location_1_org_1_by_org_1_admin',
-                        'args': [self.locations['location_1_org_1'].id],
+                        'args': {'pk': self.locations['l1_o1'].id},
                         'user': 'org_1_admin_user',
                         'data': {
                             'name': 'location_1_org_1_updated',
@@ -69,7 +69,7 @@ class LocationUpdateTests(TestsBase):
                         # no access
                         'test_name':
                             'update_location_1_org_1_by_sub_1_org_1_admin',
-                        'args': [self.locations['location_1_org_1'].id],
+                        'args': {'pk': self.locations['l1_o1'].id},
                         'user': 'sub_org_11_admin_user',
                         'data': {
                             'name': 'location_1_org_1_updated',
@@ -78,7 +78,7 @@ class LocationUpdateTests(TestsBase):
                     },
                     {   # update location of different org, bad
                         'test_name': 'update_location_1_org_1_by_org_2_admin',
-                        'args': [self.locations['location_1_org_1'].id],
+                        'args': {'pk': self.locations['l1_o1'].id},
                         'user': 'org_2_admin_user',
                         'data': {
                             'name': 'location_1_org_1_updated',
@@ -89,7 +89,7 @@ class LocationUpdateTests(TestsBase):
                         'test_name':
                             'update_location_1_sub_1_org_1_by_sub_org_1_'
                             'employee',
-                        'args': [self.locations['location_1_sub_1_org_1'].id],
+                        'args': {'pk': self.locations['l1_sub1_o1'].id},
                         'user': 'employee_user',
                         'data': {
                             'name': 'location_1_sub_1_org_1_updated',
@@ -99,7 +99,7 @@ class LocationUpdateTests(TestsBase):
                     {   # update location by id, forbidden for random user
                         'test_name':
                             'update_location_1_sub_1_org_1_by_other_user',
-                        'args': [self.locations['location_1_sub_1_org_1'].id],
+                        'args': {'pk': self.locations['l1_sub1_o1'].id},
                         'user': 'other_user',
                         'data': {
                             'name': 'location_1_sub_1_org_1_updated',
@@ -116,7 +116,7 @@ class LocationUpdateTests(TestsBase):
                     {   # update sub-org location by id, okay for staff
                         'test_name':
                             'update_location_1_sub_1_org_1_by_staff_user',
-                        'args': [self.locations['location_1_sub_1_org_1'].id],
+                        'args': {'pk': self.locations['l1_sub1_o1'].id},
                         'user': 'staff_user',
                         'data': {
                             'name': 'location_1_sub_1_org_1_updated',
@@ -132,7 +132,7 @@ class LocationUpdateTests(TestsBase):
                         # which this sub-org exists
                         'test_name':
                             'update_location_1_sub_1_org_1_by_org_1_admin',
-                        'args': [self.locations['location_1_sub_1_org_1'].id],
+                        'args': {'pk': self.locations['l1_sub1_o1'].id},
                         'user': 'org_1_admin_user',
                         'data': {
                             'name': 'location_1_sub_1_org_1_updated',
@@ -149,7 +149,7 @@ class LocationUpdateTests(TestsBase):
                         'test_name':
                             'update_location_1_sub_1_org_1_by_sub_1_org_1_'
                             'admin',
-                        'args': [self.locations['location_1_sub_1_org_1'].id],
+                        'args': {'pk': self.locations['l1_sub1_o1'].id},
                         'user': 'sub_org_11_admin_user',
                         'data': {
                             'name': 'location_1_sub_1_org_1_updated',
@@ -165,7 +165,7 @@ class LocationUpdateTests(TestsBase):
                         'test_name':
                             'update_location_1_sub_1_org_2_by_sub_1_org_2_'
                             'admin',
-                        'args': [self.locations['location_1_sub_1_org_2'].id],
+                        'args': {'pk': self.locations['l1_sub1_o2'].id},
                         'user': 'sub_org_12_admin_user',
                         'data': {
                             'name': 'location_1_sub_1_org_1_updated',
