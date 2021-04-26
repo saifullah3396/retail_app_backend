@@ -14,7 +14,6 @@ class OrganizationListSerializer(serializers.ModelSerializer):
         model = Organization
         fields = ('id', 'name', 'parent',)
         extra_kwargs = {
-            'id': {'read_only': True},
             'name': {'required': True},
         }
 
@@ -42,7 +41,6 @@ class OrganizationDetailSerializer(serializers.ModelSerializer):
         model = Organization
         fields = ('id', 'name', 'parent',)
         extra_kwargs = {
-            'id': {'read_only': True},
             'name': {'required': True},
             'parent': {'read_only': True},
         }
