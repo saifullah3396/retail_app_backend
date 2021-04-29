@@ -105,7 +105,11 @@ class CoreAPIView(GenericAPIView):
         if self.request.user.is_staff:
             return self._get_queryset_by_staff()
         else:
-            return self._get_queryset_by_group()
+            if self.request.user.organization:
+                return self._get_queryset_by_group()
+            else:
+                raise exceptions.PermissionDenied(
+                    {"detail": "You must be part of an organization."})
 
 
 class CoreListCreateDestroyView(
@@ -119,6 +123,28 @@ class CoreListCreateDestroyView(
         super(CoreListCreateDestroyView, self).__init__()
         self._perform_create_by_group_fn = \
             self._define_perform_create_by_group_fn()
+
+    def get_serializer_class(self):
+        """
+        Returns separate serializer classes for get/put/patch requests.
+        """
+
+        if self.request.method == 'GET':
+            return self._get_list_serializer_class()
+        if self.request.method == 'POST':
+            return self._get_create_serializer_class()
+
+    def _get_list_serializer_class(self):
+        """
+        Returns the list serializer.
+        """
+        raise NotImplementedError()
+
+    def _get_create_serializer_class(self):
+        """
+        Returns the create serializer.
+        """
+        raise NotImplementedError()
 
     def _define_perform_create_by_group_fn(self):
         """
@@ -167,7 +193,11 @@ class CoreListCreateDestroyView(
         if self.request.user.is_staff:
             return self._perform_create_by_staff(serializer)
         else:
-            return self._perform_create_by_group(serializer)
+            if self.request.user.organization:
+                return self._perform_create_by_group(serializer)
+            else:
+                raise exceptions.PermissionDenied(
+                    {"detail": "You must be part of an organization."})
 
     def _perform_create_by_group(self, serializer):
         """
@@ -207,6 +237,28 @@ class CoreRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView, CoreAPIView):
         self._perform_update_by_group_fn = \
             self._define_perform_update_by_group_fn()
 
+    def get_serializer_class(self):
+        """
+        Returns separate serializer classes for get/put/patch requests.
+        """
+
+        if self.request.method == 'GET':
+            return self._get_detail_serializer_class()
+        if self.request.method == 'PUT' or self.request.method == 'PATCH':
+            return self._get_update_serializer_class()
+
+    def _get_detail_serializer_class(self):
+        """
+        Returns the detail serializer.
+        """
+        raise NotImplementedError()
+
+    def _get_update_serializer_class(self):
+        """
+        Returns the update serializer.
+        """
+        raise NotImplementedError()
+
     def _define_perform_update_by_group_fn(self):
         """
         Returns a dictionary mapping user group to perform_update function
@@ -242,7 +294,11 @@ class CoreRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView, CoreAPIView):
         if self.request.user.is_staff:
             return self._perform_update_by_staff(serializer)
         else:
-            return self._perform_update_by_group(serializer)
+            if self.request.user.organization:
+                return self._perform_update_by_group(serializer)
+            else:
+                raise exceptions.PermissionDenied(
+                    {"detail": "You must be part of an organization."})
 
     def _perform_update_by_group(self, serializer):
         """
