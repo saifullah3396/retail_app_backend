@@ -12,7 +12,8 @@ from core.utils import (field_invalid_error, get_employee_authorized_locations,
 from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
 from locations.models import Block
 from measurement_frames.api.serializers import (
-    MeasurementFrameDetailSerializer, MeasurementFrameListSerializer)
+    MeasurementFrameCreateSerializer, MeasurementFrameDetailSerializer,
+    MeasurementFrameListSerializer, MeasurementFrameUpdateSerializer)
 from measurement_frames.models import MeasurementFrame
 from measurement_frames.permissions import (
     MeasurementFramesListCreateDestroyPermission,
@@ -48,7 +49,7 @@ class MeasurementFramesView:
         Returns all the frames in the given locations set
         """
 
-        # get all blocks in requested floor
+        # get all frames in requested locations
         frames_in_locations = \
             self._get_model().objects.filter(
                 block__floor__location__in=locations)
@@ -69,7 +70,6 @@ class MeasurementFramesListCreateDestroyView(
     """
 
     queryset = MeasurementFrame.objects.none()
-    serializer_class = MeasurementFrameListSerializer
     permission_classes = (MeasurementFramesListCreateDestroyPermission,)
 
     def _get_model(self):
@@ -84,6 +84,18 @@ class MeasurementFramesListCreateDestroyView(
         Returns the field with respect to which queries are to be ordered.
         """
         return MeasurementFramesView._order_by(self)
+
+    def _get_list_serializer_class(self):
+        """
+        Returns the list serializer.
+        """
+        return MeasurementFrameListSerializer
+
+    def _get_create_serializer_class(self):
+        """
+        Returns the create serializer.
+        """
+        return MeasurementFrameCreateSerializer
 
     def _define_get_queryset_by_group_fn(self):
         """
@@ -109,8 +121,7 @@ class MeasurementFramesListCreateDestroyView(
 
     def _get_organization_admin_queryset(self):
         """
-        For organization admin, all blocks are returned within the queried
-        floor/location as long as the location is authorized.
+        Returns all frames within user authorized locations.
         """
 
         locations = get_organization_admin_authorized_locations(
@@ -119,8 +130,7 @@ class MeasurementFramesListCreateDestroyView(
 
     def _get_employee_queryset(self):
         """
-        For employee, all blocks are returned within the queried
-        floor/location as long as the location is authorized.
+        Returns all frames within user authorized locations.
         """
 
         locations = get_employee_authorized_locations(self.request.user)
@@ -128,8 +138,8 @@ class MeasurementFramesListCreateDestroyView(
 
     def _perform_create_by_organization_admin(self, serializer):
         """
-        For organization admin, the block is created within the queried
-        floor/location as long as the location is authorized.
+        Creates a frame as long as its block is valid and is within
+        user authorized locations.
         """
 
         # get block
@@ -162,7 +172,6 @@ class MeasurementFramesRetrieveUpdateDestroyView(
     """
 
     queryset = MeasurementFrame.objects.none()  # Added for model permissions
-    serializer_class = MeasurementFrameDetailSerializer
     permission_classes = (MeasurementFramesRetrieveUpdateDestroyPermission,)
 
     def _get_model(self):
@@ -171,6 +180,18 @@ class MeasurementFramesRetrieveUpdateDestroyView(
         """
 
         return MeasurementFramesView._get_model(self)
+
+    def _get_detail_serializer_class(self):
+        """
+        Returns the detail serializer.
+        """
+        return MeasurementFrameDetailSerializer
+
+    def _get_update_serializer_class(self):
+        """
+        Returns the update serializer.
+        """
+        return MeasurementFrameUpdateSerializer
 
     def _define_get_queryset_by_group_fn(self):
         """
@@ -196,8 +217,8 @@ class MeasurementFramesRetrieveUpdateDestroyView(
 
     def _get_organization_admin_queryset(self):
         """
-        For organization admin, all blocks are returned within the queried
-        floor/location as long as the location is authorized.
+        Returns all frames are returned within the users
+        authorized locations.
         """
 
         locations = get_organization_admin_authorized_locations(
@@ -206,8 +227,8 @@ class MeasurementFramesRetrieveUpdateDestroyView(
 
     def _get_employee_queryset(self):
         """
-        For employee, all blocks are returned within the queried
-        floor/location as long as the location is authorized.
+        Returns all frames are returned within the users
+        authorized locations.
         """
 
         locations = get_employee_authorized_locations(self.request.user)
@@ -215,7 +236,6 @@ class MeasurementFramesRetrieveUpdateDestroyView(
 
     def _perform_update_by_organization_admin(self, serializer):
         """
-        For organization admin, the block is updated as long as it is within
-        the get queryset
+        Updates the model based on validated data.
         """
         serializer.save()
