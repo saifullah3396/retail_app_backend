@@ -13,6 +13,7 @@ api_urlpatterns = [
     path('organizations/', include('organizations.api.urls')),
     path('locations/', include('locations.api.urls')),
     path('frames/', include('measurement_frames.api.urls')),
+    path('deepstream_servers/', include('deepstream_servers.api.urls')),
     # path('cameras/', include('cameras.api.urls')),
     path('users/', include('users.api.urls')),
     path('user_auth/', include('user_auth.urls')),
