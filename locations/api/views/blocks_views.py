@@ -152,7 +152,7 @@ class BlocksListCreateDestroyView(CoreListCreateDestroyView, BlocksView):
                     'floor': field_invalid_error()
                 })
 
-        # see whether block location is within authorized locations
+        # see whether floor location is within authorized locations
         locations = get_organization_admin_authorized_locations(
             self.request.user)
         if not locations.filter(id=floor.location.id).exists():
@@ -239,4 +239,25 @@ class BlocksRetrieveUpdateDestroyView(
         For organization admin, the block is updated as long as it is within
         the get queryset
         """
+
+        if 'floor' in self.request.data:
+            # get floor
+            floor = get_object_by_id(
+                Floor, self.request.data.get('floor', None))
+
+            if not floor:
+                raise exceptions.ValidationError(
+                    {
+                        'floor': field_invalid_error()
+                    })
+
+            # see whether floor location is within authorized locations
+            locations = get_organization_admin_authorized_locations(
+                self.request.user)
+            if not locations.filter(id=floor.location.id).exists():
+                raise exceptions.ValidationError(
+                    {
+                        'location': field_invalid_error()
+                    })
+
         serializer.save()
