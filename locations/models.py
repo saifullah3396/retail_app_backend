@@ -17,13 +17,17 @@ class Location(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     """Location name."""
-    name = models.CharField(max_length=120, unique=True)
+    name = models.CharField(max_length=120)
 
     """Organization with which this location is associated."""
     organization = models.ForeignKey(
         'organizations.Organization',
         on_delete=models.PROTECT,
     )
+
+    class Meta:
+        """Don't allow non-unique locations for any given organization."""
+        unique_together = ('name', 'organization',)
 
     def __str__(self):
         """
