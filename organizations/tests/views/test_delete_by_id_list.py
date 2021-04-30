@@ -42,8 +42,8 @@ class OrganizationDeleteByIdListTests(TestsBase):
                     {   # delete orgs by id, forbidden for organization admin
                         'test_name': 'delete_multiple_org_by_id_by_org_1_admin',
                         'query_params': [
-                            ('id', self.orgs['o4_for_deletion'].id),
-                            ('id', self.orgs['o5_for_deletion'].id)
+                            ('id', self.orgs['o4_del'].id),
+                            ('id', self.orgs['o5_del'].id)
                         ],
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
@@ -51,7 +51,7 @@ class OrganizationDeleteByIdListTests(TestsBase):
                     {   # delete sub-orgs by id, okay for organization admin
                         'test_name': 'delete_multiple_sub_orgs_2_by_id_by_org_2_admin',
                         'query_params': [
-                            ('id', self.orgs['sub4_o2_for_deletion'].id)
+                            ('id', self.orgs['sub4_del_o2'].id)
                         ],
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_200_OK
@@ -60,7 +60,7 @@ class OrganizationDeleteByIdListTests(TestsBase):
                         # organization admin
                         'test_name': 'delete_multiple_sub_orgs_1_by_id_by_org_2_admin',
                         'query_params': [
-                            ('id', self.orgs['sub3_o1_for_deletion'].id)
+                            ('id', self.orgs['sub3_del_o1'].id)
                         ],
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
@@ -68,7 +68,7 @@ class OrganizationDeleteByIdListTests(TestsBase):
                     {   # delete sub-org by id, okay for staff
                         'test_name': 'delete_multiple_sub_orgs_2_by_id_by_staff',
                         'query_params': [
-                            ('id', self.orgs['sub3_o1_for_deletion'].id)
+                            ('id', self.orgs['sub3_del_o1'].id)
                         ],
                         'user': 'staff_user',
                         'status': status.HTTP_200_OK
@@ -77,8 +77,8 @@ class OrganizationDeleteByIdListTests(TestsBase):
                         # organizations are protected, they won't be deleted.
                         'test_name': 'delete_multiple_orgs_by_id_by_staff',
                         'query_params': [
-                            ('id', self.orgs['o4_for_deletion'].id),
-                            ('id', self.orgs['o5_for_deletion'].id)
+                            ('id', self.orgs['o4_del'].id),
+                            ('id', self.orgs['o5_del'].id)
                         ],
                         'user': 'staff_user',
                         'status': status.HTTP_400_BAD_REQUEST
