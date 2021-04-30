@@ -228,4 +228,24 @@ class DeepstreamServersRetrieveUpdateDestroyView(
         """
         Updates the model based on validated data.
         """
+
+        if 'block' in self.request.data:
+            # get block
+            block = get_object_by_id(
+                Block, self.request.data.get('block', None))
+
+            if not block:
+                raise exceptions.ValidationError(
+                    {
+                        'block': field_invalid_error()
+                    })
+
+            # see whether block location is within authorized locations
+            locations = get_organization_admin_authorized_locations(
+                self.request.user)
+            if not locations.filter(id=block.floor.location.id).exists():
+                raise exceptions.ValidationError(
+                    {
+                        'block': field_invalid_error()
+                    })
         serializer.save()

@@ -76,8 +76,16 @@ class DeepstreamServerDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DeepstreamServer
-        fields = ('id', 'ip_addr', 'mac_addr', 'block',
-                  'log_entries', 'diagnostics')
+        fields = (
+            'id',
+            'ip_addr',
+            'mac_addr',
+            'status',
+            'connected_at',
+            'last_echo_at',
+            'block',
+            'log_entries',
+            'diagnostics')
 
 
 class DeepstreamServerUpdateSerializer(serializers.ModelSerializer):
