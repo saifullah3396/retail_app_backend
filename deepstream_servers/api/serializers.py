@@ -1,6 +1,8 @@
 """
 Defines the serializers used in the DeepstreamServers api.
 """
+
+from django.db import IntegrityError
 from rest_framework import serializers
 
 from deepstream_servers.models import (DeepstreamDiagnostics,
@@ -8,10 +10,27 @@ from deepstream_servers.models import (DeepstreamDiagnostics,
 
 
 # pylint: disable=missing-class-docstring
-class DeepstreamServerSerializer(serializers.ModelSerializer):
+class DeepstreamServerListSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeepstreamServer
-        fields = ('id', 'ip_addr', 'mac_addr', 'block', 'camera')
+        fields = ('id', 'ip_addr', 'mac_addr', 'block')
+
+
+class DeepstreamServerCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeepstreamServer
+        fields = ('id', 'ip_addr', 'mac_addr', 'block')
+        extra_kwargs = {
+            'ip_addr': {'required': True},
+            'mac_addr': {'required': True},
+            'block': {'required': True},
+        }
+
+    def create(self, validated_data):
+        try:
+            return super().create(validated_data)
+        except IntegrityError as ex:
+            raise serializers.ValidationError({"detail": ex.__cause__})
 
 
 class LogEntryDetailSerializer(serializers.ModelSerializer):
@@ -58,4 +77,17 @@ class DeepstreamServerDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeepstreamServer
         fields = ('id', 'ip_addr', 'mac_addr', 'block',
-                  'camera', 'log_entries', 'diagnostics')
+                  'log_entries', 'diagnostics')
+
+
+class DeepstreamServerUpdateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = DeepstreamServer
+        fields = ('id', 'ip_addr', 'mac_addr', 'block')
+
+    def update(self, instance, validated_data):
+        try:
+            return super().update(instance, validated_data)
+        except IntegrityError as ex:
+            raise serializers.ValidationError({"detail": ex.__cause__})
