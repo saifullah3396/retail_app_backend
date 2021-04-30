@@ -106,7 +106,7 @@ class DeepstreamServer(models.Model):
     ip_addr = models.CharField(max_length=120, blank=True)
 
     """MAC address of the server."""
-    mac_addr = models.CharField(max_length=17)
+    mac_addr = models.CharField(max_length=17, unique=True)
 
     """Block with which this server is associated."""
     block = models.ForeignKey("locations.Block", on_delete=models.PROTECT)
@@ -123,7 +123,7 @@ class DeepstreamServer(models.Model):
 
     """Time field that is updated whenever the associated server is
         disconnected"""
-    last_response_received_at = models.DateTimeField(null=True, blank=True)
+    last_echo_at = models.DateTimeField(null=True, blank=True)
 
     def clean(self, *args, **kwargs):
         # validate mac address
