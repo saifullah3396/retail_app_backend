@@ -168,9 +168,9 @@ class OrganizationUpdateTests(TestsBase):
                     },
                     {   # update sub-org by id, okay for sub-org admin itself,
                         # but bad duplicate name
-                        'test_name': 'update_sub_1_org_2_by_id_by_sub_1_org_2_admin_dup_name',
-                        'args': {'pk': self.orgs['sub1_o2'].id},
-                        'user': 'sub_org_12_admin_user',
+                        'test_name': 'update_sub_2_org_1_by_id_by_sub_1_org_2_admin_dup_name',
+                        'args': {'pk': self.orgs['sub2_o1'].id},
+                        'user': 'sub_org_21_admin_user',
                         'data': {
                             'name': 'test_34_sub_1_org_1_updated',  # duplicate name here
                         },
