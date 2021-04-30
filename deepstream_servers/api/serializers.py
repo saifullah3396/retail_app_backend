@@ -19,7 +19,7 @@ class DeepstreamServerListSerializer(serializers.ModelSerializer):
 class DeepstreamServerCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeepstreamServer
-        fields = ('id', 'ip_addr', 'mac_addr', 'block')
+        fields = ('ip_addr', 'mac_addr', 'block')
         extra_kwargs = {
             'ip_addr': {'required': True},
             'mac_addr': {'required': True},
@@ -92,7 +92,7 @@ class DeepstreamServerUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DeepstreamServer
-        fields = ('id', 'ip_addr', 'mac_addr', 'block')
+        fields = ('ip_addr', 'mac_addr', 'block')
 
     def update(self, instance, validated_data):
         try:

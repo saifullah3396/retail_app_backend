@@ -19,7 +19,7 @@ class MeasurementFrameListSerializer(serializers.ModelSerializer):
 class MeasurementFrameCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = MeasurementFrame
-        fields = ('id', 'name', 'pixel_pose_x',
+        fields = ('name', 'pixel_pose_x',
                   'pixel_pose_y', 'pixel_pose_theta', 'block')
         extra_kwargs = {
             'name': {'required': True},
@@ -46,7 +46,7 @@ class MeasurementFrameDetailSerializer(serializers.ModelSerializer):
 class MeasurementFrameUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = MeasurementFrame
-        fields = ('id', 'name', 'pixel_pose_x',
+        fields = ('name', 'pixel_pose_x',
                   'pixel_pose_y', 'pixel_pose_theta', 'block')
         extra_kwargs = {
             'block': {'read_only': True},
