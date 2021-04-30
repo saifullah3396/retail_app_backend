@@ -9,8 +9,10 @@ from core.permissions import UserGroups
 from core.utils import (field_invalid_error, get_employee_authorized_locations,
                         get_organization_admin_authorized_locations)
 from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
-from locations.api.serializers import (LocationDetailSerializer,
-                                       LocationListSerializer)
+from locations.api.serializers import (LocationCreateSerializer,
+                                       LocationDetailSerializer,
+                                       LocationListSerializer,
+                                       LocationUpdateSerializer)
 from locations.models import Location
 from locations.permissions import (LocationsListCreateDestroyPermission,
                                    LocationsRetrieveUpdateDestroyPermission)
@@ -60,7 +62,6 @@ class LocationsListCreateDestroyView(
     """
 
     queryset = Location.objects.none()  # Added for model permissions
-    serializer_class = LocationListSerializer
     permission_classes = (LocationsListCreateDestroyPermission,)
 
     def _get_model(self):
@@ -75,6 +76,18 @@ class LocationsListCreateDestroyView(
         Returns the field with respect to which queries are to be ordered.
         """
         return LocationsView._order_by(self)
+
+    def _get_list_serializer_class(self):
+        """
+        Returns the list serializer.
+        """
+        return LocationListSerializer
+
+    def _get_create_serializer_class(self):
+        """
+        Returns the create serializer.
+        """
+        return LocationCreateSerializer
 
     def _define_get_queryset_by_group_fn(self):
         """
@@ -145,7 +158,6 @@ class LocationsRetrieveUpdateDestroyView(
     """
 
     queryset = Location.objects.none()  # Added for model permissions
-    serializer_class = LocationDetailSerializer
     permission_classes = (LocationsRetrieveUpdateDestroyPermission,)
 
     def _get_model(self):
@@ -154,6 +166,18 @@ class LocationsRetrieveUpdateDestroyView(
         """
 
         return LocationsView._get_model(self)
+
+    def _get_detail_serializer_class(self):
+        """
+        Returns the detail serializer.
+        """
+        return LocationDetailSerializer
+
+    def _get_update_serializer_class(self):
+        """
+        Returns the update serializer.
+        """
+        return LocationUpdateSerializer
 
     def _define_get_queryset_by_group_fn(self):
         """

@@ -2,6 +2,7 @@
 Defines the serializers used in the locations api.
 """
 
+from django.db import IntegrityError
 from rest_framework import exceptions, serializers, status
 
 from locations.models import Block, Floor, Location
@@ -12,14 +13,31 @@ class LocationListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
         fields = ('id', 'name', 'organization',)
+
+
+class LocationCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Location
+        fields = ('id', 'name', 'organization',)
         extra_kwargs = {
-            'id': {'read_only': True},
             'name': {'required': True},
             'organization': {'required': True},
         }
 
+    def create(self, validated_data):
+        try:
+            return super().create(validated_data)
+        except IntegrityError as ex:
+            raise serializers.ValidationError({"detail": ex.__cause__})
+
 
 class FloorListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Floor
+        fields = ('id', 'number', 'location',)
+
+
+class FloorCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Floor
         fields = ('id', 'number', 'location',)
@@ -29,17 +47,20 @@ class FloorListSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
-        location = validated_data.get('location')
-        number = validated_data.get('number')
+        try:
+            location = validated_data.get('location')
+            number = validated_data.get('number')
 
-        # get all floors in location
-        floors = Floor.objects.filter(location=location).order_by('number')
-        if floors and number != floors.last().number + 1:
-            raise exceptions.ValidationError(detail={
-                "number": "Please add an intermediate floor value."
-            }, code=status.HTTP_400_BAD_REQUEST)
+            # get all floors in location
+            floors = Floor.objects.filter(location=location).order_by('number')
+            if floors and number != floors.last().number + 1:
+                raise exceptions.ValidationError(detail={
+                    "number": "Please add an intermediate floor value."
+                }, code=status.HTTP_400_BAD_REQUEST)
 
-        return super().create(validated_data)
+            return super().create(validated_data)
+        except IntegrityError as ex:
+            raise serializers.ValidationError({"detail": ex.__cause__})
 
 
 class BlockListSerializer(serializers.ModelSerializer):
@@ -72,6 +93,12 @@ class BlockCreateSerializer(serializers.ModelSerializer):
             'floor': {'required': True},
         }
 
+    def create(self, validated_data):
+        try:
+            return super().create(validated_data)
+        except IntegrityError as ex:
+            raise serializers.ValidationError({"detail": ex.__cause__})
+
 
 class BlockDetailSerializer(serializers.ModelSerializer):
     floor_map_url = serializers.SerializerMethodField(read_only=True)
@@ -90,6 +117,22 @@ class BlockDetailSerializer(serializers.ModelSerializer):
                 build_absolute_uri(block.floor_map.url)
 
 
+class BlockUpdateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Block
+        fields = ('id', 'name', 'pixels_to_m_x', 'pixels_to_m_y', 'floor')
+        extra_kwargs = {
+            'floor': {'read_only': True}
+        }
+
+    def update(self, instance, validated_data):
+        try:
+            return super().update(instance, validated_data)
+        except IntegrityError as ex:
+            raise serializers.ValidationError({"detail": ex.__cause__})
+
+
 class FloorDetailSerializer(serializers.ModelSerializer):
     blocks = serializers.SerializerMethodField(read_only=True)
 
@@ -104,10 +147,22 @@ class FloorDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Floor
         fields = ('id', 'number', 'blocks', 'location')
+
+
+class FloorUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Floor
+        fields = ('id', 'number', 'location')
         extra_kwargs = {
             'number': {'read_only': True},
             'location': {'read_only': True}
         }
+
+    def update(self, instance, validated_data):
+        try:
+            return super().update(instance, validated_data)
+        except IntegrityError as ex:
+            raise serializers.ValidationError({"detail": ex.__cause__})
 
 
 class LocationDetailSerializer(serializers.ModelSerializer):
@@ -124,6 +179,18 @@ class LocationDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
         fields = ('id', 'name', 'organization', 'floors')
+
+
+class LocationUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Location
+        fields = ('id', 'name', 'organization')
         extra_kwargs = {
-            'id': {'read_only': True}
+            'organization': {'read_only': True}
         }
+
+    def update(self, instance, validated_data):
+        try:
+            return super().update(instance, validated_data)
+        except IntegrityError as ex:
+            raise serializers.ValidationError({"detail": ex.__cause__})

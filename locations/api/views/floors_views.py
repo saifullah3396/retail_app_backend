@@ -8,8 +8,10 @@ from core.permissions import UserGroups
 from core.utils import (field_invalid_error, get_employee_authorized_locations,
                         get_organization_admin_authorized_locations)
 from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
-from locations.api.serializers import (FloorDetailSerializer,
-                                       FloorListSerializer)
+from locations.api.serializers import (FloorCreateSerializer,
+                                       FloorDetailSerializer,
+                                       FloorListSerializer,
+                                       FloorUpdateSerializer)
 from locations.models import Floor, Location
 from locations.permissions import (FloorsListCreateDestroyPermission,
                                    FloorsRetrieveUpdateDestroyPermission)
@@ -59,7 +61,6 @@ class FloorsListCreateDestroyView(CoreListCreateDestroyView, FloorsView):
     """
 
     queryset = Floor.objects.none()  # Added for model permissions
-    serializer_class = FloorListSerializer
     permission_classes = (FloorsListCreateDestroyPermission,)
 
     def _get_model(self):
@@ -74,6 +75,18 @@ class FloorsListCreateDestroyView(CoreListCreateDestroyView, FloorsView):
         Returns the field with respect to which queries are to be ordered.
         """
         return FloorsView._order_by(self)
+
+    def _get_list_serializer_class(self):
+        """
+        Returns the list serializer.
+        """
+        return FloorListSerializer
+
+    def _get_create_serializer_class(self):
+        """
+        Returns the create serializer.
+        """
+        return FloorCreateSerializer
 
     def _define_get_queryset_by_group_fn(self):
         """
@@ -148,7 +161,6 @@ class FloorsRetrieveUpdateDestroyView(
     """
 
     queryset = Location.objects.none()  # Added for model permissions
-    serializer_class = FloorDetailSerializer
     permission_classes = (FloorsRetrieveUpdateDestroyPermission,)
 
     def _get_model(self):
@@ -157,6 +169,18 @@ class FloorsRetrieveUpdateDestroyView(
         """
 
         return FloorsView._get_model(self)
+
+    def _get_detail_serializer_class(self):
+        """
+        Returns the detail serializer.
+        """
+        return FloorDetailSerializer
+
+    def _get_update_serializer_class(self):
+        """
+        Returns the update serializer.
+        """
+        return FloorUpdateSerializer
 
     def _define_get_queryset_by_group_fn(self):
         """
@@ -202,7 +226,8 @@ class FloorsRetrieveUpdateDestroyView(
         Implements the customized destroy functionalty for a floor
         """
         # get all floors in this floor's location
-        floors = Floor.objects.filter(location=instance.location).order_by('number')
+        floors = Floor.objects.filter(
+            location=instance.location).order_by('number')
         if instance.number != floors.last().number:
             raise exceptions.ValidationError(
                 "Cannot be deleted. Higher floors depend on this floor.")

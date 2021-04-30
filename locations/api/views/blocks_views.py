@@ -12,7 +12,8 @@ from core.utils import (field_invalid_error, get_employee_authorized_locations,
 from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
 from locations.api.serializers import (BlockCreateSerializer,
                                        BlockDetailSerializer,
-                                       BlockListSerializer)
+                                       BlockListSerializer,
+                                       BlockUpdateSerializer)
 from locations.models import Block, Floor
 from locations.permissions import (BlocksListCreateDestroyPermission,
                                    BlocksRetrieveUpdateDestroyPermission)
@@ -66,18 +67,7 @@ class BlocksListCreateDestroyView(CoreListCreateDestroyView, BlocksView):
     """
 
     queryset = Block.objects.none()  # Added for model permissions
-    serializer_class = BlockListSerializer
     permission_classes = (BlocksListCreateDestroyPermission,)
-
-    def get_serializer_class(self):
-        """
-        Returns separate serializer classes for get/put/patch requests.
-        """
-
-        if self.request.method == 'GET':
-            return BlockListSerializer
-        elif self.request.method == 'POST':
-            return BlockCreateSerializer
 
     def _get_model(self):
         """
@@ -91,6 +81,18 @@ class BlocksListCreateDestroyView(CoreListCreateDestroyView, BlocksView):
         Returns the field with respect to which queries are to be ordered.
         """
         return BlocksView._order_by(self)
+
+    def _get_list_serializer_class(self):
+        """
+        Returns the list serializer.
+        """
+        return BlockListSerializer
+
+    def _get_create_serializer_class(self):
+        """
+        Returns the create serializer.
+        """
+        return BlockCreateSerializer
 
     def _define_get_queryset_by_group_fn(self):
         """
@@ -170,7 +172,6 @@ class BlocksRetrieveUpdateDestroyView(
     """
 
     queryset = Block.objects.none()  # Added for model permissions
-    serializer_class = BlockDetailSerializer
     permission_classes = (BlocksRetrieveUpdateDestroyPermission,)
 
     def _get_model(self):
@@ -179,6 +180,18 @@ class BlocksRetrieveUpdateDestroyView(
         """
 
         return BlocksView._get_model(self)
+
+    def _get_detail_serializer_class(self):
+        """
+        Returns the detail serializer.
+        """
+        return BlockDetailSerializer
+
+    def _get_update_serializer_class(self):
+        """
+        Returns the update serializer.
+        """
+        return BlockUpdateSerializer
 
     def _define_get_queryset_by_group_fn(self):
         """
