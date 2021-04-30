@@ -9,7 +9,7 @@ from core.tests import TestsBase
 
 
 # pylint: disable=pointless-string-statement
-class BlockListTests(TestsBase):
+class FrameListTests(TestsBase):
     """
     Defines unit tests for 'list' api requests for views defined
     at 'locations/' url.
@@ -17,7 +17,7 @@ class BlockListTests(TestsBase):
 
     """Define the api url patterns used in this test unit."""
     api_urlpatterns = [
-        path('locations/blocks/', include('locations.api.urls')),
+        path('frames/', include('measurement_frames.api.urls')),
     ]
 
     """Define the the complete url pattern used in this test unit."""
@@ -29,15 +29,15 @@ class BlockListTests(TestsBase):
         """
         Sets up the test cases.
         """
-        super(BlockListTests, self).setUp()
+        super(FrameListTests, self).setUp()
         self.test = [
             {
-                'test_name': 'get_blocks_list',
+                'test_name': 'get_frames_list',
                 'type': 'get',
-                'path_name': 'blocks_list_create_delete',
+                'path_name': 'frames_list_create_delete',
                 'request': [
-                    {   # get blocks list by staff
-                        'test_name': 'get_blocks_list_by_staff',
+                    {   # get frames list by staff
+                        'test_name': 'get_frames_list_by_staff',
                         'args': None,
                         'user': 'staff_user',
                         'status': status.HTTP_200_OK,
@@ -45,59 +45,58 @@ class BlockListTests(TestsBase):
                             test.assertEqual(
                                 len(
                                     data.get('results', None)),
-                                len(self.bs_names))
+                                len(self.mfs_dict))
                         )
                     },
-                    {    # get blocks list by org admin
-                        'test_name': 'get_blocks_list_by_org1_admin',
+                    {    # get frames list by org admin
+                        'test_name': 'get_frames_list_by_org1_admin',
                         'args': None,
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.bs_f0_l1_o1_names) +
-                                len(self.bs_f1_l1_o1_names) +
-                                len(self.bs_f0_l1_sub1_o1_names))
+                                len(self.mfs_b1_f0_l1_o1_dict) +
+                                len(self.mfs_b1_f0_l1_sub1_o1_dict))
                         )
                     },
-                    {   # get blocks list by sub-org admin
-                        'test_name': 'get_blocks_list_by_sub1_org1_admin',
+                    {   # get frames list by sub-org admin
+                        'test_name': 'get_frames_list_by_sub1_org1_admin',
                         'args': None,
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.bs_f0_l1_sub1_o1_names))
+                                len(self.mfs_b1_f0_l1_sub1_o1_dict))
                         )
                     },
-                    {   # get blocks list by another org admin
-                        'test_name': 'get_blocks_list_by_org2_admin',
+                    {   # get frames list by another org admin
+                        'test_name': 'get_frames_list_by_org2_admin',
                         'args': None,
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.bs_f0_l1_o2_names) +
-                                len(self.bs_f0_l1_sub1_o2_names))
+                                len(self.mfs_b1_f0_l1_o2_dict) +
+                                len(self.mfs_b1_f0_l1_sub1_o2_dict))
                         )
                     },
-                    {   # get blocks list by employee, okay
-                        'test_name': 'get_blocks_list_by_employee',
+                    {   # get frames list by employee, okay
+                        'test_name': 'get_frames_list_by_employee',
                         'args': None,
                         'user': 'employee_user',
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.bs_f0_l1_sub1_o1_names)
+                                len(self.mfs_b1_f0_l1_sub1_o1_dict)
                             )
                         )
                     },
-                    {   # get blocks list by random user, forbidden
-                        'test_name': 'get_blocks_list_by_other_user',
+                    {   # get frames list by random user, forbidden
+                        'test_name': 'get_frames_list_by_other_user',
                         'args': None,
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN

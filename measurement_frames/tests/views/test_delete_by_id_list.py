@@ -10,7 +10,7 @@ from core.tests import TestsBase
 
 
 # pylint: disable=pointless-string-statement
-class BlockDeleteByIdListTests(TestsBase):
+class FrameDeleteByIdListTests(TestsBase):
     """
     Defines unit tests for 'delete-by-id-list' api requests for views defined
     at 'blocks/' url.
@@ -18,7 +18,7 @@ class BlockDeleteByIdListTests(TestsBase):
 
     """Define the api url patterns used in this test unit."""
     api_urlpatterns = [
-        path('locations/blocks/', include('locations.api.urls')),
+        path('frames/', include('measurement_frames.api.urls')),
     ]
 
     """Define the the complete url pattern used in this test unit."""
@@ -30,125 +30,115 @@ class BlockDeleteByIdListTests(TestsBase):
         """
         Sets up the test cases.
         """
-        super(BlockDeleteByIdListTests, self).setUp()
+        super(FrameDeleteByIdListTests, self).setUp()
         self.test = [
             {
-                'test_name': 'delete_multiple_blocks',
+                'test_name': 'delete_multiple_frames',
                 'type': 'delete',
-                'path_name': 'blocks_list_create_delete',
+                'path_name': 'frames_list_create_delete',
                 'request': [
-                    {   # delete block, okay for staff but bad because its
-                        # protected
-                        'test_name': 'delete_block_by_staff',
-                        'query_params': [
-                            ('id', self.blocks['b1_f0_l1_o1'].id),
-                        ],
-                        'user': 'staff_user',
-                        'status': status.HTTP_400_BAD_REQUEST
-                    },
-                    {   # delete block by org-admin in other organization,
+                    # {   # delete frame, okay for staff but bad because its
+                    #     # protected
+                    #     'test_name': 'delete_frame_by_staff',
+                    #     'query_params': [
+                    #         ('id', self.frames['mf0_b1_f0_l1_o1'].id),
+                    #     ],
+                    #     'user': 'staff_user',
+                    #     'status': status.HTTP_400_BAD_REQUEST
+                    # },
+                    {   # delete frame by org-admin in other organization,
                         # bad
-                        'test_name': 'delete_block_org_admin_1_in_org_2',
+                        'test_name': 'delete_frame_org_admin_1_in_org_2',
                         'query_params': [
-                            ('id', self.blocks['b2_f0_l1_o2_for_deletion'].id),
-                            ('id', self.blocks['b3_f0_l1_o2_for_deletion'].id),
+                            ('id', self.frames['mf0_b1_f0_l1_o2'].id),
+                            ('id', self.frames['mf1_b1_f0_l1_o2'].id),
                         ],
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
-                    {   # delete block by org-admin in other organization
+                    {   # delete frame by org-admin in other organization
                         # lower tree, bad
                         'test_name':
-                            'delete_block_org_admin_1_in_sub_1_org_2',
+                            'delete_frame_org_admin_1_in_sub_1_org_2',
                         'query_params': [
-                            ('id',
-                             self.blocks['b2_f0_l1_sub1_o2_for_deletion'].id),
-                            ('id',
-                             self.blocks['b3_f0_l1_sub1_o2_for_deletion'].id),
+                            ('id', self.frames['mf0_b1_f0_l1_sub1_o2'].id),
+                            ('id', self.frames['mf1_b1_f0_l1_sub1_o2'].id),
                         ],
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
-                    {   # delete block by sub-org-admin in upper tree, bad
-                        'test_name': 'delete_block_sub_org_admin_1_in_org_1',
+                    {   # delete frame by sub-org-admin in upper tree, bad
+                        'test_name': 'delete_frame_sub_org_admin_1_in_org_1',
                         'query_params': [
-                            ('id', self.blocks['b2_f0_l1_o2_for_deletion'].id),
-                            ('id', self.blocks['b3_f0_l1_o2_for_deletion'].id),
+                            ('id', self.frames['mf0_b1_f0_l1_o1'].id),
+                            ('id', self.frames['mf1_b1_f0_l1_o1'].id),
                         ],
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
-                    {   # delete block by employee user, forbidden
-                        'test_name': 'delete_block_other_user',
+                    {   # delete frame by employee user, forbidden
+                        'test_name': 'delete_frame_other_user',
                         'query_params': [
-                            ('id',
-                             self.blocks['b2_f0_l1_sub1_o2_for_deletion'].id),
-                            ('id',
-                             self.blocks['b3_f0_l1_sub1_o2_for_deletion'].id),
+                            ('id', self.frames['mf0_b1_f0_l1_sub1_o1'].id),
+                            ('id', self.frames['mf1_b1_f0_l1_sub1_o1'].id),
                         ],
                         'user': 'employee_user',
                         'status': status.HTTP_403_FORBIDDEN
                     },
-                    {   # delete block by random user, forbidden
-                        'test_name': 'delete_block_other_user',
+                    {   # delete frame by random user, forbidden
+                        'test_name': 'delete_frame_other_user',
                         'query_params': [
-                            ('id',
-                             self.blocks['b2_f0_l1_sub1_o2_for_deletion'].id),
-                            ('id',
-                             self.blocks['b3_f0_l1_sub1_o2_for_deletion'].id),
+                            ('id', self.frames['mf0_b1_f0_l1_sub1_o1'].id),
+                            ('id', self.frames['mf1_b1_f0_l1_sub1_o1'].id),
                         ],
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN
                     },
-                    {   # delete block, okay for staff
-                        'test_name': 'delete_block_by_staff',
+                    {   # delete frame, okay for staff
+                        'test_name': 'delete_frame_by_staff',
                         'query_params': [
-                            ('id', self.blocks['b3_f0_l1_o1_for_deletion'].id),
-                            ('id', self.blocks['b4_f0_l1_o1_for_deletion'].id),
+                            ('id', self.frames['mf2_del_b1_f0_l1_o1'].id),
+                            ('id', self.frames['mf3_del_b1_f0_l1_o1'].id),
                         ],
                         'user': 'staff_user',
                         'status': status.HTTP_200_OK
                     },
                     {   # duplicate delete by staff, bad
-                        'test_name': 'delete_dup_block_by_staff',
+                        'test_name': 'delete_dup_frame_by_staff',
                         'query_params': [
-                            ('id', self.blocks['b3_f0_l1_o1_for_deletion'].id),
-                            ('id', self.blocks['b4_f0_l1_o1_for_deletion'].id),
+                            ('id', self.frames['mf2_del_b1_f0_l1_o1'].id),
+                            ('id', self.frames['mf3_del_b1_f0_l1_o1'].id),
                         ],
                         'user': 'staff_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
-                    {   # delete block by org-admin, okay
-                        'test_name': 'delete_block_org_admin_1_in_org_1',
+                    {   # delete frame by org-admin, okay
+                        'test_name': 'delete_frame_org_admin_1_in_org_1',
                         'query_params': [
-                            ('id', self.blocks['b5_f0_l1_o1_for_deletion'].id),
-                            ('id', self.blocks['b6_f0_l1_o1_for_deletion'].id),
+                            ('id', self.frames['mf4_del_b1_f0_l1_o1'].id),
+                            ('id', self.frames['mf5_del_b1_f0_l1_o1'].id),
                         ],
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_200_OK
                     },
-                    {   # delete block by org-admin in lower tree, okay
+                    {   # delete frame by org-admin in lower tree, okay
                         'test_name':
-                            'delete_block_org_admin_1_in_sub_1_org_1',
+                            'delete_frame_org_admin_1_in_sub_1_org_1',
                         'query_params': [
-                            ('id',
-                             self.blocks['b3_f0_l1_sub1_o1_for_deletion'].id),
-                            ('id',
-                             self.blocks['b4_f0_l1_sub1_o1_for_deletion'].id),
+                            ('id', self.frames['mf2_del_b1_f0_l1_sub1_o1'].id),
+                            ('id', self.frames['mf3_del_b1_f0_l1_sub1_o1'].id),
                         ],
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_200_OK
                     },
-                    {   # delete block by sub-org-admin in own tree, okay
+                    {   # delete frame by sub-org-admin in own tree, okay
                         'test_name':
-                            'delete_block_sub_org_admin_2_in_sub_1_org_2',
+                            'delete_frame_sub_org_admin_2_in_sub_1_org_2',
                         'query_params': [
-                            ('id',
-                             self.blocks['b2_f0_l1_sub1_o2_for_deletion'].id),
-                            ('id',
-                             self.blocks['b3_f0_l1_sub1_o2_for_deletion'].id),
+                            ('id', self.frames['mf4_del_b1_f0_l1_sub1_o1'].id),
+                            ('id', self.frames['mf5_del_b1_f0_l1_sub1_o1'].id),
                         ],
-                        'user': 'sub_org_12_admin_user',
+                        'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_200_OK
                     },
                 ]

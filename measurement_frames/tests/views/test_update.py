@@ -9,7 +9,7 @@ from core.tests import TestsBase
 
 
 # pylint: disable=pointless-string-statement
-class BlockRetrieveTests(TestsBase):
+class FrameRetrieveTests(TestsBase):
     """
     Defines unit tests for 'retrieve' api requests for views defined
     at 'locations/' url.
@@ -17,7 +17,7 @@ class BlockRetrieveTests(TestsBase):
 
     """Define the api url patterns used in this test unit."""
     api_urlpatterns = [
-        path('locations/blocks/', include('locations.api.urls')),
+        path('frames/', include('measurement_frames.api.urls')),
     ]
 
     """Define the the complete url pattern used in this test unit."""
@@ -29,184 +29,194 @@ class BlockRetrieveTests(TestsBase):
         """
         Sets up the test cases.
         """
-        super(BlockRetrieveTests, self).setUp()
+        super(FrameRetrieveTests, self).setUp()
         self.test = [
             {
-                'test_name': 'update_block_by_id',
+                'test_name': 'update_frame_by_id',
                 'type': 'patch',
-                'path_name': 'blocks_retrieve_update_delete',
+                'path_name': 'frames_retrieve_update_delete',
                 'request': [
-                    {   # update block by id. change name to an existing
-                        # block name inside the floor, bad
-                        'test_name': 'b1',
-                        'args': {'pk': self.blocks['b1_f0_l1_o1'].id},
+                    {   # update frame by id. change name to an existing
+                        # frame name inside the floor, bad
+                        'test_name': 'rename_mf0',
+                        'args': {'pk': self.frames['mf0_b1_f0_l1_o1'].id},
                         'user': 'staff_user',
                         'data': {
-                            'name': 'b2',  # b2 already exists in f0_l1_o1
+                            'name': 'mf1',  # mf1 already exists in b1_f0_l1_o1
                         },
                         'status': status.HTTP_400_BAD_REQUEST,
                     },
-                    {   # update block by id. change floor to another floor with
-                        # existing block name, bad
-                        'test_name': 'b1',
-                        'args': {'pk': self.blocks['b1_f0_l1_o1'].id},
+                    {   # update frame by id. change block to another block with
+                        # existing frame name, bad
+                        'test_name': 'change_mf0_block',
+                        'args': {'pk': self.frames['mf0_b1_f0_l1_o1'].id},
                         'user': 'staff_user',
                         'data': {
                             # b1 already exists in f1_l1_o1
-                            'floor': self.floors['f1_l1_o1'].id
+                            'block': self.blocks['b2_f0_l1_o1'].id
                         },
-                        'status': status.HTTP_400_BAD_REQUEST,
+                        'status': status.HTTP_200_OK,
+                        'response_check': lambda test, data: (
+                            test.assertDictContainsSubset(
+                                {
+                                    'block': self.blocks['b1_f0_l1_o1'].id
+                                }, data)
+                        )
                     },
-                    {   # update block by id, okay for staff
-                        'test_name': 'update_b1_f0_l1_o1_by_staff',
-                        'args': {'pk': self.blocks['b1_f0_l1_o1'].id},
+                    {   # update frame by id, okay for staff
+                        'test_name': 'update_mf0_b1_f0_l1_o1_by_staff',
+                        'args': {'pk': self.frames['mf0_b1_f0_l1_o1'].id},
                         'user': 'staff_user',
                         'data': {
-                            'name': 'update_b1_f0_l1_o1_by_staff',
-                            'pixels_to_m_x': 30,
-                            'pixels_to_m_y': 30,
-                            'floor': self.floors['f1_l1_o1'].id
+                            'name': 'update_mf0_b1_f0_l1_o1_by_staff',
+                            'pixel_pose_x': 30,
+                            'pixel_pose_y': 30,
+                            'pixel_pose_theta': 30,
+                            'block': self.blocks['b1_f0_l1_o1'].id
                         },
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertDictContainsSubset(
                                 {
-                                    'name': 'update_b1_f0_l1_o1_by_staff',
-                                    'pixels_to_m_x': 30,
-                                    'pixels_to_m_y': 30,
-                                    'floor': self.floors['f1_l1_o1'].id
+                                    'name': 'update_mf0_b1_f0_l1_o1_by_staff',
+                                    'pixel_pose_x': 30,
+                                    'pixel_pose_y': 30,
+                                    'pixel_pose_theta': 30,
+                                    'block': self.blocks['b1_f0_l1_o1'].id
                                 }, data)
                         )
                     },
-                    {   # update block by id, okay for org_1_admin
-                        'test_name': 'update_b1_f0_l1_o1_by_org_1_admin',
-                        'args': {'pk': self.blocks['b1_f0_l1_o1'].id},
+                    {   # update frame by id, okay for org_1_admin
+                        'test_name': 'update_mf0_b1_f0_l1_o1_by_org_1_admin',
+                        'args': {'pk': self.frames['mf0_b1_f0_l1_o1'].id},
                         'user': 'org_1_admin_user',
                         'data': {
-                            'name': 'update_b1_f0_l1_o1_by_org_1_admin',
-                            'pixels_to_m_x': 30,
-                            'pixels_to_m_y': 30,
-                            'floor': self.floors['f1_l1_o1'].id
+                            'name': 'update_mf0_b1_f0_l1_o1_by_org_1_admin',
+                            'pixel_pose_x': 30,
+                            'pixel_pose_y': 30,
+                            'pixel_pose_theta': 30,
+                            'block': self.blocks['b1_f0_l1_o1'].id
                         },
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertDictContainsSubset(
                                 {
-                                    'name': 'update_b1_f0_l1_o1_by_org_1_admin',
-                                    'pixels_to_m_x': 30,
-                                    'pixels_to_m_y': 30,
-                                    'floor': self.floors['f1_l1_o1'].id
+                                    'name': 'update_mf0_b1_f0_l1_o1_by_org_1_admin',
+                                    'pixel_pose_x': 30,
+                                    'pixel_pose_y': 30,
+                                    'pixel_pose_theta': 30,
+                                    'block': self.blocks['b1_f0_l1_o1'].id
                                 }, data)
                         )
                     },
-                    {   # update block of org, forbidden for sub-org admin
-                        'test_name': 'update_b1_f0_l1_o1_by_sub_org_1_admin',
-                        'args': {'pk': self.blocks['b1_f0_l1_o1'].id},
+                    {   # update frame of org, forbidden for sub-org admin
+                        'test_name': 'update_mf0_b1_f0_l1_o1_by_sub_org_1_admin',
+                        'args': {'pk': self.frames['mf0_b1_f0_l1_o1'].id},
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
-                    {   # update block, bad for other org-admin
-                        'test_name': 'update_b1_f0_l1_o1_by_org_2_admin',
-                        'args': {'pk': self.blocks['b1_f0_l1_o1'].id},
+                    {   # update frame, bad for other org-admin
+                        'test_name': 'update_mf0_b1_f0_l1_o1_by_org_2_admin',
+                        'args': {'pk': self.frames['mf0_b1_f0_l1_o1'].id},
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
-                    {   # update block by id, forbidden for random user
-                        'test_name': 'update_b1_f0_l1_o1_by_other_user',
-                        'args': {'pk': self.blocks['b1_f0_l1_o1'].id},
+                    {   # update frame by id, forbidden for random user
+                        'test_name': 'update_mf0_b1_f0_l1_o1_by_other_user',
+                        'args': {'pk': self.frames['mf0_b1_f0_l1_o1'].id},
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN
                     },
                 ]
             },
             {
-                'test_name': 'update_sub_block_by_id',
+                'test_name': 'update_sub_frame_by_id',
                 'type': 'patch',
-                'path_name': 'blocks_retrieve_update_delete',
+                'path_name': 'frames_retrieve_update_delete',
                 'request': [
-                    {   # update sub-org block by id, okay for staff
-                        'test_name': 'update_b1_f0_l1_sub1_o1_by_staff',
-                        'args': {'pk': self.blocks['b1_f0_l1_sub1_o1'].id},
+                    {   # update sub-org frame by id, okay for staff
+                        'test_name': 'update_mf0_b1_f0_l1_sub1_o1_by_staff',
+                        'args': {'pk': self.frames['mf0_b1_f0_l1_sub1_o1'].id},
                         'user': 'staff_user',
                         'data': {
-                            'name': 'update_b1_f0_l1_sub1_o1_by_staff',
+                            'name': 'update_mf0_b1_f0_l1_sub1_o1_by_staff',
                         },
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertDictContainsSubset(
                                 {
-                                    'name': 'update_b1_f0_l1_sub1_o1_by_staff',
+                                    'name': 'update_mf0_b1_f0_l1_sub1_o1_by_staff',
                                 }, data)
                         )
                     },
-                    {   # update sub-org block by id, okay for org admin itself
+                    {   # update sub-org frame by id, okay for org admin itself
                         # under which this sub-org exists
                         'test_name':
-                            'update_b1_f0_l1_sub1_o1_by_org_1_admin',
-                        'args': {'pk': self.blocks['b1_f0_l1_sub1_o1'].id},
+                            'update_mf0_b1_f0_l1_sub1_o1_by_org_1_admin',
+                        'args': {'pk': self.frames['mf0_b1_f0_l1_sub1_o1'].id},
                         'user': 'org_1_admin_user',
                         'data': {
-                            'name': 'update_b1_f0_l1_sub1_o1_by_org_1_admin',
+                            'name': 'update_mf0_b1_f0_l1_sub1_o1_by_org_1_admin',
                         },
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertDictContainsSubset(
                                 {
-                                    'name': 'update_b1_f0_l1_sub1_o1_by_org_1_admin',
+                                    'name': 'update_mf0_b1_f0_l1_sub1_o1_by_org_1_admin',
                                 }, data)
                         )
                     },
-                    {   # update sub-org block by id, okay for sub-org admin
+                    {   # update sub-org frame by id, okay for sub-org admin
                         # itself
                         'test_name':
-                            'update_b1_f0_l1_sub1_o1_by_sub_1_org_1_admin',
-                        'args': {'pk': self.blocks['b1_f0_l1_sub1_o1'].id},
+                            'update_mf0_b1_f0_l1_sub1_o1_by_sub_1_org_1_admin',
+                        'args': {'pk': self.frames['mf0_b1_f0_l1_sub1_o1'].id},
                         'user': 'sub_org_11_admin_user',
                         'data': {
-                            'name': 'update_b1_f0_l1_sub1_o1_by_sub_1_org_1_admin',
+                            'name': 'update_mf0_b1_f0_l1_sub1_o1_by_sub_1_org_1_admin',
                         },
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertDictContainsSubset(
                                 {
-                                    'name': 'update_b1_f0_l1_sub1_o1_by_sub_1_org_1_admin',
+                                    'name': 'update_mf0_b1_f0_l1_sub1_o1_by_sub_1_org_1_admin',
                                 }, data)
                         )
                     },
-                    {   # update sub-org block by id, bad for other
+                    {   # update sub-org frame by id, bad for other
                         # org-admin under which this sub-org does not exist
                         'test_name':
-                            'update_b1_f0_l1_sub1_o1_by_org_2_admin',
-                        'args': {'pk': self.blocks['b1_f0_l1_sub1_o1'].id},
+                            'update_mf0_b1_f0_l1_sub1_o1_by_org_2_admin',
+                        'args': {'pk': self.frames['mf0_b1_f0_l1_sub1_o1'].id},
                         'data': {
-                            'name': 'update_b1_f0_l1_sub1_o1_by_org_2_admin',
+                            'name': 'update_mf0_b1_f0_l1_sub1_o1_by_org_2_admin',
                         },
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
-                    {   # update sub-org block by id, bad for other
+                    {   # update sub-org frame by id, bad for other
                         # sub-org admin to which this sub-org does not exist
                         'test_name':
-                            'update_b1_f0_l1_sub1_o1_by_sub_1_org_2_admin',
-                        'args': {'pk': self.blocks['b1_f0_l1_sub1_o1'].id},
+                            'update_mf0_b1_f0_l1_sub1_o1_by_sub_1_org_2_admin',
+                        'args': {'pk': self.frames['mf0_b1_f0_l1_sub1_o1'].id},
                         'data': {
-                            'name': 'update_b1_f0_l1_sub1_o1_by_sub_1_org_2_admin',
+                            'name': 'update_mf0_b1_f0_l1_sub1_o1_by_sub_1_org_2_admin',
                         },
                         'user': 'sub_org_12_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
-                    {   # update sub-org block by id, forbidden for employees
-                        'test_name': 'update_b1_f0_l1_sub1_o1_by_employee',
-                        'args': {'pk': self.blocks['b1_f0_l1_sub1_o1'].id},
+                    {   # update sub-org frame by id, forbidden for employees
+                        'test_name': 'update_mf0_b1_f0_l1_sub1_o1_by_employee',
+                        'args': {'pk': self.frames['mf0_b1_f0_l1_sub1_o1'].id},
                         'user': 'employee_user',
                         'data': {
-                            'name': 'update_b1_f0_l1_sub1_o1_by_employee',
+                            'name': 'update_mf0_b1_f0_l1_sub1_o1_by_employee',
                         },
                         'status': status.HTTP_403_FORBIDDEN,
                     },
                     {   # update sub-org by id, forbidden for random user
-                        'test_name': 'update_b1_f0_l1_o2_by_other_user',
-                        'args': {'pk': self.blocks['b1_f0_l1_o2'].id},
+                        'test_name': 'update_mf0_b1_f0_l1_o1_by_other_user',
+                        'args': {'pk': self.frames['mf0_b1_f0_l1_o1'].id},
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN
                     }

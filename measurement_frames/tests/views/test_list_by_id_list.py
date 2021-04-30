@@ -9,15 +9,15 @@ from core.tests import TestsBase
 
 
 # pylint: disable=pointless-string-statement
-class BlockListByIdListTests(TestsBase):
+class FrameListByIdListTests(TestsBase):
     """
     Defines unit tests for 'list-by-id-list' api requests for views defined
-    at 'locations/' url.
+    at 'frames/' url.
     """
 
     """Define the api url patterns used in this test unit."""
     api_urlpatterns = [
-        path('locations/blocks/', include('locations.api.urls')),
+        path('frames/', include('measurement_frames.api.urls')),
     ]
 
     """Define the the complete url pattern used in this test unit."""
@@ -29,69 +29,66 @@ class BlockListByIdListTests(TestsBase):
         """
         Sets up the test cases.
         """
-        super(BlockListByIdListTests, self).setUp()
+        super(FrameListByIdListTests, self).setUp()
         self.test = [
             {
-                'test_name': 'get_blocks_list_multiple',
+                'test_name': 'get_frames_list_multiple',
                 'type': 'get',
-                'path_name': 'blocks_list_create_delete',
+                'path_name': 'frames_list_create_delete',
                 'request': [
-                    {   # get blocks list by staff
-                        'test_name': 'test_get_blocks_list_by_ids_by_staff',
+                    {   # get frames list by staff
+                        'test_name': 'test_get_frames_list_by_ids_by_staff',
                         'query_params': [
-                            ('id', self.blocks['b1_f0_l1_o1'].id),
-                            ('id', self.blocks['b2_f0_l1_o1'].id),
-                            ('id', self.blocks['b1_f1_l1_o1'].id),
+                            ('id', self.frames['mf0_b1_f0_l1_o1'].id),
+                            ('id', self.frames['mf1_b1_f0_l1_o1'].id),
                         ],
                         'user': 'staff_user',
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
-                            test.assertEqual(len(data.get('results', None)), 3)
+                            test.assertEqual(len(data.get('results', None)), 2)
                         )
                     },
-                    {   # get blocks of different org (1) by org admin (2),
+                    {   # get frames of different org (1) by org admin (2),
                         # forbidden
                         'test_name':
-                            'test_get_org_1_blocks_by_id_by_org_2_admin',
+                            'test_get_org_1_frames_by_id_by_org_2_admin',
                         'query_params': [
-                            ('id', self.blocks['b1_f0_l1_o1'].id),
-                            ('id', self.blocks['b2_f0_l1_o1'].id),
-                            ('id', self.blocks['b1_f1_l1_o1'].id),
+                            ('id', self.frames['mf0_b1_f0_l1_o1'].id),
+                            ('id', self.frames['mf1_b1_f0_l1_o1'].id),
                         ],
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
-                    {   # get blocks of different org (2) by sub-org
+                    {   # get frames of different org (2) by sub-org
                         # admin (1), forbidden
                         'test_name':
-                            'test_get_org_2_blocks_by_id_by_sub_org_1_admin',
+                            'test_get_org_2_frames_by_id_by_sub_org_1_admin',
                         'query_params': [
-                            ('id', self.blocks['b1_f0_l1_o2'].id),
-                            ('id', self.blocks['b1_f0_l1_sub1_o2'].id),
+                            ('id', self.frames['mf0_b1_f0_l1_o2'].id),
+                            ('id', self.frames['mf1_b1_f0_l1_sub1_o2'].id),
                         ],
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
-                    {   # get blocks of same org (1) by sub-org
+                    {   # get frames of same org (1) by sub-org
                         # admin (1), forbidden
                         'test_name':
-                            'test_get_org_1_blocks_by_id_by_sub_org_1_admin',
+                            'test_get_org_1_frames_by_id_by_sub_org_1_admin',
                         'query_params': [
-                            ('id', self.blocks['b1_f0_l1_o1'].id),
-                            ('id', self.blocks['b2_f0_l1_o1'].id),
-                            ('id', self.blocks['b1_f1_l1_o1'].id),
+                            ('id', self.frames['mf0_b1_f0_l1_o1'].id),
+                            ('id', self.frames['mf1_b1_f0_l1_o1'].id),
                         ],
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
-                    {   # get blocks of same org (1) by sub-org
+                    {   # get frames of same org (1) by sub-org
                         # admin (1), okay
                         'test_name':
-                            'test_get_sub_org_1_blocks_by_id_by_sub_org_1_'
+                            'test_get_sub_org_1_frames_by_id_by_sub_org_1_'
                             'admin',
                         'query_params': [
-                            ('id', self.blocks['b1_f0_l1_sub1_o1'].id),
-                            ('id', self.blocks['b2_f0_l1_sub1_o1'].id),
+                            ('id', self.frames['mf0_b1_f0_l1_sub1_o1'].id),
+                            ('id', self.frames['mf1_b1_f0_l1_sub1_o1'].id),
                         ],
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_200_OK,
@@ -99,29 +96,27 @@ class BlockListByIdListTests(TestsBase):
                             test.assertEqual(len(data.get('results', None)), 2)
                         )
                     },
-                    {   # get blocks of org (1) by org admin (1),
+                    {   # get frames of org (1) by org admin (1),
                         # should work
                         'test_name':
-                            'test_get_org_1_blocks_by_id_by_org_1_admin',
+                            'test_get_org_1_frames_by_id_by_org_1_admin',
                         'query_params': [
-                            ('id', self.blocks['b1_f0_l1_o1'].id),
-                            ('id', self.blocks['b2_f0_l1_o1'].id),
-                            ('id', self.blocks['b1_f1_l1_o1'].id),
-                            ('id', self.blocks['b2_f1_l1_o1'].id),
+                            ('id', self.frames['mf0_b1_f0_l1_o1'].id),
+                            ('id', self.frames['mf1_b1_f0_l1_o1'].id),
                         ],
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
-                            test.assertEqual(len(data.get('results', None)), 4)
+                            test.assertEqual(len(data.get('results', None)), 2)
                         )
                     },
-                    {   # get blocks of sub org (1) employee,
+                    {   # get frames of sub org (1) employee,
                         # should work
                         'test_name':
-                            'test_get_sub1_org_1_blocks_by_id_by_employee_user',
+                            'test_get_sub1_org_1_frames_by_id_by_employee_user',
                         'query_params': [
-                            ('id', self.blocks['b1_f0_l1_sub1_o1'].id),
-                            ('id', self.blocks['b2_f0_l1_sub1_o1'].id),
+                            ('id', self.frames['mf0_b1_f0_l1_sub1_o1'].id),
+                            ('id', self.frames['mf1_b1_f0_l1_sub1_o1'].id),
                         ],
                         'user': 'employee_user',
                         'status': status.HTTP_200_OK,
@@ -129,11 +124,11 @@ class BlockListByIdListTests(TestsBase):
                             test.assertEqual(len(data.get('results', None)), 2)
                         )
                     },
-                    {   # get list of blocks by some random user
-                        'test_name': 'test_get_blocks_by_other_user',
+                    {   # get list of frames by some random user
+                        'test_name': 'test_get_frames_by_other_user',
                         'query_params': [
-                            ('id', self.blocks['b1_f0_l1_sub1_o1'].id),
-                            ('id', self.blocks['b2_f0_l1_sub1_o1'].id),
+                            ('id', self.frames['mf0_b1_f0_l1_sub1_o1'].id),
+                            ('id', self.frames['mf1_b1_f0_l1_sub1_o1'].id),
                         ],
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN
