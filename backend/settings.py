@@ -158,7 +158,7 @@ DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql_psycopg2'
 
 # internationalization
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'Asia/Tashkent'
+TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
@@ -245,7 +245,9 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 1,
 
     'DEFAULT_FILTER_BACKENDS':
-        ['django_filters.rest_framework.DjangoFilterBackend']
+        ['django_filters.rest_framework.DjangoFilterBackend'],
+
+    'DATETIME_FORMAT': "%Y-%m-%d %H:%M:%S.%f%z",
 }
 
 REST_AUTH_REGISTER_PERMISSION_CLASSES = [
