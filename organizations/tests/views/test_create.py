@@ -116,15 +116,6 @@ class OrganizationCreateTests(TestsBase):
                                 data['name'], 'test_12_sub_org_in_org_1')
                         )
                     },
-                    {   # duplicate create by staff, bad
-                        'test_name': 'create_dup_sub_org_in_org_1_by_staff',
-                        'data': {
-                            'name': 'test_12_sub_org_in_org_1',
-                            'parent': self.orgs['o1'].id
-                        },
-                        'user': 'staff_user',
-                        'status': status.HTTP_400_BAD_REQUEST
-                    },
                     {   # create sub-org under org_1, okay for org admin if
                         # org is within descendents of admin organization
                         'test_name': 'create_sub_org_in_org_1_by_org_1_admin',
@@ -138,15 +129,6 @@ class OrganizationCreateTests(TestsBase):
                             test.assertEqual(
                                 data['name'], 'test_34_sub_org_in_org_1')
                         )
-                    },
-                    {   # duplicate create by org-admin, bad
-                        'test_name': 'create_dup_sub_org_in_org_1_by_org_1_admin',
-                        'data': {
-                            'name': 'test_34_sub_org_in_org_1',
-                            'parent': self.orgs['o1'].id
-                        },
-                        'user': 'org_1_admin_user',
-                        'status': status.HTTP_400_BAD_REQUEST
                     },
                     {   # create sub-org by sub-org admin with a higher level
                         # organization, forbidden
