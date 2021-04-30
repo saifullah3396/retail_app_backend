@@ -86,6 +86,18 @@ class CamerasListCreateDestroyView(
         """
         return CamerasView._order_by(self)
 
+    def _get_list_serializer_class(self):
+        """
+        Returns the list serializer.
+        """
+        return CameraListSerializer
+
+    def _get_create_serializer_class(self):
+        """
+        Returns the create serializer.
+        """
+        return CameraCreateSerializer
+
     def _define_get_queryset_by_group_fn(self):
         """
         Returns a dictionary mapping user group to get_queryset function
@@ -168,6 +180,18 @@ class CamerasRetrieveUpdateDestroyView(
         """
 
         return CamerasView._get_model(self)
+
+    def _get_detail_serializer_class(self):
+        """
+        Returns the detail serializer.
+        """
+        return CameraDetailSerializer
+
+    def _get_update_serializer_class(self):
+        """
+        Returns the update serializer.
+        """
+        return CameraUpdateSerializer
 
     def _define_get_queryset_by_group_fn(self):
         """
