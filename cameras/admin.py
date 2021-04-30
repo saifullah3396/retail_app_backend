@@ -1,5 +1,5 @@
 """
-Registers the Camera Model to the admin interface.
+Registers the models to the admin interface.
 """
 
 from django.contrib import admin

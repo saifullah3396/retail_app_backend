@@ -87,7 +87,7 @@ INSTALLED_APPS = [
     'locations',
     'measurement_frames',
     'deepstream_servers',
-    # 'cameras',
+    'cameras',
     # 'deepstream_manager',
     'frontend',
 ]

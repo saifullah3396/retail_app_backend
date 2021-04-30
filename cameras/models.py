@@ -20,25 +20,13 @@ class Camera(models.Model):
     coords = ArrayField(models.IntegerField(default=0), size=2, null=True)
 
     """ Coordinates of the reference points p0, p1, p2, p3 in frame """
-    p0_coord_in_frame_x = models.IntegerField(default=0)
-    p0_coord_in_frame_y = models.IntegerField(default=0)
-    p1_coord_in_frame_x = models.IntegerField(default=0)
-    p1_coord_in_frame_y = models.IntegerField(default=0)
-    p2_coord_in_frame_x = models.IntegerField(default=0)
-    p2_coord_in_frame_y = models.IntegerField(default=0)
-    p3_coord_in_frame_x = models.IntegerField(default=0)
-    p3_coord_in_frame_y = models.IntegerField(default=0)
+    point_coords_in_frame = ArrayField(
+        models.IntegerField(default=0), size=8, null=True)
 
     """ Coordinates of the all the reference points in camera image pixel
         coordinates """
-    p0_coord_in_image_x = models.IntegerField(default=0)
-    p0_coord_in_image_y = models.IntegerField(default=0)
-    p1_coord_in_image_x = models.IntegerField(default=0)
-    p1_coord_in_image_y = models.IntegerField(default=0)
-    p2_coord_in_image_x = models.IntegerField(default=0)
-    p2_coord_in_image_y = models.IntegerField(default=0)
-    p3_coord_in_image_x = models.IntegerField(default=0)
-    p3_coord_in_image_y = models.IntegerField(default=0)
+    point_coords_in_image = ArrayField(
+        models.IntegerField(default=0), size=8, null=True)
 
     """ Block name with which the camera is associated """
     block = models.ForeignKey(

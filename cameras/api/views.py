@@ -5,8 +5,10 @@ Defines the REST API views for cameras models.
 
 from rest_framework import exceptions
 
-from cameras.api.serializers import (CameraDetailSerializer,
-                                     CameraListSerializer)
+from cameras.api.serializers import (CameraCreateSerializer,
+                                     CameraDetailSerializer,
+                                     CameraListSerializer,
+                                     CameraUpdateSerializer)
 from cameras.models import Camera
 from cameras.permissions import (CamerasListCreateDestroyPermission,
                                  CamerasRetrieveUpdateDestroyPermission)
@@ -48,7 +50,7 @@ class CamerasView:
         Returns all the cameras in the given locations set
         """
 
-        # get all blocks in requested floor
+        # get all cameras in requested locations
         cameras_in_locations = \
             self._get_model().objects.filter(
                 block__floor__location__in=locations)
@@ -69,7 +71,6 @@ class CamerasListCreateDestroyView(
     """
 
     queryset = Camera.objects.none()
-    serializer_class = CameraListSerializer
     permission_classes = (CamerasListCreateDestroyPermission,)
 
     def _get_model(self):
@@ -109,8 +110,7 @@ class CamerasListCreateDestroyView(
 
     def _get_organization_admin_queryset(self):
         """
-        For organization admin, all blocks are returned within the queried
-        floor/location as long as the location is authorized.
+        Return all cameras in authorized locations.
         """
 
         locations = get_organization_admin_authorized_locations(
@@ -119,8 +119,7 @@ class CamerasListCreateDestroyView(
 
     def _get_employee_queryset(self):
         """
-        For employee, all blocks are returned within the queried
-        floor/location as long as the location is authorized.
+        Return all cameras in authorized locations.
         """
 
         locations = get_employee_authorized_locations(self.request.user)
@@ -128,8 +127,7 @@ class CamerasListCreateDestroyView(
 
     def _perform_create_by_organization_admin(self, serializer):
         """
-        For organization admin, the block is created within the queried
-        floor/location as long as the location is authorized.
+        Create camera if information is valid and within authorization.
         """
 
         # get block
@@ -151,18 +149,17 @@ class CamerasListCreateDestroyView(
                     'location': field_invalid_error()
                 })
 
-        # create floor in db
+        # create camera in db
         serializer.save()
 
 
 class CamerasRetrieveUpdateDestroyView(
         CoreRetrieveUpdateDestroyView, CamerasView):
     """
-    Defines the retrieve-update-destroy view for blocks.
+    Defines the retrieve-update-destroy view for cameras.
     """
 
     queryset = Camera.objects.none()  # Added for model permissions
-    serializer_class = CameraDetailSerializer
     permission_classes = (CamerasRetrieveUpdateDestroyPermission,)
 
     def _get_model(self):
@@ -196,8 +193,7 @@ class CamerasRetrieveUpdateDestroyView(
 
     def _get_organization_admin_queryset(self):
         """
-        For organization admin, all blocks are returned within the queried
-        floor/location as long as the location is authorized.
+        Return all cameras within authorized locations.
         """
 
         locations = get_organization_admin_authorized_locations(
@@ -206,8 +202,7 @@ class CamerasRetrieveUpdateDestroyView(
 
     def _get_employee_queryset(self):
         """
-        For employee, all blocks are returned within the queried
-        floor/location as long as the location is authorized.
+        Return all cameras within authorized locations.
         """
 
         locations = get_employee_authorized_locations(self.request.user)
@@ -215,7 +210,26 @@ class CamerasRetrieveUpdateDestroyView(
 
     def _perform_update_by_organization_admin(self, serializer):
         """
-        For organization admin, the block is updated as long as it is within
-        the get queryset
+        Update if information is valid and within authorization.
         """
+
+        if 'block' in self.request.data:
+            # get block
+            block = get_object_by_id(
+                Block, self.request.data.get('block', None))
+
+            if not block:
+                raise exceptions.ValidationError(
+                    {
+                        'block': field_invalid_error()
+                    })
+
+            # see whether block location is within authorized locations
+            locations = get_organization_admin_authorized_locations(
+                self.request.user)
+            if not locations.filter(id=block.floor.location.id).exists():
+                raise exceptions.ValidationError(
+                    {
+                        'block': field_invalid_error()
+                    })
         serializer.save()
