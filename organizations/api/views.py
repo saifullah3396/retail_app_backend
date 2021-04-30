@@ -7,8 +7,10 @@ from rest_framework import exceptions
 from core.permissions import UserGroups
 from core.utils import field_invalid_error, field_required_error
 from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
-from organizations.api.serializers import (OrganizationDetailSerializer,
-                                           OrganizationListSerializer)
+from organizations.api.serializers import (OrganizationCreateSerializer,
+                                           OrganizationDetailSerializer,
+                                           OrganizationListSerializer,
+                                           OrganizationUpdateSerializer)
 from organizations.models import Organization
 from organizations.permissions import (
     OrganizationsListCreateDestroyPermission,
@@ -46,7 +48,6 @@ class OrganizationsListCreateDestroyView(
     """
 
     queryset = Organization.objects.none()
-    serializer_class = OrganizationListSerializer
     permission_classes = (OrganizationsListCreateDestroyPermission,)
 
     # Define the mapping from request type to query that returns the
@@ -72,6 +73,18 @@ class OrganizationsListCreateDestroyView(
         Returns the field with respect to which queries are to be ordered.
         """
         return OrganizationsView._order_by(self)
+
+    def _get_list_serializer_class(self):
+        """
+        Returns the list serializer.
+        """
+        return OrganizationListSerializer
+
+    def _get_create_serializer_class(self):
+        """
+        Returns the create serializer.
+        """
+        return OrganizationCreateSerializer
 
     def _define_get_queryset_by_group_fn(self):
         """
@@ -147,7 +160,6 @@ class OrganizationsRetrieveUpdateDestroyView(
     """
 
     queryset = Organization.objects.none()  # Added for model permissions
-    serializer_class = OrganizationDetailSerializer
     permission_classes = (OrganizationsRetrieveUpdateDestroyPermission,)
 
     # Define the mapping from request type to query that returns the
@@ -162,6 +174,18 @@ class OrganizationsRetrieveUpdateDestroyView(
             include_self=True),
         'DELETE': lambda organization: organization.get_descendants()
     }
+
+    def _get_detail_serializer_class(self):
+        """
+        Returns the detail serializer.
+        """
+        return OrganizationDetailSerializer
+
+    def _get_update_serializer_class(self):
+        """
+        Returns the update serializer.
+        """
+        return OrganizationUpdateSerializer
 
     def _get_model(self):
         """
