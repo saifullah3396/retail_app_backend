@@ -1,4 +1,7 @@
-# pylint: disable=missing-module-docstring
+"""
+Defines the application configuration.
+"""
+
 from django.apps import AppConfig
 
 
