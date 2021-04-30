@@ -9,7 +9,7 @@ from rest_framework import status
 from core.tests import TestsBase
 
 
-# pylint: disable=pointless-string-statement
+# pylint: disable=pointless-string-statement, line-too-long
 class BlockDeleteByIdListTests(TestsBase):
     """
     Defines unit tests for 'delete-by-id-list' api requests for views defined
@@ -50,8 +50,8 @@ class BlockDeleteByIdListTests(TestsBase):
                         # bad
                         'test_name': 'delete_block_org_admin_1_in_org_2',
                         'query_params': [
-                            ('id', self.blocks['b2_f0_l1_o2_for_deletion'].id),
-                            ('id', self.blocks['b3_f0_l1_o2_for_deletion'].id),
+                            ('id', self.blocks['b2_del_f0_l1_o2'].id),
+                            ('id', self.blocks['b3_del_f0_l1_o2'].id),
                         ],
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
@@ -62,9 +62,9 @@ class BlockDeleteByIdListTests(TestsBase):
                             'delete_block_org_admin_1_in_sub_1_org_2',
                         'query_params': [
                             ('id',
-                             self.blocks['b2_f0_l1_sub1_o2_for_deletion'].id),
+                             self.blocks['b2_del_f0_l1_sub1_o2'].id),
                             ('id',
-                             self.blocks['b3_f0_l1_sub1_o2_for_deletion'].id),
+                             self.blocks['b3_del_f0_l1_sub1_o2'].id),
                         ],
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
@@ -72,8 +72,8 @@ class BlockDeleteByIdListTests(TestsBase):
                     {   # delete block by sub-org-admin in upper tree, bad
                         'test_name': 'delete_block_sub_org_admin_1_in_org_1',
                         'query_params': [
-                            ('id', self.blocks['b2_f0_l1_o2_for_deletion'].id),
-                            ('id', self.blocks['b3_f0_l1_o2_for_deletion'].id),
+                            ('id', self.blocks['b2_del_f0_l1_o2'].id),
+                            ('id', self.blocks['b3_del_f0_l1_o2'].id),
                         ],
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
@@ -82,9 +82,9 @@ class BlockDeleteByIdListTests(TestsBase):
                         'test_name': 'delete_block_other_user',
                         'query_params': [
                             ('id',
-                             self.blocks['b2_f0_l1_sub1_o2_for_deletion'].id),
+                             self.blocks['b2_del_f0_l1_sub1_o2'].id),
                             ('id',
-                             self.blocks['b3_f0_l1_sub1_o2_for_deletion'].id),
+                             self.blocks['b3_del_f0_l1_sub1_o2'].id),
                         ],
                         'user': 'employee_user',
                         'status': status.HTTP_403_FORBIDDEN
@@ -93,9 +93,9 @@ class BlockDeleteByIdListTests(TestsBase):
                         'test_name': 'delete_block_other_user',
                         'query_params': [
                             ('id',
-                             self.blocks['b2_f0_l1_sub1_o2_for_deletion'].id),
+                             self.blocks['b2_del_f0_l1_sub1_o2'].id),
                             ('id',
-                             self.blocks['b3_f0_l1_sub1_o2_for_deletion'].id),
+                             self.blocks['b3_del_f0_l1_sub1_o2'].id),
                         ],
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN
@@ -103,8 +103,8 @@ class BlockDeleteByIdListTests(TestsBase):
                     {   # delete block, okay for staff
                         'test_name': 'delete_block_by_staff',
                         'query_params': [
-                            ('id', self.blocks['b3_f0_l1_o1_for_deletion'].id),
-                            ('id', self.blocks['b4_f0_l1_o1_for_deletion'].id),
+                            ('id', self.blocks['b3_del_f0_l1_o1'].id),
+                            ('id', self.blocks['b4_del_f0_l1_o1'].id),
                         ],
                         'user': 'staff_user',
                         'status': status.HTTP_200_OK
@@ -112,8 +112,8 @@ class BlockDeleteByIdListTests(TestsBase):
                     {   # duplicate delete by staff, bad
                         'test_name': 'delete_dup_block_by_staff',
                         'query_params': [
-                            ('id', self.blocks['b3_f0_l1_o1_for_deletion'].id),
-                            ('id', self.blocks['b4_f0_l1_o1_for_deletion'].id),
+                            ('id', self.blocks['b3_del_f0_l1_o1'].id),
+                            ('id', self.blocks['b4_del_f0_l1_o1'].id),
                         ],
                         'user': 'staff_user',
                         'status': status.HTTP_404_NOT_FOUND
@@ -121,8 +121,8 @@ class BlockDeleteByIdListTests(TestsBase):
                     {   # delete block by org-admin, okay
                         'test_name': 'delete_block_org_admin_1_in_org_1',
                         'query_params': [
-                            ('id', self.blocks['b5_f0_l1_o1_for_deletion'].id),
-                            ('id', self.blocks['b6_f0_l1_o1_for_deletion'].id),
+                            ('id', self.blocks['b5_del_f0_l1_o1'].id),
+                            ('id', self.blocks['b6_del_f0_l1_o1'].id),
                         ],
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_200_OK
@@ -132,9 +132,9 @@ class BlockDeleteByIdListTests(TestsBase):
                             'delete_block_org_admin_1_in_sub_1_org_1',
                         'query_params': [
                             ('id',
-                             self.blocks['b3_f0_l1_sub1_o1_for_deletion'].id),
+                             self.blocks['b3_del_f0_l1_sub1_o1'].id),
                             ('id',
-                             self.blocks['b4_f0_l1_sub1_o1_for_deletion'].id),
+                             self.blocks['b4_del_f0_l1_sub1_o1'].id),
                         ],
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_200_OK
@@ -144,9 +144,9 @@ class BlockDeleteByIdListTests(TestsBase):
                             'delete_block_sub_org_admin_2_in_sub_1_org_2',
                         'query_params': [
                             ('id',
-                             self.blocks['b2_f0_l1_sub1_o2_for_deletion'].id),
+                             self.blocks['b2_del_f0_l1_sub1_o2'].id),
                             ('id',
-                             self.blocks['b3_f0_l1_sub1_o2_for_deletion'].id),
+                             self.blocks['b3_del_f0_l1_sub1_o2'].id),
                         ],
                         'user': 'sub_org_12_admin_user',
                         'status': status.HTTP_200_OK

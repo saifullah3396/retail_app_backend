@@ -9,9 +9,9 @@ from core.tests import TestsBase
 
 
 # pylint: disable=pointless-string-statement
-class BlockRetrieveTests(TestsBase):
+class BlockUpdateTests(TestsBase):
     """
-    Defines unit tests for 'retrieve' api requests for views defined
+    Defines unit tests for 'update' api requests for views defined
     at 'locations/' url.
     """
 
@@ -29,7 +29,7 @@ class BlockRetrieveTests(TestsBase):
         """
         Sets up the test cases.
         """
-        super(BlockRetrieveTests, self).setUp()
+        super(BlockUpdateTests, self).setUp()
         self.test = [
             {
                 'test_name': 'update_block_by_id',
@@ -38,7 +38,7 @@ class BlockRetrieveTests(TestsBase):
                 'request': [
                     {   # update block by id. change name to an existing
                         # block name inside the floor, bad
-                        'test_name': 'b1',
+                        'test_name': 'update_block_by_id',
                         'args': {'pk': self.blocks['b1_f0_l1_o1'].id},
                         'user': 'staff_user',
                         'data': {
@@ -48,14 +48,20 @@ class BlockRetrieveTests(TestsBase):
                     },
                     {   # update block by id. change floor to another floor with
                         # existing block name, bad
-                        'test_name': 'b1',
+                        'test_name': 'update_block_by_id',
                         'args': {'pk': self.blocks['b1_f0_l1_o1'].id},
                         'user': 'staff_user',
                         'data': {
-                            # b1 already exists in f1_l1_o1
+                            # b1 already exists in f1_l1_o1, floor just won't change
                             'floor': self.floors['f1_l1_o1'].id
                         },
-                        'status': status.HTTP_400_BAD_REQUEST,
+                        'status': status.HTTP_200_OK,
+                        'response_check': lambda test, data: (
+                            test.assertDictContainsSubset(
+                                {
+                                    'floor': self.floors['f0_l1_o1'].id
+                                }, data)
+                        )
                     },
                     {   # update block by id, okay for staff
                         'test_name': 'update_b1_f0_l1_o1_by_staff',
@@ -65,7 +71,7 @@ class BlockRetrieveTests(TestsBase):
                             'name': 'update_b1_f0_l1_o1_by_staff',
                             'pixels_to_m_x': 30,
                             'pixels_to_m_y': 30,
-                            'floor': self.floors['f1_l1_o1'].id
+                            'floor': self.floors['f0_l1_o1'].id
                         },
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
@@ -74,7 +80,7 @@ class BlockRetrieveTests(TestsBase):
                                     'name': 'update_b1_f0_l1_o1_by_staff',
                                     'pixels_to_m_x': 30,
                                     'pixels_to_m_y': 30,
-                                    'floor': self.floors['f1_l1_o1'].id
+                                    'floor': self.floors['f0_l1_o1'].id
                                 }, data)
                         )
                     },
@@ -86,7 +92,7 @@ class BlockRetrieveTests(TestsBase):
                             'name': 'update_b1_f0_l1_o1_by_org_1_admin',
                             'pixels_to_m_x': 30,
                             'pixels_to_m_y': 30,
-                            'floor': self.floors['f1_l1_o1'].id
+                            'floor': self.floors['f0_l1_o1'].id
                         },
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
@@ -95,7 +101,7 @@ class BlockRetrieveTests(TestsBase):
                                     'name': 'update_b1_f0_l1_o1_by_org_1_admin',
                                     'pixels_to_m_x': 30,
                                     'pixels_to_m_y': 30,
-                                    'floor': self.floors['f1_l1_o1'].id
+                                    'floor': self.floors['f0_l1_o1'].id
                                 }, data)
                         )
                     },

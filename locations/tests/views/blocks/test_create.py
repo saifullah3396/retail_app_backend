@@ -7,7 +7,7 @@ from rest_framework import status
 from core.tests import TestsBase
 
 
-# pylint: disable=pointless-string-statement
+# pylint: disable=pointless-string-statement, line-too-long
 class BlockCreateTests(TestsBase):
     """
     Defines unit tests for 'create' api requests for views defined at

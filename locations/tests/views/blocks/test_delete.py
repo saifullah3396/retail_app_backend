@@ -8,7 +8,7 @@ from rest_framework import status
 from core.tests import TestsBase
 
 
-# pylint: disable=pointless-string-statement
+# pylint: disable=pointless-string-statement, line-too-long
 class BlockDeleteTests(TestsBase):
     """
     Defines unit tests for 'delete' api requests for views defined
@@ -39,27 +39,27 @@ class BlockDeleteTests(TestsBase):
                     {
                         # delete b3_f0_l1_o1 by staff
                         'test_name': 'delete_b3_f0_l1_o1_staff',
-                        'args': {'pk': self.blocks['b3_f0_l1_o1_for_deletion'].id},
+                        'args': {'pk': self.blocks['b3_del_f0_l1_o1'].id},
                         'user': 'staff_user',
                         'status': status.HTTP_200_OK
                     },
                     {   # delete b4_f0_l1_o1 by org 1 admin
                         'test_name': 'delete_b4_f0_l1_o1_by_org1_admin',
-                        'args': {'pk': self.blocks['b4_f0_l1_o1_for_deletion'].id},
+                        'args': {'pk': self.blocks['b4_del_f0_l1_o1'].id},
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_200_OK
                     },
                     {   # delete block in higher level organization,
                         'test_name':
                             'delete_b5_f0_l1_o1_by_sub_1_org_1_admin',
-                        'args': {'pk': self.blocks['b5_f0_l1_o1_for_deletion'].id},
+                        'args': {'pk': self.blocks['b5_del_f0_l1_o1'].id},
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
                     {   # delete block of different org, bad (location 1 is in
                         # org 1)
                         'test_name': 'delete_b5_f0_l1_o1_by_org_2_admin',
-                        'args': {'pk': self.blocks['b5_f0_l1_o1_for_deletion'].id},
+                        'args': {'pk': self.blocks['b5_del_f0_l1_o1'].id},
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
@@ -67,14 +67,14 @@ class BlockDeleteTests(TestsBase):
                         'test_name':
                             'delete_b5_f0_l1_o1_by_sub_org_1_'
                             'employee',
-                        'args': {'pk': self.blocks['b5_f0_l1_o1_for_deletion'].id},
+                        'args': {'pk': self.blocks['b5_del_f0_l1_o1'].id},
                         'user': 'employee_user',
                         'status': status.HTTP_403_FORBIDDEN
                     },
                     {   # delete block by id, forbidden for random user
                         'test_name':
                             'delete_b5_f0_l1_o1_by_other_user',
-                        'args': {'pk': self.blocks['b5_f0_l1_o1_for_deletion'].id},
+                        'args': {'pk': self.blocks['b5_del_f0_l1_o1'].id},
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN
                     }
@@ -88,7 +88,7 @@ class BlockDeleteTests(TestsBase):
                     {   # delete sub-org block by id, okay for staff
                         'test_name':
                             'delete_b3_f0_l1_sub1_o1_by_staff_user',
-                        'args': {'pk': self.blocks['b3_f0_l1_sub1_o1_for_deletion'].id},
+                        'args': {'pk': self.blocks['b3_del_f0_l1_sub1_o1'].id},
                         'user': 'staff_user',
                         'status': status.HTTP_200_OK
                     },
@@ -96,7 +96,7 @@ class BlockDeleteTests(TestsBase):
                         # which this sub-org exists
                         'test_name':
                             'delete_b4_f0_l1_sub1_o1_by_org_1_admin',
-                        'args': {'pk': self.blocks['b4_f0_l1_sub1_o1_for_deletion'].id},
+                        'args': {'pk': self.blocks['b4_del_f0_l1_sub1_o1'].id},
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_200_OK
                     },
@@ -104,7 +104,7 @@ class BlockDeleteTests(TestsBase):
                         # itself
                         'test_name':
                             'delete_b5_f0_l1_sub1_o1_by_sub_1_org_1_admin',
-                        'args': {'pk': self.blocks['b5_f0_l1_sub1_o1_for_deletion'].id},
+                        'args': {'pk': self.blocks['b5_del_f0_l1_sub1_o1'].id},
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_200_OK
                     },

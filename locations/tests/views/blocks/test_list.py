@@ -8,7 +8,7 @@ from rest_framework import status
 from core.tests import TestsBase
 
 
-# pylint: disable=pointless-string-statement
+# pylint: disable=pointless-string-statement, line-too-long
 class BlockListTests(TestsBase):
     """
     Defines unit tests for 'list' api requests for views defined
@@ -45,7 +45,7 @@ class BlockListTests(TestsBase):
                             test.assertEqual(
                                 len(
                                     data.get('results', None)),
-                                len(self.bs_names))
+                                len(self.bs_dict))
                         )
                     },
                     {    # get blocks list by org admin
@@ -56,9 +56,9 @@ class BlockListTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.bs_f0_l1_o1_names) +
-                                len(self.bs_f1_l1_o1_names) +
-                                len(self.bs_f0_l1_sub1_o1_names))
+                                len(self.bs_f0_l1_o1_dict) +
+                                len(self.bs_f1_l1_o1_dict) +
+                                len(self.bs_f0_l1_sub1_o1_dict))
                         )
                     },
                     {   # get blocks list by sub-org admin
@@ -69,7 +69,7 @@ class BlockListTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.bs_f0_l1_sub1_o1_names))
+                                len(self.bs_f0_l1_sub1_o1_dict))
                         )
                     },
                     {   # get blocks list by another org admin
@@ -80,8 +80,8 @@ class BlockListTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.bs_f0_l1_o2_names) +
-                                len(self.bs_f0_l1_sub1_o2_names))
+                                len(self.bs_f0_l1_o2_dict) +
+                                len(self.bs_f0_l1_sub1_o2_dict))
                         )
                     },
                     {   # get blocks list by employee, okay
@@ -92,7 +92,7 @@ class BlockListTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.bs_f0_l1_sub1_o1_names)
+                                len(self.bs_f0_l1_sub1_o1_dict)
                             )
                         )
                     },

@@ -8,7 +8,7 @@ from rest_framework import status
 from core.tests import TestsBase
 
 
-# pylint: disable=pointless-string-statement
+# pylint: disable=pointless-string-statement, line-too-long, invalid-name
 class FloorListTests(TestsBase):
     """
     Defines unit tests for 'list' api requests for views defined
@@ -43,7 +43,7 @@ class FloorListTests(TestsBase):
                             test.assertEqual(
                                 len(
                                     data.get('results', None)),
-                                len(self.fs_names))
+                                len(self.fs_dict))
                         )
                     },
                     {    # get floors list by org admin
@@ -52,8 +52,8 @@ class FloorListTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.fs_l1_o1_names) +
-                                len(self.fs_l1_sub1_o1_names))
+                                len(self.fs_l1_o1_dict) +
+                                len(self.fs_l1_sub1_o1_dict))
                         )
                     },
                     {   # get floors list by sub-org admin
@@ -62,7 +62,7 @@ class FloorListTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.fs_l1_sub1_o1_names))
+                                len(self.fs_l1_sub1_o1_dict))
                         )
                     },
                     {   # get floors list by another org admin
@@ -71,8 +71,8 @@ class FloorListTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.fs_l1_o2_names) +
-                                len(self.fs_l1_sub1_o2_names))
+                                len(self.fs_l1_o2_dict) +
+                                len(self.fs_l1_sub1_o2_dict))
                         )
                     },
                     {   # get floors list by employee, okay
@@ -81,7 +81,7 @@ class FloorListTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.fs_l1_sub1_o1_names)
+                                len(self.fs_l1_sub1_o1_dict)
                             )
                         )
                     },

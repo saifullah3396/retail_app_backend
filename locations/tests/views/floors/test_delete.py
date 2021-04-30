@@ -8,7 +8,7 @@ from rest_framework import status
 from core.tests import TestsBase
 
 
-# pylint: disable=pointless-string-statement
+# pylint: disable=pointless-string-statement, line-too-long, invalid-name
 class FloorDeleteTests(TestsBase):
     """
     Defines unit tests for 'delete' api requests for views defined
@@ -49,14 +49,14 @@ class FloorDeleteTests(TestsBase):
                         # delete floor 4 location 1 org 1 by staff, okay
                         # (location has floors 0, 1, 2, 3, 4)
                         'test_name': 'delete_floor_by_staff',
-                        'args': {'pk': self.floors['f4_l1_o1_for_deletion'].id},
+                        'args': {'pk': self.floors['f4_del_l1_o1'].id},
                         'user': 'staff_user',
                         'status': status.HTTP_200_OK
                     },
                     {   # delete floor 3 location 1 org 1 by org 1 admin, okay
                         # (location has floors 0, 1,2 , 3 now)
                         'test_name': 'delete_floor_in_org_1_by_org_1_admin',
-                        'args': {'pk': self.floors['f3_l1_o1_for_deletion'].id},
+                        'args': {'pk': self.floors['f3_del_l1_o1'].id},
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_200_OK
                     },

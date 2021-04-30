@@ -8,7 +8,7 @@ from rest_framework import status
 from core.tests import TestsBase
 
 
-# pylint: disable=pointless-string-statement
+# pylint: disable=pointless-string-statement, line-too-long, invalid-name
 class LocationListTests(TestsBase):
     """
     Defines unit tests for 'list' api requests for views defined
@@ -43,7 +43,7 @@ class LocationListTests(TestsBase):
                             test.assertEqual(
                                 len(
                                     data.get('results', None)),
-                                len(self.ls_names))
+                                len(self.ls_dict))
                         )
                     },
                     {    # get locations list by org admin
@@ -52,8 +52,8 @@ class LocationListTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.ls_o1_names) +
-                                len(self.ls_sub1_o1_names))
+                                len(self.ls_o1_dict) +
+                                len(self.ls_sub1_o1_dict))
                         )
                     },
                     {   # get locations list by sub-org admin
@@ -62,7 +62,7 @@ class LocationListTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.ls_sub1_o1_names))
+                                len(self.ls_sub1_o1_dict))
                         )
                     },
                     {   # get locations list by another org admin
@@ -71,8 +71,8 @@ class LocationListTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.ls_o2_names) +
-                                len(self.ls_sub1_o2_names))
+                                len(self.ls_o2_dict) +
+                                len(self.ls_sub1_o2_dict))
                         )
                     },
                     {   # get locations list by employee, okay

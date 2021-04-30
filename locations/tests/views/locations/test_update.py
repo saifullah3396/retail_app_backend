@@ -8,7 +8,7 @@ from rest_framework import status
 from core.tests import TestsBase
 
 
-# pylint: disable=pointless-string-statement
+# pylint: disable=pointless-string-statement, line-too-long, invalid-name
 class LocationUpdateTests(TestsBase):
     """
     Defines unit tests for 'update' api requests for views defined
@@ -165,8 +165,8 @@ class LocationUpdateTests(TestsBase):
                         'test_name':
                             'update_location_1_sub_1_org_2_by_sub_1_org_2_'
                             'admin',
-                        'args': {'pk': self.locations['l1_sub1_o2'].id},
-                        'user': 'sub_org_12_admin_user',
+                        'args': {'pk': self.locations['l2_sub1_o1'].id},
+                        'user': 'sub_org_11_admin_user',
                         'data': {
                             'name': 'location_1_sub_1_org_1_updated',
                         },

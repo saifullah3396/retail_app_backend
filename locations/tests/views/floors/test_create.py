@@ -7,7 +7,7 @@ from rest_framework import status
 from core.tests import TestsBase
 
 
-# pylint: disable=pointless-string-statement
+# pylint: disable=pointless-string-statement, line-too-long, invalid-name
 class FloorCreateTests(TestsBase):
     """
     Defines unit tests for 'create' api requests for views defined at
@@ -55,7 +55,7 @@ class FloorCreateTests(TestsBase):
                         # bad (location_1_org_1 has 0, 1, 2 floors)
                         'test_name': 'create_floor_by_staff_no_floor_in_between',
                         'data': {
-                            'number': 4,
+                            'number': 6,
                             'location': self.locations['l1_o1'].id
                         },
                         'user': 'staff_user',
@@ -65,7 +65,7 @@ class FloorCreateTests(TestsBase):
                         # bad (location_1_org_1 has 0, 1, 2 floors)
                         'test_name': 'create_floor_by_staff',
                         'data': {
-                            'number': 3,
+                            'number': 5,
                             'location': self.locations['l1_o1'].id
                         },
                         'user': 'staff_user',
@@ -73,7 +73,7 @@ class FloorCreateTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertDictContainsSubset(
                                 {
-                                    'number': 3,
+                                    'number': 5,
                                     'location':
                                         self.locations['l1_o1'].id
                                 }, data)
@@ -82,7 +82,7 @@ class FloorCreateTests(TestsBase):
                     {   # create floor by org-admin, okay
                         'test_name': 'create_floor_org_admin_1_in_org_1',
                         'data': {
-                            'number': 4,
+                            'number': 6,
                             'location': self.locations['l1_o1'].id
                         },
                         'user': 'org_1_admin_user',
@@ -90,7 +90,7 @@ class FloorCreateTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertDictContainsSubset(
                                 {
-                                    'number': 4,
+                                    'number': 6,
                                     'location':
                                         self.locations['l1_o1'].id
                                 }, data)

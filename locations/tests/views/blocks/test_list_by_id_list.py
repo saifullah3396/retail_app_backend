@@ -8,7 +8,7 @@ from rest_framework import status
 from core.tests import TestsBase
 
 
-# pylint: disable=pointless-string-statement
+# pylint: disable=pointless-string-statement, line-too-long
 class BlockListByIdListTests(TestsBase):
     """
     Defines unit tests for 'list-by-id-list' api requests for views defined
