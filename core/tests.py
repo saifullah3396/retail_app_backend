@@ -2,6 +2,7 @@
 Defines the base functionality for unit tests generation for our applications.
 """
 
+import random
 import tempfile
 
 from django.conf import settings as django_settings
@@ -9,12 +10,14 @@ from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.http import urlencode
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITransactionTestCase, URLPatternsTestCase
 from rest_framework_jwt.settings import api_settings
 
 from backend.settings import MEDIA_ROOT
+from deepstream_servers.models import DeepstreamServer
 from locations.models import Block, Floor, Location
 from measurement_frames.models import MeasurementFrame
 from organizations.models import Organization
@@ -33,7 +36,7 @@ JWT_AUTH = True
 
 
 class TestsBase(APITransactionTestCase, URLPatternsTestCase):
-    #pylint: disable=attribute-defined-outside-init
+    # pylint: disable=attribute-defined-outside-init
     """
     Generates a test database with example values for different models for
     performing tests
@@ -161,6 +164,28 @@ class TestsBase(APITransactionTestCase, URLPatternsTestCase):
                 pixel_pose_x=data['pixel_pose_x'],
                 pixel_pose_y=data['pixel_pose_y'],
                 pixel_pose_theta=data['pixel_pose_theta'],
+                block=blocks.get(data['block']))
+            item_dict[item_name].save()
+        return item_dict
+
+    def create_servers_from_data(self, data, blocks):
+        """
+        Creates new deepstream servers with given data
+
+        :param data: Data of type {
+                'd0': { 'block': 'b0_f1_l1', **data },
+                ...
+                'd1': { 'block': 'b0_f2_l1', **data },
+            }
+        :parma blocks: List of already created blocks
+        """
+        item_dict = {}
+        for (item_name, data) in data.items():
+            item_dict[item_name] = DeepstreamServer(
+                ip_addr=data['ip_addr'],
+                mac_addr=data['mac_addr'],
+                connected_at=data['connected_at'],
+                last_echo_at=data['last_echo_at'],
                 block=blocks.get(data['block']))
             item_dict[item_name].save()
         return item_dict
@@ -440,6 +465,14 @@ class TestsBase(APITransactionTestCase, URLPatternsTestCase):
         # generate blocks in database
         self.blocks = self.create_blocks_from_data(self.bs_dict, self.floors)
 
+    def generate_random_mac_addr(self):
+        """
+        Generates a random mac address for testing purposes.
+        """
+        return "02:00:00:%02x:%02x:%02x" % (random.randint(0, 255),
+                                            random.randint(0, 255),
+                                            random.randint(0, 255))
+
     def generate_test_frames(self):
         """
         Generates frames data in test database for testing purposes.
@@ -490,6 +523,58 @@ class TestsBase(APITransactionTestCase, URLPatternsTestCase):
         # generate blocks in database
         self.frames = self.create_frames_from_data(self.mfs_dict, self.blocks)
 
+    def generate_test_deepstream_servers(self):
+        """
+        Generates deepstream servers data in test database for testing
+        purposes.
+        """
+        def generate_servers_for_block(names, block_name, data):
+            item_dict = {}
+            for name in names:
+                item_dict['{}_{}'.format(name, block_name)] = {
+                    'block': block_name,
+                    'mac_addr': self.generate_random_mac_addr(),
+                    **data,
+                }
+            return item_dict
+
+        server_data = {
+            'ip_addr': 'rtsp://192.168.1.1',
+            'connected_at': timezone.now(),
+            'last_echo_at': timezone.now()
+        }
+        self.ds_b1_f0_l1_o1_dict =\
+            generate_servers_for_block(
+                ['ds0', 'ds1', 'ds2_del', 'ds3_del', 'ds4_del', 'ds5_del'],
+                'b1_f0_l1_o1',
+                server_data)
+        self.ds_b1_f0_l1_o2_dict =\
+            generate_servers_for_block(
+                ['ds0', 'ds1', 'ds2_del', 'ds3_del', 'ds4_del', 'ds5_del'],
+                'b1_f0_l1_o2',
+                server_data)
+        self.ds_b1_f0_l1_sub1_o1_dict =\
+            generate_servers_for_block(
+                ['ds0', 'ds1', 'ds2_del', 'ds3_del', 'ds4_del', 'ds5_del'],
+                'b1_f0_l1_sub1_o1',
+                server_data)
+        self.ds_b1_f0_l1_sub1_o2_dict =\
+            generate_servers_for_block(
+                ['ds0', 'ds1', 'ds2_del', 'ds3_del'],
+                'b1_f0_l1_sub1_o2',
+                server_data)
+
+        self.ds_dict = {
+            **self.ds_b1_f0_l1_o1_dict,
+            **self.ds_b1_f0_l1_o2_dict,
+            **self.ds_b1_f0_l1_sub1_o1_dict,
+            **self.ds_b1_f0_l1_sub1_o2_dict,
+        }
+
+        # generate blocks in database
+        self.deepstream_servers = \
+            self.create_servers_from_data(self.ds_dict, self.blocks)
+
     def setUp(self):
         """
         Sets up the test database with example values for different models
@@ -517,6 +602,9 @@ class TestsBase(APITransactionTestCase, URLPatternsTestCase):
 
         # generate measurement frames in database
         self.generate_test_frames()
+
+        # generate deepstream servers data in database
+        self.generate_test_deepstream_servers()
 
         # make a list of users with respective properties
         self.users_dict = {
