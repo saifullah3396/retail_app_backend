@@ -45,7 +45,7 @@ class OrganizationListTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data['results']),
-                                len(self.os_names)+len(self.subs_names))
+                                len(self.os_dict)+len(self.subs_dict))
                         )
                     },
                     {   # get org list by org admin
@@ -55,7 +55,7 @@ class OrganizationListTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data['results']),
-                                1+len(self.subs_o1_names))
+                                1+len(self.subs_o1_dict))
                         )
                     },
                     {   # get org list by sub-org admin
@@ -73,7 +73,7 @@ class OrganizationListTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data['results']),
-                                1+len(self.subs_o2_names))
+                                1+len(self.subs_o2_dict))
                         )
                     },
                     {   # get org list by org employee
