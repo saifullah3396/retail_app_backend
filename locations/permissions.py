@@ -12,7 +12,7 @@ from .models import Block, Floor, Location
 USER_GROUP_PERMISSIONS = {
     UserGroups.ORGANIZATION_ADMIN_GROUP.name: {
         Location: ['add', 'change', 'view', 'delete'],
-        Floor: ['add', 'view', 'delete'], # floor is not changeable
+        Floor: ['add', 'view', 'delete'],  # floor is not changeable
         Block: ['add', 'change', 'view', 'delete']
     },
     UserGroups.EMPLOYEE_GROUP.name: {
