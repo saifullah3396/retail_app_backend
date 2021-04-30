@@ -135,6 +135,7 @@ class DeepstreamServer(models.Model):
 
         super(DeepstreamServer, self).clean(*args, **kwargs)
 
+    # pylint: disable=signature-differs
     def save(self, *args, **kwargs):
         self.full_clean()
         super(DeepstreamServer, self).save(*args, **kwargs)
