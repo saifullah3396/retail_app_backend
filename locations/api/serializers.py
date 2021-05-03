@@ -18,7 +18,7 @@ class LocationListSerializer(serializers.ModelSerializer):
 class LocationCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
-        fields = ('name', 'organization',)
+        fields = ('id', 'name', 'organization',)
         extra_kwargs = {
             'name': {'required': True},
             'organization': {'required': True},
@@ -40,7 +40,7 @@ class FloorListSerializer(serializers.ModelSerializer):
 class FloorCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Floor
-        fields = ('number', 'location',)
+        fields = ('id', 'number', 'location',)
         extra_kwargs = {
             'number': {'required': True},
             'location': {'required': True},
@@ -82,7 +82,7 @@ class BlockCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Block
-        fields = ('name', 'floor_map', 'floor_map_url',
+        fields = ('id', 'name', 'floor_map', 'floor_map_url',
                   'pixels_to_m_x', 'pixels_to_m_y', 'floor')
         extra_kwargs = {
             'name': {'required': True},
@@ -121,7 +121,7 @@ class BlockUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Block
-        fields = ('name', 'pixels_to_m_x', 'pixels_to_m_y', 'floor')
+        fields = ('id', 'name', 'pixels_to_m_x', 'pixels_to_m_y', 'floor')
         extra_kwargs = {
             'floor': {'read_only': True}
         }
@@ -152,7 +152,7 @@ class FloorDetailSerializer(serializers.ModelSerializer):
 class FloorUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Floor
-        fields = ('number', 'location')
+        fields = ('id', 'number', 'location')
         extra_kwargs = {
             'number': {'read_only': True},
             'location': {'read_only': True}
@@ -184,7 +184,7 @@ class LocationDetailSerializer(serializers.ModelSerializer):
 class LocationUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
-        fields = ('name', 'organization')
+        fields = ('id', 'name', 'organization')
         extra_kwargs = {
             'organization': {'read_only': True}
         }

@@ -33,7 +33,7 @@ class CameraListSerializer(serializers.ModelSerializer):
 class CameraCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Camera
-        fields = ('ip_addr', 'coords', 'block')
+        fields = ('id', 'ip_addr', 'coords', 'block')
         extra_kwargs = {
             'ip_addr': {'required': True},
             'coords': {'required': True},
@@ -79,6 +79,7 @@ class CameraUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Camera
         fields = (
+            'id',
             'ip_addr',
             'coords',
             'block',

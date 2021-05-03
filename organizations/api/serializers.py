@@ -13,7 +13,7 @@ class OrganizationCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Organization
-        fields = ('name', 'parent',)
+        fields = ('id', 'name', 'parent',)
         extra_kwargs = {
             'name': {'required': True},
         }
@@ -80,7 +80,7 @@ class OrganizationUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Organization
-        fields = ('name', 'parent',)
+        fields = ('id', 'name', 'parent',)
         extra_kwargs = {
             'name': {'required': True},
             'parent': {'read_only': True},
