@@ -105,6 +105,34 @@ def filter_queryset_by_id_list(query_set, id_list):
     return query_set.filter(id__in=id_list)
 
 
+def filter_objects_by_id_list(objects, id_list):
+    """
+    Filters the object by id list. If all ids in the list do not
+    match, a not found exception is raised.
+    """
+    filtered_objects = filter_queryset_by_id_list(
+        objects, id_list)
+
+    # make sure all the given ids are inside filtered objects,
+    # otherwise raise a validation error
+    if len(filtered_objects) != len(id_list):
+        raise exceptions.NotFound(
+            {
+                'id': 'The following requested ids are invalid: {}'.format(
+                    exclude_queryset_by_id_list(
+                        objects, id_list).values_list(
+                        'id', flat=True))
+            })
+    return filtered_objects
+
+
+def get_id_list(request):
+    """
+    Returns the list of ids from API request.
+    """
+    return request.query_params.getlist('id')
+
+
 def exclude_queryset_by_id_list(query_set, id_list):
     """
     Filters a queryset by excluding the given list of ids

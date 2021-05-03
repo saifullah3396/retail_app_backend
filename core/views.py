@@ -11,8 +11,8 @@ from rest_framework.generics import (DestroyAPIView, GenericAPIView,
                                      RetrieveUpdateDestroyAPIView)
 from rest_framework.response import Response
 
-from core.utils import (exclude_queryset_by_id_list,
-                        filter_queryset_by_id_list, get_fn_by_group)
+from core.utils import (filter_queryset_by_id_list, get_fn_by_user_group,
+                        get_id_list)
 
 
 class PaginationConfig(pagination.PageNumberPagination):
@@ -24,7 +24,68 @@ class PaginationConfig(pagination.PageNumberPagination):
     max_page_size = 100
 
 
-class CoreAPIView(GenericAPIView):
+class BaseAPIHandler:
+    """
+    Defines the custom user-based functionality for get-create-update-delete
+    API calls for our views.
+    """
+
+    def __init__(self, model, get_is_list):
+        self._api_handler_by_group = \
+            self._define_api_handler_by_group()
+        self._model = model
+        self._get_is_list = get_is_list
+
+    def _define_api_handler_by_group(self):
+        """
+        Returns a dictionary mapping user group to rest api handler functions
+        that will be called if the request user is in that user group.
+        """
+        raise NotImplementedError()
+
+    def _get_queryset_by_staff(self, request):
+        """
+        Returns the get queryset for staff users.
+        """
+        if self._get_is_list:
+            id_list = get_id_list(request)
+            if id_list:
+                return filter_queryset_by_id_list(
+                    self._model.objects, id_list)
+            return self._model.objects.all()
+        else:
+            return self._model.objects.all()
+
+    def _perform_create_by_staff(self, serializer):
+        """
+        Implements perform_create for staff users.
+        """
+        serializer.save()
+
+    def _perform_update_by_staff(self, serializer):
+        """
+        Implements perform_update for staff users.
+        """
+        serializer.save()
+
+    def _call_api_by_group(self, user, request_type, *args, **kwargs):
+        """
+        Implements the customized get_queryset functionalty.
+        """
+        if user.is_staff:
+            return self._api_handler_by_group[request_type]['staff'](
+                *args, **kwargs)
+        else:
+            if user.organization:
+                return get_fn_by_user_group(
+                    user, self._api_handler_by_group[request_type])(
+                        *args, **kwargs)
+            else:
+                raise exceptions.PermissionDenied(
+                    {"detail": "You must be part of an organization."})
+
+
+class CoreAPIViewBase(GenericAPIView):
     """
     Defines the base class for the rest api views.
     """
@@ -32,88 +93,9 @@ class CoreAPIView(GenericAPIView):
     pagination_class = PaginationConfig
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
 
-    def __init__(self):
-        super(CoreAPIView, self).__init__()
-        self._get_queryset_by_group_fn = \
-            self._define_get_queryset_by_group_fn()
-
-        self.model = self._get_model()
-
-    def _define_get_queryset_by_group_fn(self):
-        """
-        Returns a dictionary mapping user group to get_queryset function
-        that will be called if the request user is in that user group.
-
-        To be implemented by the child class.
-        """
-        raise NotImplementedError()
-
-    def _get_model(self):
-        """
-        Returns the model associated with the view.
-
-        To be implemented by the child class.
-        """
-        raise NotImplementedError()
-
-    def _get_queryset_by_staff(self):
-        """
-        Returns the get queryset for staff users.
-
-        To be implemented by the child class.
-        """
-        raise NotImplementedError()
-
-    def _get_id_list(self):
-        """
-        Returns the list of ids based on different request types.
-        """
-        return self.request.query_params.getlist('id')
-
-    def _filter_objects_by_id_list(self, objects, id_list):
-        """
-        Filters the object by id list. If all ids in the list do not
-        match, a not found exception is raised.
-        """
-        filtered_objects = filter_queryset_by_id_list(
-            objects, id_list)
-
-        # make sure all the given ids are inside filtered objects,
-        # otherwise raise a validation error
-        if len(filtered_objects) != len(id_list):
-            raise exceptions.NotFound(
-                {
-                    'id': 'The following requested ids are invalid: {}'.format(
-                        exclude_queryset_by_id_list(
-                            objects, id_list).values_list(
-                            'id', flat=True))
-                })
-        return filtered_objects
-
-    def _get_queryset_by_group(self):
-        """
-        Returns the get queryset for individual user groups as defined by the
-        [_get_queryset_by_group_fn] dictionary initialized in child class.
-        """
-        return get_fn_by_group(
-            self.request.user, self._get_queryset_by_group_fn)()
-
-    def _get_queryset(self):
-        """
-        Implements the customized get_queryset functionalty.
-        """
-        if self.request.user.is_staff:
-            return self._get_queryset_by_staff()
-        else:
-            if self.request.user.organization:
-                return self._get_queryset_by_group()
-            else:
-                raise exceptions.PermissionDenied(
-                    {"detail": "You must be part of an organization."})
-
 
 class CoreListCreateDestroyView(
-        ListCreateAPIView, DestroyAPIView, CoreAPIView):
+        ListCreateAPIView, DestroyAPIView, CoreAPIViewBase, BaseAPIHandler):
     """
     Defines the base list-create-destroy view that will be extended by our
     applications for model specific list-create-destroy views.
@@ -121,8 +103,18 @@ class CoreListCreateDestroyView(
 
     def __init__(self):
         super(CoreListCreateDestroyView, self).__init__()
-        self._perform_create_by_group_fn = \
-            self._define_perform_create_by_group_fn()
+        BaseAPIHandler.__init__(
+            self,
+            model=self.queryset.model,
+            get_is_list=True)
+
+    def _order_by(self):
+        """
+        Returns the field with respect to which queries are to be ordered.
+
+        To be implemented by the child class.
+        """
+        raise NotImplementedError()
 
     def get_serializer_class(self):
         """
@@ -146,66 +138,35 @@ class CoreListCreateDestroyView(
         """
         raise NotImplementedError()
 
-    def _define_perform_create_by_group_fn(self):
+    def _define_api_handler_by_group(self):
         """
-        Returns a dictionary mapping user group to perform_create function
+        Returns a dictionary mapping user group to rest api handler functions
         that will be called if the request user is in that user group.
-
-        To be implemented by the child class.
         """
-        raise NotImplementedError()
-
-    def _get_queryset_by_staff(self):
-        """
-        Returns the get queryset for staff users.
-        """
-        id_list = self._get_id_list()
-        if id_list:
-            return filter_queryset_by_id_list(
-                self._get_model().objects, id_list)
-        return self._get_model().objects.all()
-
-    def _perform_create_by_staff(self, serializer):
-        """
-        Implements perform_create for staff users.
-        """
-        serializer.save()
-
-    def _order_by(self):
-        """
-        Returns the field with respect to which queries are to be ordered.
-
-        To be implemented by the child class.
-        """
-        raise NotImplementedError()
+        return {
+            'get': {
+                'staff': self._get_queryset_by_staff,
+            },
+            'create': {
+                'staff': self._perform_create_by_staff,
+            }
+        }
 
     def get_queryset(self):
         """
         Implements the get_queryset function. Any final modifications to the
         query set are made here.
         """
-        return self._get_queryset().order_by(self._order_by())
+        return self._call_api_by_group(
+            self.request.user, 'get', request=self.request).order_by(
+                self._order_by())
 
     def perform_create(self, serializer):
         """
         Implements the customized perform_create functionalty.
         """
-        if self.request.user.is_staff:
-            return self._perform_create_by_staff(serializer)
-        else:
-            if self.request.user.organization:
-                return self._perform_create_by_group(serializer)
-            else:
-                raise exceptions.PermissionDenied(
-                    {"detail": "You must be part of an organization."})
-
-    def _perform_create_by_group(self, serializer):
-        """
-        Calls the perform create for individual user groups as defined by the
-        [_perform_create_by_group_fn] dictionary initialized in child class.
-        """
-        return get_fn_by_group(
-            self.request.user, self._perform_create_by_group_fn)(serializer)
+        self._call_api_by_group(
+            self.request.user, 'create', serializer=serializer)
 
     def destroy(self, request, *args, **kwargs):
         """
@@ -226,7 +187,8 @@ class CoreListCreateDestroyView(
             status=status.HTTP_200_OK)
 
 
-class CoreRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView, CoreAPIView):
+class CoreRetrieveUpdateDestroyView(
+        RetrieveUpdateDestroyAPIView, CoreAPIViewBase, BaseAPIHandler):
     """
     Defines the base retrieve-update-destroy view that will be extended by our
     applications for model specific retrieve-update-destroy views.
@@ -234,8 +196,10 @@ class CoreRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView, CoreAPIView):
 
     def __init__(self):
         super(CoreRetrieveUpdateDestroyView, self).__init__()
-        self._perform_update_by_group_fn = \
-            self._define_perform_update_by_group_fn()
+        BaseAPIHandler.__init__(
+            self,
+            model=self.queryset.model,
+            get_is_list=False)
 
     def get_serializer_class(self):
         """
@@ -259,54 +223,40 @@ class CoreRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView, CoreAPIView):
         """
         raise NotImplementedError()
 
-    def _define_perform_update_by_group_fn(self):
-        """
-        Returns a dictionary mapping user group to perform_update function
-        that will be called if the request user is in that user group.
-
-        To be implemented by the child class.
-        """
-        raise NotImplementedError()
-
-    def _get_queryset_by_staff(self):
-        """
-        Returns the get queryset for staff users.
-        """
-        return self._get_model().objects.all()
-
     def _perform_update_by_staff(self, serializer):
         """
         Implements perform_update for staff users.
         """
         serializer.save()
 
+    def _define_api_handler_by_group(self):
+        """
+        Returns a dictionary mapping user group to rest api handler functions
+        that will be called if the request user is in that user group.
+        """
+        return {
+            'get': {
+                'staff': self._get_queryset_by_staff,
+            },
+            'update': {
+                'staff': self._perform_update_by_staff,
+            }
+        }
+
     def get_queryset(self):
         """
         Implements the get_queryset function. Any final modifications to the
         query set are made here.
         """
-        return self._get_queryset()
+        return self._call_api_by_group(
+            self.request.user, 'get', request=self.request)
 
     def perform_update(self, serializer):
         """
         Implements the customized perform_update functionalty.
         """
-        if self.request.user.is_staff:
-            return self._perform_update_by_staff(serializer)
-        else:
-            if self.request.user.organization:
-                return self._perform_update_by_group(serializer)
-            else:
-                raise exceptions.PermissionDenied(
-                    {"detail": "You must be part of an organization."})
-
-    def _perform_update_by_group(self, serializer):
-        """
-        Calls the perform update for individual user groups as defined by the
-        [_perform_update_by_group_fn] dictionary initialized in child class.
-        """
-        return get_fn_by_group(
-            self.request.user, self._perform_update_by_group_fn)(serializer)
+        return self._call_api_by_group(
+            self.request.user, 'update', serializer=serializer)
 
     def destroy(self, request, *args, **kwargs):
         """
