@@ -38,6 +38,7 @@ class Camera(models.Model):
     deepstream_server = models.ForeignKey(
         'deepstream_servers.DeepstreamServer',
         on_delete=models.PROTECT,
+        null=True
     )
 
     """ Frame with which the camera measurements are taken. """
@@ -53,6 +54,9 @@ class Camera(models.Model):
         """
         return "Camera={}, {}, {}, {}".format(
             self.ip_addr,
+            self.coords,
+            self.point_coords_in_frame,
+            self.point_coords_in_image,
             str(self.deepstream_server),
             str(self.measurement_frame),
             str(self.block))
