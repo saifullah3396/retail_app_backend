@@ -47,7 +47,6 @@ class DSCreateTests(TestsBase):
                         # already exists in this block
                         'test_name': 'create_deepstream_server_by_staff_not_unique',
                         'data': {
-                            'ip_addr': 'rtsp://192.168.1.1',
                             'mac_addr': self.deepstream_servers['ds0_b1_f0_l1_o1'].mac_addr,
                             # 'connected_at': test_connected_at,
                             # 'last_echo_at': test_last_echo_at,
@@ -59,7 +58,6 @@ class DSCreateTests(TestsBase):
                     {   # create a new unique deepstream_server, okay for staff
                         'test_name': 'create_deepstream_server_by_staff',
                         'data': {
-                            'ip_addr': 'rtsp://192.168.1.1',
                             'mac_addr': test_mac_addrs[1],
                             'block': self.blocks['b1_f0_l1_o1'].id
                         },
@@ -68,7 +66,6 @@ class DSCreateTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertDictContainsSubset(
                                 {
-                                    'ip_addr': 'rtsp://192.168.1.1',
                                     'mac_addr': test_mac_addrs[1],
                                     'block': self.blocks['b1_f0_l1_o1'].id
                                 }, data)
@@ -77,7 +74,6 @@ class DSCreateTests(TestsBase):
                     {   # create deepstream_server by org-admin, okay
                         'test_name': 'create_deepstream_server_org_admin_1_in_org_1',
                         'data': {
-                            'ip_addr': 'rtsp://192.168.1.1',
                             'mac_addr': test_mac_addrs[2],
                             'block': self.blocks['b1_f0_l1_o1'].id
                         },
@@ -86,7 +82,6 @@ class DSCreateTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertDictContainsSubset(
                                 {
-                                    'ip_addr': 'rtsp://192.168.1.1',
                                     'mac_addr': test_mac_addrs[2],
                                     'block': self.blocks['b1_f0_l1_o1'].id
                                 }, data)
@@ -96,7 +91,6 @@ class DSCreateTests(TestsBase):
                         'test_name':
                             'create_deepstream_server_org_admin_1_in_sub_1_org_1',
                         'data': {
-                            'ip_addr': 'rtsp://192.168.1.1',
                             'mac_addr': test_mac_addrs[3],
                             'block': self.blocks['b1_f0_l1_sub1_o1'].id
                         },
@@ -105,7 +99,6 @@ class DSCreateTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertDictContainsSubset(
                                 {
-                                    'ip_addr': 'rtsp://192.168.1.1',
                                     'mac_addr': test_mac_addrs[3],
                                     'block': self.blocks['b1_f0_l1_sub1_o1'].id
                                 }, data)
@@ -115,7 +108,6 @@ class DSCreateTests(TestsBase):
                         # bad
                         'test_name': 'create_deepstream_server_org_admin_1_in_org_2',
                         'data': {
-                            'ip_addr': 'rtsp://192.168.1.1',
                             'mac_addr': test_mac_addrs[4],
                             'block': self.blocks['b1_f0_l1_o2'].id
                         },
@@ -125,7 +117,6 @@ class DSCreateTests(TestsBase):
                     {   # create deepstream_server by sub-org-admin in upper tree, bad
                         'test_name': 'create_deepstream_server_sub_org_admin_1_in_org_1',
                         'data': {
-                            'ip_addr': 'rtsp://192.168.1.1',
                             'mac_addr': test_mac_addrs[4],
                             'block': self.blocks['b1_f0_l1_o1'].id
                         },
@@ -136,7 +127,6 @@ class DSCreateTests(TestsBase):
                         'test_name':
                             'create_deepstream_server_sub_org_admin_1_in_sub_1_org_1',
                         'data': {
-                            'ip_addr': 'rtsp://192.168.1.1',
                             'mac_addr': test_mac_addrs[5],
                             'block': self.blocks['b1_f0_l1_sub1_o1'].id
                         },
@@ -145,7 +135,6 @@ class DSCreateTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertDictContainsSubset(
                                 {
-                                    'ip_addr': 'rtsp://192.168.1.1',
                                     'mac_addr': test_mac_addrs[5],
                                     'block': self.blocks['b1_f0_l1_sub1_o1'].id
                                 }, data)
@@ -154,7 +143,6 @@ class DSCreateTests(TestsBase):
                     {   # create deepstream_server by employee user, forbidden
                         'test_name': 'create_deepstream_server_employee_user',
                         'data': {
-                            'ip_addr': 'rtsp://192.168.1.1',
                             'mac_addr': test_mac_addrs[6],
                             'block': self.blocks['b1_f0_l1_sub1_o1'].id
                         },
@@ -164,7 +152,6 @@ class DSCreateTests(TestsBase):
                     {   # create deepstream_server by random user, forbidden
                         'test_name': 'create_deepstream_server_other_user',
                         'data': {
-                            'ip_addr': 'rtsp://192.168.1.1',
                             'mac_addr': test_mac_addrs[6],
                             'block': self.blocks['b1_f0_l1_sub1_o1'].id
                         },

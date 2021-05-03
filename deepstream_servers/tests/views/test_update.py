@@ -74,7 +74,6 @@ class DSUpdateTests(TestsBase):
                         'user': 'staff_user',
                         'data': {
                             'mac_addr': test_mac_addrs[0],
-                            'ip_addr': 'rtsp://192.168.3.4',
                             'block': self.blocks['b2_f0_l1_o1'].id
                         },
                         'status': status.HTTP_200_OK,
@@ -82,7 +81,6 @@ class DSUpdateTests(TestsBase):
                             test.assertDictContainsSubset(
                                 {
                                     'mac_addr': test_mac_addrs[0],
-                                    'ip_addr': 'rtsp://192.168.3.4',
                                     'block': self.blocks['b2_f0_l1_o1'].id
                                 }, data)
                         )
@@ -93,7 +91,6 @@ class DSUpdateTests(TestsBase):
                         'user': 'org_1_admin_user',
                         'data': {
                             'mac_addr': test_mac_addrs[1],
-                            'ip_addr': 'rtsp://192.168.3.4',
                             'block': self.blocks['b2_f0_l1_o1'].id
                         },
                         'status': status.HTTP_200_OK,
@@ -101,7 +98,6 @@ class DSUpdateTests(TestsBase):
                             test.assertDictContainsSubset(
                                 {
                                     'mac_addr': test_mac_addrs[1],
-                                    'ip_addr': 'rtsp://192.168.3.4',
                                     'block': self.blocks['b2_f0_l1_o1'].id
                                 }, data)
                         )
@@ -179,7 +175,6 @@ class DSUpdateTests(TestsBase):
                         'user': 'staff_user',
                         'data': {
                             'mac_addr': test_mac_addrs[3],
-                            'ip_addr': 'rtsp://192.168.3.4',
                             'block': self.blocks['b2_f0_l1_o1'].id
                         },
                         'status': status.HTTP_200_OK,
@@ -187,7 +182,6 @@ class DSUpdateTests(TestsBase):
                             test.assertDictContainsSubset(
                                 {
                                     'mac_addr': test_mac_addrs[3],
-                                    'ip_addr': 'rtsp://192.168.3.4',
                                     'block': self.blocks['b2_f0_l1_o1'].id
                                 }, data)
                         )
@@ -200,7 +194,6 @@ class DSUpdateTests(TestsBase):
                         'user': 'org_1_admin_user',
                         'data': {
                             'mac_addr': test_mac_addrs[4],
-                            'ip_addr': 'rtsp://192.168.3.4',
                             'block': self.blocks['b2_f0_l1_sub1_o1'].id
                         },
                         'status': status.HTTP_200_OK,
@@ -208,7 +201,6 @@ class DSUpdateTests(TestsBase):
                             test.assertDictContainsSubset(
                                 {
                                     'mac_addr': test_mac_addrs[4],
-                                    'ip_addr': 'rtsp://192.168.3.4',
                                     'block': self.blocks['b2_f0_l1_sub1_o1'].id
                                 }, data)
                         )
@@ -221,7 +213,6 @@ class DSUpdateTests(TestsBase):
                         'user': 'sub_org_11_admin_user',
                         'data': {
                             'mac_addr': test_mac_addrs[5],
-                            'ip_addr': 'rtsp://192.168.3.4',
                             'block': self.blocks['b1_f0_l1_sub1_o1'].id
                         },
                         'status': status.HTTP_200_OK,
@@ -229,7 +220,6 @@ class DSUpdateTests(TestsBase):
                             test.assertDictContainsSubset(
                                 {
                                     'mac_addr': test_mac_addrs[5],
-                                    'ip_addr': 'rtsp://192.168.3.4',
                                     'block': self.blocks['b1_f0_l1_sub1_o1'].id
                                 }, data)
                         )
@@ -241,7 +231,6 @@ class DSUpdateTests(TestsBase):
                         'user': 'sub_org_11_admin_user',
                         'data': {
                             'mac_addr': test_mac_addrs[5],
-                            'ip_addr': 'rtsp://192.168.3.4',
                             'block': self.blocks['b1_f0_l1_o1'].id
                         },
                         'status': status.HTTP_400_BAD_REQUEST
@@ -253,7 +242,6 @@ class DSUpdateTests(TestsBase):
                         'args': {'pk': self.deepstream_servers['ds0_b1_f0_l1_sub1_o1'].id},
                         'data': {
                             'mac_addr': test_mac_addrs[6],
-                            'ip_addr': 'rtsp://192.168.3.4',
                             'block': self.blocks['b2_f0_l1_o1'].id
                         },
                         'user': 'org_2_admin_user',
@@ -266,7 +254,6 @@ class DSUpdateTests(TestsBase):
                         'args': {'pk': self.deepstream_servers['ds0_b1_f0_l1_sub1_o1'].id},
                         'data': {
                             'mac_addr': test_mac_addrs[7],
-                            'ip_addr': 'rtsp://192.168.3.4',
                             'block': self.blocks['b2_f0_l1_o1'].id
                         },
                         'user': 'sub_org_12_admin_user',
@@ -278,7 +265,6 @@ class DSUpdateTests(TestsBase):
                         'user': 'employee_user',
                         'data': {
                             'mac_addr': test_mac_addrs[8],
-                            'ip_addr': 'rtsp://192.168.3.4',
                             'block': self.blocks['b2_f0_l1_o1'].id
                         },
                         'status': status.HTTP_403_FORBIDDEN,
