@@ -575,6 +575,57 @@ class TestsBase(APITransactionTestCase, URLPatternsTestCase):
         self.deepstream_servers = \
             self.create_servers_from_data(self.ds_dict, self.blocks)
 
+    def generate_test_cameras(self):
+        """
+        Generates cameras data in test database for testing
+        purposes.
+        """
+        def generate_cameras_for_block(names, block_name, data):
+            item_dict = {}
+            for name in names:
+                item_dict['{}_{}'.format(name, block_name)] = {
+                    'block': block_name,
+                    **data,
+                }
+            return item_dict
+
+        server_data = {
+            'ip_addr': 'rtsp://192.168.1.1',
+            'coords': coords,
+            'last_echo_at': timezone.now()
+        }
+        self.ds_b1_f0_l1_o1_dict =\
+            generate_servers_for_block(
+                ['ds0', 'ds1', 'ds2_del', 'ds3_del', 'ds4_del', 'ds5_del'],
+                'b1_f0_l1_o1',
+                server_data)
+        self.ds_b1_f0_l1_o2_dict =\
+            generate_servers_for_block(
+                ['ds0', 'ds1', 'ds2_del', 'ds3_del', 'ds4_del', 'ds5_del'],
+                'b1_f0_l1_o2',
+                server_data)
+        self.ds_b1_f0_l1_sub1_o1_dict =\
+            generate_servers_for_block(
+                ['ds0', 'ds1', 'ds2_del', 'ds3_del', 'ds4_del', 'ds5_del'],
+                'b1_f0_l1_sub1_o1',
+                server_data)
+        self.ds_b1_f0_l1_sub1_o2_dict =\
+            generate_servers_for_block(
+                ['ds0', 'ds1', 'ds2_del', 'ds3_del'],
+                'b1_f0_l1_sub1_o2',
+                server_data)
+
+        self.ds_dict = {
+            **self.ds_b1_f0_l1_o1_dict,
+            **self.ds_b1_f0_l1_o2_dict,
+            **self.ds_b1_f0_l1_sub1_o1_dict,
+            **self.ds_b1_f0_l1_sub1_o2_dict,
+        }
+
+        # generate blocks in database
+        self.deepstream_servers = \
+            self.create_servers_from_data(self.ds_dict, self.blocks)
+
     def setUp(self):
         """
         Sets up the test database with example values for different models
