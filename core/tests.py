@@ -17,6 +17,7 @@ from rest_framework.test import APITransactionTestCase, URLPatternsTestCase
 from rest_framework_jwt.settings import api_settings
 
 from backend.settings import MEDIA_ROOT
+from cameras.models import Camera
 from deepstream_servers.models import DeepstreamServer
 from locations.models import Block, Floor, Location
 from measurement_frames.models import MeasurementFrame
@@ -168,7 +169,7 @@ class TestsBase(APITransactionTestCase, URLPatternsTestCase):
             item_dict[item_name].save()
         return item_dict
 
-    def create_servers_from_data(self, data, blocks):
+    def create_servers_from_data(self, data, orgs):
         """
         Creates new deepstream servers with given data
 
@@ -177,7 +178,7 @@ class TestsBase(APITransactionTestCase, URLPatternsTestCase):
                 ...
                 'd1': { 'block': 'b0_f2_l1', **data },
             }
-        :parma blocks: List of already created blocks
+        :parma orgs: List of already created organizations
         """
         item_dict = {}
         for (item_name, data) in data.items():
@@ -186,6 +187,28 @@ class TestsBase(APITransactionTestCase, URLPatternsTestCase):
                 mac_addr=data['mac_addr'],
                 connected_at=data['connected_at'],
                 last_echo_at=data['last_echo_at'],
+                organization=orgs.get(data['organization']))
+            item_dict[item_name].save()
+        return item_dict
+
+    def create_cameras_from_data(self, data, blocks):
+        """
+        Creates new cameras with given data
+
+        :param data: Data of type {
+                'c0': { 'block': 'b0_f1_l1', **data },
+                ...
+                'c1': { 'block': 'b0_f2_l1', **data },
+            }
+        :parma blocks: List of already created blocks
+        """
+        item_dict = {}
+        for (item_name, data) in data.items():
+            item_dict[item_name] = Camera(
+                ip_addr=data['ip_addr'],
+                coords=data['coords'],
+                point_coords_in_frame=data['point_coords_in_frame'],
+                point_coords_in_image=data['point_coords_in_image'],
                 block=blocks.get(data['block']))
             item_dict[item_name].save()
         return item_dict
@@ -264,7 +287,8 @@ class TestsBase(APITransactionTestCase, URLPatternsTestCase):
         """
         return SimpleUploadedFile(
             "test_image.png",
-            content=open("{}/maps/wing_l.png".format(MEDIA_ROOT), 'rb').read(),
+            content=open(
+                "{}/maps/wing_l.png".format(MEDIA_ROOT), 'rb').read(),
             content_type='image/png')
 
     def generate_test_organizations(self):
@@ -528,11 +552,11 @@ class TestsBase(APITransactionTestCase, URLPatternsTestCase):
         Generates deepstream servers data in test database for testing
         purposes.
         """
-        def generate_servers_for_block(names, block_name, data):
+        def generate_servers_for_block(names, organization_name, data):
             item_dict = {}
             for name in names:
-                item_dict['{}_{}'.format(name, block_name)] = {
-                    'block': block_name,
+                item_dict['{}_{}'.format(name, organization_name)] = {
+                    'organization': organization_name,
                     'mac_addr': self.generate_random_mac_addr(),
                     **data,
                 }
@@ -543,37 +567,37 @@ class TestsBase(APITransactionTestCase, URLPatternsTestCase):
             'connected_at': timezone.now(),
             'last_echo_at': timezone.now()
         }
-        self.ds_b1_f0_l1_o1_dict =\
+        self.ds_o1_dict =\
             generate_servers_for_block(
                 ['ds0', 'ds1', 'ds2_del', 'ds3_del', 'ds4_del', 'ds5_del'],
-                'b1_f0_l1_o1',
+                'o1',
                 server_data)
-        self.ds_b1_f0_l1_o2_dict =\
+        self.ds_o2_dict =\
             generate_servers_for_block(
                 ['ds0', 'ds1', 'ds2_del', 'ds3_del', 'ds4_del', 'ds5_del'],
-                'b1_f0_l1_o2',
+                'o2',
                 server_data)
-        self.ds_b1_f0_l1_sub1_o1_dict =\
+        self.ds_sub1_o1_dict =\
             generate_servers_for_block(
                 ['ds0', 'ds1', 'ds2_del', 'ds3_del', 'ds4_del', 'ds5_del'],
-                'b1_f0_l1_sub1_o1',
+                'sub1_o1',
                 server_data)
-        self.ds_b1_f0_l1_sub1_o2_dict =\
+        self.ds_sub1_o2_dict =\
             generate_servers_for_block(
                 ['ds0', 'ds1', 'ds2_del', 'ds3_del'],
-                'b1_f0_l1_sub1_o2',
+                'sub1_o2',
                 server_data)
 
         self.ds_dict = {
-            **self.ds_b1_f0_l1_o1_dict,
-            **self.ds_b1_f0_l1_o2_dict,
-            **self.ds_b1_f0_l1_sub1_o1_dict,
-            **self.ds_b1_f0_l1_sub1_o2_dict,
+            **self.ds_o1_dict,
+            **self.ds_o2_dict,
+            **self.ds_sub1_o1_dict,
+            **self.ds_sub1_o2_dict,
         }
 
         # generate blocks in database
         self.deepstream_servers = \
-            self.create_servers_from_data(self.ds_dict, self.blocks)
+            self.create_servers_from_data(self.ds_dict, self.orgs)
 
     def generate_test_cameras(self):
         """
@@ -589,42 +613,45 @@ class TestsBase(APITransactionTestCase, URLPatternsTestCase):
                 }
             return item_dict
 
-        server_data = {
+        camera_data = {
             'ip_addr': 'rtsp://192.168.1.1',
-            'coords': coords,
-            'last_echo_at': timezone.now()
+            'coords': [0, 0],
+            'point_coords_in_frame': [0, 1, 2, 3, 4, 5, 6, 7],
+            'point_coords_in_image': [0, 1, 2, 3, 4, 5, 6, 7],
         }
-        self.ds_b1_f0_l1_o1_dict =\
-            generate_servers_for_block(
-                ['ds0', 'ds1', 'ds2_del', 'ds3_del', 'ds4_del', 'ds5_del'],
-                'b1_f0_l1_o1',
-                server_data)
-        self.ds_b1_f0_l1_o2_dict =\
-            generate_servers_for_block(
-                ['ds0', 'ds1', 'ds2_del', 'ds3_del', 'ds4_del', 'ds5_del'],
-                'b1_f0_l1_o2',
-                server_data)
-        self.ds_b1_f0_l1_sub1_o1_dict =\
-            generate_servers_for_block(
-                ['ds0', 'ds1', 'ds2_del', 'ds3_del', 'ds4_del', 'ds5_del'],
-                'b1_f0_l1_sub1_o1',
-                server_data)
-        self.ds_b1_f0_l1_sub1_o2_dict =\
-            generate_servers_for_block(
-                ['ds0', 'ds1', 'ds2_del', 'ds3_del'],
-                'b1_f0_l1_sub1_o2',
-                server_data)
 
-        self.ds_dict = {
-            **self.ds_b1_f0_l1_o1_dict,
-            **self.ds_b1_f0_l1_o2_dict,
-            **self.ds_b1_f0_l1_sub1_o1_dict,
-            **self.ds_b1_f0_l1_sub1_o2_dict,
+        self.c_b1_f0_l1_o1_dict =\
+            generate_cameras_for_block(
+                ['c0', 'c1', 'c2_del', 'c3_del', 'c4_del', 'c5_del'],
+                'b1_f0_l1_o1',
+                camera_data)
+        self.c_b1_f0_l1_o2_dict =\
+            generate_cameras_for_block(
+                ['c0', 'c1', 'c2_del', 'c3_del', 'c4_del', 'c5_del'],
+                'b1_f0_l1_o2',
+                camera_data)
+        self.c_b1_f0_l1_sub1_o1_dict =\
+            generate_cameras_for_block(
+                ['c0', 'c1', 'c2_del', 'c3_del', 'c4_del', 'c5_del'],
+                'b1_f0_l1_sub1_o1',
+                camera_data)
+        self.c_b1_f0_l1_sub1_o2_dict =\
+            generate_cameras_for_block(
+                ['c0', 'c1', 'c2_del', 'c3_del'],
+                'b1_f0_l1_sub1_o2',
+                camera_data)
+
+        self.c_dict = {
+            **self.c_b1_f0_l1_o1_dict,
+            **self.c_b1_f0_l1_o2_dict,
+            **self.c_b1_f0_l1_sub1_o1_dict,
+            **self.c_b1_f0_l1_sub1_o2_dict,
         }
 
         # generate blocks in database
-        self.deepstream_servers = \
-            self.create_servers_from_data(self.ds_dict, self.blocks)
+        self.cameras = \
+            self.create_cameras_from_data(self.c_dict, self.blocks)
+        print(self.cameras)
 
     def setUp(self):
         """
@@ -656,6 +683,9 @@ class TestsBase(APITransactionTestCase, URLPatternsTestCase):
 
         # generate deepstream servers data in database
         self.generate_test_deepstream_servers()
+
+        # generate test cameras data in database
+        self.generate_test_cameras()
 
         # make a list of users with respective properties
         self.users_dict = {

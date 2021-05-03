@@ -6,10 +6,9 @@ from django.contrib.auth.models import Group
 from rest_framework import exceptions, serializers
 
 from core.permissions import UserGroups
+from deepstream_servers.models import DeepstreamServer
 from locations.models import Location
 from organizations.models import Organization
-
-MAC_ADDRESS_VALIDATOR_REGEX = '([0-9a-fA-F]{2}[:]){5}([0-9a-fA-F]{2})'
 
 
 class WritableSerializerMethodField(serializers.SerializerMethodField):
@@ -175,6 +174,14 @@ def get_organization_admin_authorized_locations(user, include_self=True):
     organizations_tree = user.organization.get_descendants(
         include_self=include_self)
     return Location.objects.filter(organization__in=organizations_tree)
+
+
+def get_organization_servers(organization):
+    """
+    Returns the locations authorized to organization admin user
+    """
+    organizations_tree = organization.get_descendants(include_self=True)
+    return DeepstreamServer.objects.filter(organization__in=organizations_tree)
 
 
 def get_employee_authorized_locations(user):
