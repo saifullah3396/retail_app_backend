@@ -69,7 +69,7 @@ def is_in_group(user, group_name):
         return None
 
 
-def get_fn_by_group(user, group_to_fn_map):
+def get_fn_by_user_group(user, group_to_fn_map):
     """
     Returns the function to be called for the user group the user is in
     given the user group to function map.

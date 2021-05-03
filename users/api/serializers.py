@@ -9,7 +9,8 @@ from core.permissions import UserGroups
 from core.utils import (field_invalid_error, field_not_found_error,
                         field_with_id_not_found_error,
                         get_employee_authorized_locations,
-                        get_employee_authorized_organizations, get_fn_by_group,
+                        get_employee_authorized_organizations,
+                        get_fn_by_user_group,
                         get_organization_admin_authorized_locations,
                         get_organization_admin_authorized_organizations,
                         get_staff_authorized_locations,
@@ -118,7 +119,8 @@ class AppUserDetailRetrieveSerializer(serializers.ModelSerializer):
             locations = get_staff_authorized_locations()
         else:
             locations = \
-                get_fn_by_group(instance, self.group_to_locations_fn)(instance)
+                get_fn_by_user_group(
+                    instance, self.group_to_locations_fn)(instance)
         return AppUserDetailLocationSerializer(locations, many=True).data
 
     def get_organization(self, instance):
@@ -131,7 +133,7 @@ class AppUserDetailRetrieveSerializer(serializers.ModelSerializer):
             organizations = get_staff_authorized_organizations()
         else:
             organizations = \
-                get_fn_by_group(
+                get_fn_by_user_group(
                     instance, self.group_to_organizations_fn)(instance)
         return AppUserDetailOrganizationSerializer(
             organizations, many=True).data
