@@ -11,6 +11,7 @@ from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
 from deepstream_servers.api.serializers import (
     DeepstreamServerCreateSerializer, DeepstreamServerDetailSerializer,
     DeepstreamServerListSerializer, DeepstreamServerUpdateSerializer)
+from deepstream_servers.api.utils import filter_servers_with_locations
 from deepstream_servers.models import DeepstreamServer
 from deepstream_servers.permissions import (
     DeepstreamServersListCreateDestroyPermission,
@@ -18,67 +19,22 @@ from deepstream_servers.permissions import (
 from locations.models import Block
 
 
-class DeepstreamServerView:
+class DeepstreamServersListCreateDestroyView(CoreListCreateDestroyView):
     """
-    Defines the base class for the deepstream servers rest api views.
+    Defines the organizations retrieve-update-destroy view.
     """
-    # pylint: disable=no-member
-
+    queryset = DeepstreamServer.objects.none()
+    permission_classes = (DeepstreamServersListCreateDestroyPermission,)
     ordering_fields = ['id', 'ip_addr', 'block']
     filterset_fields = {
         'block__name': ['icontains'],
     }
-
-    def _get_model(self):
-        """
-        Returns the view model.
-        """
-        return DeepstreamServer
 
     def _order_by(self):
         """
         Returns the field with respect to which queries are to be ordered.
         """
         return 'id'
-
-    def _filter_servers_with_locations(self, locations):
-        """
-        Returns all the servers in the given locations set
-        """
-
-        # get all servers in requested location
-        servers_in_locations = \
-            self._get_model().objects.filter(
-                block__floor__location__in=locations)
-
-        # filter with ids if present
-        id_list = self._get_id_list()
-        if id_list:
-            return self._filter_objects_by_id_list(
-                servers_in_locations, id_list)
-
-        return servers_in_locations
-
-
-class DeepstreamServersListCreateDestroyView(CoreListCreateDestroyView,
-                                             DeepstreamServerView):
-    """
-    Defines the organizations retrieve-update-destroy view.
-    """
-    queryset = DeepstreamServer.objects.none()
-    permission_classes = (DeepstreamServersListCreateDestroyPermission,)
-
-    def _get_model(self):
-        """
-        Returns the view model.
-        """
-        return DeepstreamServerView._get_model(self)
-
-    def _order_by(self):
-        """
-        Returns the field with respect to which queries are to be ordered.
-        """
-        return DeepstreamServerView._order_by(self)
 
     def _get_list_serializer_class(self):
         """
@@ -92,42 +48,40 @@ class DeepstreamServersListCreateDestroyView(CoreListCreateDestroyView,
         """
         return DeepstreamServerCreateSerializer
 
-    def _define_get_queryset_by_group_fn(self):
+    def _define_api_handler_by_group(self):
         """
-        Returns a dictionary mapping user group to get_queryset function
+        Returns a dictionary mapping user group to rest api handler functions
         that will be called if the request user is in that user group.
         """
+        api_handler_by_group = super()._define_api_handler_by_group()
         return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._get_organizations_admin_queryset,
-            UserGroups.EMPLOYEE_GROUP:
-                self._get_employee_queryset,
+            'get': {
+                **api_handler_by_group['get'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._get_organization_admin_queryset,
+                UserGroups.EMPLOYEE_GROUP:
+                    self._get_employee_queryset,
+            },
+            'create': {
+                **api_handler_by_group['create'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._perform_create_by_organization_admin
+            }
         }
 
-    def _define_perform_create_by_group_fn(self):
-        """
-        Returns a dictionary mapping user group to perform_create function
-        that will be called if the request user is in that user group.
-        """
-        return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-            self._perform_create_by_organization_admin
-        }
-
-    def _get_organizations_admin_queryset(self):
+    def _get_organization_admin_queryset(self, request):
         """
         Returns all servers within user authorized locations.
         """
-        locations = get_organization_admin_authorized_locations(
-            self.request.user)
-        return self._filter_servers_with_locations(locations)
+        locations = get_organization_admin_authorized_locations(request.user)
+        return filter_servers_with_locations(request, locations)
 
-    def _get_employee_queryset(self):
+    def _get_employee_queryset(self, request):
         """
         Returns all servers within user authorized locations.
         """
-        locations = get_employee_authorized_locations(self.request.user)
-        return self._filter_servers_with_locations(locations)
+        locations = get_employee_authorized_locations(request.user)
+        return filter_servers_with_locations(request, locations)
 
     def _perform_create_by_organization_admin(self, serializer):
         """
@@ -157,20 +111,12 @@ class DeepstreamServersListCreateDestroyView(CoreListCreateDestroyView,
         serializer.save()
 
 
-class DeepstreamServersRetrieveUpdateDestroyView(
-        CoreRetrieveUpdateDestroyView, DeepstreamServerView):
+class DeepstreamServersRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
     """
     Defines the deepstream servers retrieve-update-destroy view.
     """
     queryset = DeepstreamServer.objects.none()
     permission_classes = (DeepstreamServersRetrieveUpdateDestroyPermission,)
-
-    def _get_model(self):
-        """
-        Returns the model for this view
-        """
-
-        return DeepstreamServerView._get_model(self)
 
     def _get_detail_serializer_class(self):
         """
@@ -184,45 +130,42 @@ class DeepstreamServersRetrieveUpdateDestroyView(
         """
         return DeepstreamServerUpdateSerializer
 
-    def _define_get_queryset_by_group_fn(self):
+    def _define_api_handler_by_group(self):
         """
-        Returns a dictionary mapping user group to get_queryset function
+        Returns a dictionary mapping user group to rest api handler functions
         that will be called if the request user is in that user group.
         """
-
+        api_handler_by_group = super()._define_api_handler_by_group()
         return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._get_organization_admin_queryset,
-            UserGroups.EMPLOYEE_GROUP:
-                self._get_employee_queryset,
+            'get': {
+                **api_handler_by_group['get'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._get_organization_admin_queryset,
+                UserGroups.EMPLOYEE_GROUP:
+                    self._get_employee_queryset,
+            },
+            'update': {
+                **api_handler_by_group['update'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._perform_update_by_organization_admin
+            }
         }
 
-    def _define_perform_update_by_group_fn(self):
-        """
-        Returns a dictionary mapping user group to perform_update function
-        that will be called if the request user is in that user group.
-        """
-        return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._perform_update_by_organization_admin
-        }
-
-    def _get_organization_admin_queryset(self):
+    def _get_organization_admin_queryset(self, request):
         """
         Returns all servers are returned within the users
         authorized locations.
         """
-        locations = get_organization_admin_authorized_locations(
-            self.request.user)
-        return self._filter_servers_with_locations(locations)
+        locations = get_organization_admin_authorized_locations(request.user)
+        return filter_servers_with_locations(request, locations)
 
-    def _get_employee_queryset(self):
+    def _get_employee_queryset(self, request):
         """
         Returns all servers are returned within the users
         authorized locations.
         """
-        locations = get_employee_authorized_locations(self.request.user)
-        return self._filter_servers_with_locations(locations)
+        locations = get_employee_authorized_locations(request.user)
+        return filter_servers_with_locations(request, locations)
 
     def _perform_update_by_organization_admin(self, serializer):
         """

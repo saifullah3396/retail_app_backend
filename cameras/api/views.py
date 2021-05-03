@@ -9,6 +9,7 @@ from cameras.api.serializers import (CameraCreateSerializer,
                                      CameraDetailSerializer,
                                      CameraListSerializer,
                                      CameraUpdateSerializer)
+from cameras.api.utils import filter_cameras_with_locations
 from cameras.models import Camera
 from cameras.permissions import (CamerasListCreateDestroyPermission,
                                  CamerasRetrieveUpdateDestroyPermission)
@@ -20,71 +21,24 @@ from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
 from locations.models import Block
 
 
-class CamerasView:
-    """
-    Defines the base interface class for the cameras rest api views.
-    """
-    # pylint: disable=no-member
-
-    ordering_fields = ['ip_addr']
-    filterset_fields = {
-        'ip_addr': ['exact', 'icontains'],
-        'block__id': ['exact'],
-    }
-
-    def _get_model(self):
-        """
-        Returns the view model.
-        """
-
-        return Camera
-
-    def _order_by(self):
-        """
-        Returns the field with respect to which queries are to be ordered.
-        """
-        return 'ip_addr'
-
-    def _filter_cameras_with_locations(self, locations):
-        """
-        Returns all the cameras in the given locations set
-        """
-
-        # get all cameras in requested locations
-        cameras_in_locations = \
-            self._get_model().objects.filter(
-                block__floor__location__in=locations)
-
-        # filter with ids if present
-        id_list = self._get_id_list()
-        if id_list:
-            return self._filter_objects_by_id_list(
-                cameras_in_locations, id_list)
-
-        return cameras_in_locations
-
-
-class CamerasListCreateDestroyView(
-        CoreListCreateDestroyView, CamerasView):
+class CamerasListCreateDestroyView(CoreListCreateDestroyView):
     """
     Defines the list-create-destroy view for Cameras.
     """
 
     queryset = Camera.objects.none()
     permission_classes = (CamerasListCreateDestroyPermission,)
-
-    def _get_model(self):
-        """
-        Returns the view model.
-        """
-
-        return CamerasView._get_model(self)
+    ordering_fields = ['id', 'ip_addr', 'block']
+    filterset_fields = {
+        'ip_addr': ['exact', 'icontains'],
+        'block__id': ['exact'],
+    }
 
     def _order_by(self):
         """
         Returns the field with respect to which queries are to be ordered.
         """
-        return CamerasView._order_by(self)
+        return 'ip_addr'
 
     def _get_list_serializer_class(self):
         """
@@ -98,44 +52,42 @@ class CamerasListCreateDestroyView(
         """
         return CameraCreateSerializer
 
-    def _define_get_queryset_by_group_fn(self):
+    def _define_api_handler_by_group(self):
         """
-        Returns a dictionary mapping user group to get_queryset function
+        Returns a dictionary mapping user group to rest api handler functions
         that will be called if the request user is in that user group.
         """
+        api_handler_by_group = super()._define_api_handler_by_group()
         return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._get_organization_admin_queryset,
-            UserGroups.EMPLOYEE_GROUP:
-                self._get_employee_queryset,
+            'get': {
+                **api_handler_by_group['get'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._get_organization_admin_queryset,
+                UserGroups.EMPLOYEE_GROUP:
+                    self._get_employee_queryset,
+            },
+            'create': {
+                **api_handler_by_group['create'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._perform_create_by_organization_admin
+            }
         }
 
-    def _define_perform_create_by_group_fn(self):
-        """
-        Returns a dictionary mapping user group to perform_create function
-        that will be called if the request user is in that user group.
-        """
-        return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._perform_create_by_organization_admin
-        }
-
-    def _get_organization_admin_queryset(self):
+    def _get_organization_admin_queryset(self, request):
         """
         Return all cameras in authorized locations.
         """
 
-        locations = get_organization_admin_authorized_locations(
-            self.request.user)
-        return self._filter_cameras_with_locations(locations)
+        locations = get_organization_admin_authorized_locations(request.user)
+        return filter_cameras_with_locations(request, locations)
 
     def _get_employee_queryset(self):
         """
         Return all cameras in authorized locations.
         """
 
-        locations = get_employee_authorized_locations(self.request.user)
-        return self._filter_cameras_with_locations(locations)
+        locations = get_employee_authorized_locations(request.user)
+        return filter_cameras_with_locations(request, locations)
 
     def _perform_create_by_organization_admin(self, serializer):
         """
@@ -165,21 +117,13 @@ class CamerasListCreateDestroyView(
         serializer.save()
 
 
-class CamerasRetrieveUpdateDestroyView(
-        CoreRetrieveUpdateDestroyView, CamerasView):
+class CamerasRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
     """
     Defines the retrieve-update-destroy view for cameras.
     """
 
     queryset = Camera.objects.none()  # Added for model permissions
     permission_classes = (CamerasRetrieveUpdateDestroyPermission,)
-
-    def _get_model(self):
-        """
-        Returns the view model.
-        """
-
-        return CamerasView._get_model(self)
 
     def _get_detail_serializer_class(self):
         """
@@ -193,44 +137,43 @@ class CamerasRetrieveUpdateDestroyView(
         """
         return CameraUpdateSerializer
 
-    def _define_get_queryset_by_group_fn(self):
+    def _define_api_handler_by_group(self):
         """
-        Returns a dictionary mapping user group to get_queryset function
+        Returns a dictionary mapping user group to rest api handler functions
         that will be called if the request user is in that user group.
         """
+        api_handler_by_group = super()._define_api_handler_by_group()
         return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._get_organization_admin_queryset,
-            UserGroups.EMPLOYEE_GROUP:
-                self._get_employee_queryset,
+            'get': {
+                **api_handler_by_group['get'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._get_organization_admin_queryset,
+                UserGroups.EMPLOYEE_GROUP:
+                    self._get_employee_queryset,
+            },
+            'update': {
+                **api_handler_by_group['update'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._perform_update_by_organization_admin
+            }
         }
 
-    def _define_perform_update_by_group_fn(self):
-        """
-        Returns a dictionary mapping user group to perform_update function
-        that will be called if the request user is in that user group.
-        """
-        return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._perform_update_by_organization_admin
-        }
-
-    def _get_organization_admin_queryset(self):
+    def _get_organization_admin_queryset(self, request):
         """
         Return all cameras within authorized locations.
         """
 
         locations = get_organization_admin_authorized_locations(
             self.request.user)
-        return self._filter_cameras_with_locations(locations)
+        return filter_cameras_with_locations(request, locations)
 
-    def _get_employee_queryset(self):
+    def _get_employee_queryset(self, request):
         """
         Return all cameras within authorized locations.
         """
 
-        locations = get_employee_authorized_locations(self.request.user)
-        return self._filter_cameras_with_locations(locations)
+        locations = get_employee_authorized_locations(request.user)
+        return filter_cameras_with_locations(request, locations)
 
     def _perform_update_by_organization_admin(self, serializer):
         """

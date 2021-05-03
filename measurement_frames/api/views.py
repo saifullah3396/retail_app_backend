@@ -14,76 +14,30 @@ from locations.models import Block
 from measurement_frames.api.serializers import (
     MeasurementFrameCreateSerializer, MeasurementFrameDetailSerializer,
     MeasurementFrameListSerializer, MeasurementFrameUpdateSerializer)
+from measurement_frames.api.utils import filter_frames_with_locations
 from measurement_frames.models import MeasurementFrame
 from measurement_frames.permissions import (
     MeasurementFramesListCreateDestroyPermission,
     MeasurementFramesRetrieveUpdateDestroyPermission)
 
 
-class MeasurementFramesView:
-    """
-    Defines the base interface class for the cameras rest api views.
-    """
-    # pylint: disable=no-member
-
-    ordering_fields = ['name']
-    filterset_fields = {
-        'name': ['exact', 'icontains'],
-    }
-
-    def _get_model(self):
-        """
-        Returns the view model.
-        """
-
-        return MeasurementFrame
-
-    def _order_by(self):
-        """
-        Returns the field with respect to which queries are to be ordered.
-        """
-        return 'name'
-
-    def _filter_frames_with_locations(self, locations):
-        """
-        Returns all the frames in the given locations set
-        """
-
-        # get all frames in requested locations
-        frames_in_locations = \
-            self._get_model().objects.filter(
-                block__floor__location__in=locations)
-
-        # filter with ids if present
-        id_list = self._get_id_list()
-        if id_list:
-            return self._filter_objects_by_id_list(
-                frames_in_locations, id_list)
-
-        return frames_in_locations
-
-
-class MeasurementFramesListCreateDestroyView(
-        CoreListCreateDestroyView, MeasurementFramesView):
+class MeasurementFramesListCreateDestroyView(CoreListCreateDestroyView):
     """
     Defines the list-create-destroy view for MeasurementFrames.
     """
 
     queryset = MeasurementFrame.objects.none()
     permission_classes = (MeasurementFramesListCreateDestroyPermission,)
-
-    def _get_model(self):
-        """
-        Returns the view model.
-        """
-
-        return MeasurementFramesView._get_model(self)
+    ordering_fields = ['name']
+    filterset_fields = {
+        'name': ['exact', 'icontains'],
+    }
 
     def _order_by(self):
         """
         Returns the field with respect to which queries are to be ordered.
         """
-        return MeasurementFramesView._order_by(self)
+        return 'name'
 
     def _get_list_serializer_class(self):
         """
@@ -97,44 +51,42 @@ class MeasurementFramesListCreateDestroyView(
         """
         return MeasurementFrameCreateSerializer
 
-    def _define_get_queryset_by_group_fn(self):
+    def _define_api_handler_by_group(self):
         """
-        Returns a dictionary mapping user group to get_queryset function
+        Returns a dictionary mapping user group to rest api handler functions
         that will be called if the request user is in that user group.
         """
+        api_handler_by_group = super()._define_api_handler_by_group()
         return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._get_organization_admin_queryset,
-            UserGroups.EMPLOYEE_GROUP:
-                self._get_employee_queryset,
+            'get': {
+                **api_handler_by_group['get'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._get_organization_admin_queryset,
+                UserGroups.EMPLOYEE_GROUP:
+                    self._get_employee_queryset,
+            },
+            'create': {
+                **api_handler_by_group['create'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._perform_create_by_organization_admin
+            }
         }
 
-    def _define_perform_create_by_group_fn(self):
-        """
-        Returns a dictionary mapping user group to perform_create function
-        that will be called if the request user is in that user group.
-        """
-        return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._perform_create_by_organization_admin
-        }
-
-    def _get_organization_admin_queryset(self):
+    def _get_organization_admin_queryset(self, request):
         """
         Returns all frames within user authorized locations.
         """
 
-        locations = get_organization_admin_authorized_locations(
-            self.request.user)
-        return self._filter_frames_with_locations(locations)
+        locations = get_organization_admin_authorized_locations(request.user)
+        return filter_frames_with_locations(request, locations)
 
-    def _get_employee_queryset(self):
+    def _get_employee_queryset(self, request):
         """
         Returns all frames within user authorized locations.
         """
 
-        locations = get_employee_authorized_locations(self.request.user)
-        return self._filter_frames_with_locations(locations)
+        locations = get_employee_authorized_locations(request.user)
+        return filter_frames_with_locations(request, locations)
 
     def _perform_create_by_organization_admin(self, serializer):
         """
@@ -165,21 +117,13 @@ class MeasurementFramesListCreateDestroyView(
         serializer.save()
 
 
-class MeasurementFramesRetrieveUpdateDestroyView(
-        CoreRetrieveUpdateDestroyView, MeasurementFramesView):
+class MeasurementFramesRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
     """
     Defines the retrieve-update-destroy view for blocks.
     """
 
     queryset = MeasurementFrame.objects.none()  # Added for model permissions
     permission_classes = (MeasurementFramesRetrieveUpdateDestroyPermission,)
-
-    def _get_model(self):
-        """
-        Returns the view model.
-        """
-
-        return MeasurementFramesView._get_model(self)
 
     def _get_detail_serializer_class(self):
         """
@@ -193,46 +137,44 @@ class MeasurementFramesRetrieveUpdateDestroyView(
         """
         return MeasurementFrameUpdateSerializer
 
-    def _define_get_queryset_by_group_fn(self):
+    def _define_api_handler_by_group(self):
         """
-        Returns a dictionary mapping user group to get_queryset function
+        Returns a dictionary mapping user group to rest api handler functions
         that will be called if the request user is in that user group.
         """
+        api_handler_by_group = super()._define_api_handler_by_group()
         return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._get_organization_admin_queryset,
-            UserGroups.EMPLOYEE_GROUP:
-                self._get_employee_queryset,
+            'get': {
+                **api_handler_by_group['get'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._get_organization_admin_queryset,
+                UserGroups.EMPLOYEE_GROUP:
+                    self._get_employee_queryset,
+            },
+            'update': {
+                **api_handler_by_group['update'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._perform_update_by_organization_admin
+            }
         }
 
-    def _define_perform_update_by_group_fn(self):
-        """
-        Returns a dictionary mapping user group to perform_update function
-        that will be called if the request user is in that user group.
-        """
-        return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._perform_update_by_organization_admin
-        }
-
-    def _get_organization_admin_queryset(self):
+    def _get_organization_admin_queryset(self, request):
         """
         Returns all frames are returned within the users
         authorized locations.
         """
 
-        locations = get_organization_admin_authorized_locations(
-            self.request.user)
-        return self._filter_frames_with_locations(locations)
+        locations = get_organization_admin_authorized_locations(request.user)
+        return filter_frames_with_locations(request, locations)
 
-    def _get_employee_queryset(self):
+    def _get_employee_queryset(self, request):
         """
         Returns all frames are returned within the users
         authorized locations.
         """
 
-        locations = get_employee_authorized_locations(self.request.user)
-        return self._filter_frames_with_locations(locations)
+        locations = get_employee_authorized_locations(request.user)
+        return filter_frames_with_locations(request, locations)
 
     def _perform_update_by_organization_admin(self, serializer):
         """
