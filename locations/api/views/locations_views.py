@@ -13,69 +13,30 @@ from locations.api.serializers import (LocationCreateSerializer,
                                        LocationDetailSerializer,
                                        LocationListSerializer,
                                        LocationUpdateSerializer)
+from locations.api.utils import filter_locations
 from locations.models import Location
 from locations.permissions import (LocationsListCreateDestroyPermission,
                                    LocationsRetrieveUpdateDestroyPermission)
 
 
-class LocationsView:
-    """
-    Defines the base interface class for the locations rest api views.
-    """
-    # pylint: disable=no-member
-
-    ordering_fields = ['id', 'name']
-    filterset_fields = {
-        'name': ['exact', 'icontains'],
-        'organization__id': ['exact']
-    }
-
-    def _get_model(self):
-        """
-        Returns the view model.
-        """
-
-        return Location
-
-    def _order_by(self):
-        """
-        Returns the default ordering field.
-        """
-        return 'name'
-
-    def _filter_locations(self, locations):
-        """
-        Filter input locations by id list.
-        """
-        id_list = self._get_id_list()
-        if id_list:
-            return self._filter_objects_by_id_list(
-                locations, id_list)
-
-        return locations
-
-
-class LocationsListCreateDestroyView(
-        CoreListCreateDestroyView, LocationsView):
+class LocationsListCreateDestroyView(CoreListCreateDestroyView):
     """
     Defines the locations list-create-destroy view.
     """
 
     queryset = Location.objects.none()  # Added for model permissions
     permission_classes = (LocationsListCreateDestroyPermission,)
-
-    def _get_model(self):
-        """
-        Returns the model for this view
-        """
-
-        return LocationsView._get_model(self)
+    ordering_fields = ['id', 'name']
+    filterset_fields = {
+        'name': ['exact', 'icontains'],
+        'organization__id': ['exact']
+    }
 
     def _order_by(self):
         """
         Returns the field with respect to which queries are to be ordered.
         """
-        return LocationsView._order_by(self)
+        return 'name'
 
     def _get_list_serializer_class(self):
         """
@@ -89,47 +50,44 @@ class LocationsListCreateDestroyView(
         """
         return LocationCreateSerializer
 
-    def _define_get_queryset_by_group_fn(self):
+    def _define_api_handler_by_group(self):
         """
-        Returns a dictionary mapping user group to get_queryset function
+        Returns a dictionary mapping user group to rest api handler functions
         that will be called if the request user is in that user group.
         """
-
+        api_handler_by_group = super()._define_api_handler_by_group()
         return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._get_organization_admin_queryset,
-            UserGroups.EMPLOYEE_GROUP:
-                self._get_employee_queryset,
+            'get': {
+                **api_handler_by_group['get'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._get_organization_admin_queryset,
+                UserGroups.EMPLOYEE_GROUP:
+                    self._get_employee_queryset,
+            },
+            'create': {
+                **api_handler_by_group['create'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._perform_create_by_organization_admin
+            }
         }
 
-    def _define_perform_create_by_group_fn(self):
-        """
-        Returns a dictionary mapping user group to perform_create function
-        that will be called if the request user is in that user group.
-        """
-        return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._perform_create_by_organization_admin
-        }
-
-    def _get_organization_admin_queryset(self):
+    def _get_organization_admin_queryset(self, request):
         """
         For an organization admin, locations in all the organizations below
         the user organization are returned. In case a list of ids is provided,
         the locations are filtered further by ids.
         """
 
-        locations = get_organization_admin_authorized_locations(
-            self.request.user)
-        return self._filter_locations(locations)
+        locations = get_organization_admin_authorized_locations(request.user)
+        return filter_locations(request, locations)
 
-    def _get_employee_queryset(self):
+    def _get_employee_queryset(self, request):
         """
         For an employee, only authorized_locations are returned. If ids are
         provided, locations are further filtered by the them.
         """
-        locations = get_employee_authorized_locations(self.request.user)
-        return self._filter_locations(locations)
+        locations = get_employee_authorized_locations(request.user)
+        return filter_locations(request, locations)
 
     def _perform_create_by_organization_admin(self, serializer):
         """
@@ -151,21 +109,13 @@ class LocationsListCreateDestroyView(
         serializer.save()
 
 
-class LocationsRetrieveUpdateDestroyView(
-        CoreRetrieveUpdateDestroyView, LocationsView):
+class LocationsRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
     """
     Defines the locations retrieve-update-destroy view.
     """
 
     queryset = Location.objects.none()  # Added for model permissions
     permission_classes = (LocationsRetrieveUpdateDestroyPermission,)
-
-    def _get_model(self):
-        """
-        Returns the model for this view
-        """
-
-        return LocationsView._get_model(self)
 
     def _get_detail_serializer_class(self):
         """
@@ -179,42 +129,41 @@ class LocationsRetrieveUpdateDestroyView(
         """
         return LocationUpdateSerializer
 
-    def _define_get_queryset_by_group_fn(self):
+    def _define_api_handler_by_group(self):
         """
-        Returns a dictionary mapping user group to get_queryset function
+        Returns a dictionary mapping user group to rest api handler functions
         that will be called if the request user is in that user group.
         """
+        api_handler_by_group = super()._define_api_handler_by_group()
         return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._get_organization_admin_queryset,
-            UserGroups.EMPLOYEE_GROUP:
-                self._get_employee_queryset,
+            'get': {
+                **api_handler_by_group['get'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._get_organization_admin_queryset,
+                UserGroups.EMPLOYEE_GROUP:
+                    self._get_employee_queryset,
+            },
+            'update': {
+                **api_handler_by_group['update'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._perform_update_by_organization_admin
+            }
         }
 
-    def _define_perform_update_by_group_fn(self):
-        """
-        Returns a dictionary mapping user group to perform_update function
-        that will be called if the request user is in that user group.
-        """
-        return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._perform_update_by_organization_admin
-        }
-
-    def _get_organization_admin_queryset(self):
+    def _get_organization_admin_queryset(self, request):
         """
         Returns the get_queryset for organization admin user group
         """
-        organizations_tree = self.request.user.organization.get_descendants(
+        organizations_tree = request.user.organization.get_descendants(
             include_self=True)
-        return self._get_model().objects.filter(
+        return self._model.objects.filter(
             organization__in=organizations_tree)
 
-    def _get_employee_queryset(self):
+    def _get_employee_queryset(self, request):
         """
         Returns the get_queryset for employee user group
         """
-        return self.request.user.authorized_locations.all()
+        return request.user.authorized_locations.all()
 
     def _perform_update_by_organization_admin(self, serializer):
         """

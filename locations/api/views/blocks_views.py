@@ -14,73 +14,29 @@ from locations.api.serializers import (BlockCreateSerializer,
                                        BlockDetailSerializer,
                                        BlockListSerializer,
                                        BlockUpdateSerializer)
+from locations.api.utils import filter_blocks_with_locations
 from locations.models import Block, Floor
 from locations.permissions import (BlocksListCreateDestroyPermission,
                                    BlocksRetrieveUpdateDestroyPermission)
 
 
-class BlocksView:
-    """
-    Defines the base interface class for the floors rest api views.
-    """
-
-    # pylint: disable=no-member
-    ordering_fields = ['id', 'name']
-    filterset_fields = {
-        'name': ['exact', 'icontains'],
-    }
-
-    def _get_model(self):
-        """
-        Returns the view model.
-        """
-
-        return Block
-
-    def _order_by(self):
-        """
-        Returns the field with respect to which queries are to be ordered.
-        """
-        return 'name'
-
-    def _filter_blocks_with_locations(self, locations):
-        """
-        Returns all the blocks in the given locations set
-        """
-
-        # get all blocks in requested floor
-        blocks_in_locations = \
-            self._get_model().objects.filter(floor__location__in=locations)
-
-        # filter with ids if present
-        id_list = self._get_id_list()
-        if id_list:
-            return self._filter_objects_by_id_list(
-                blocks_in_locations, id_list)
-
-        return blocks_in_locations
-
-
-class BlocksListCreateDestroyView(CoreListCreateDestroyView, BlocksView):
+class BlocksListCreateDestroyView(CoreListCreateDestroyView):
     """
     Defines the list-create-destroy view for Blocks.
     """
 
     queryset = Block.objects.none()  # Added for model permissions
     permission_classes = (BlocksListCreateDestroyPermission,)
-
-    def _get_model(self):
-        """
-        Returns the view model.
-        """
-
-        return BlocksView._get_model(self)
+    ordering_fields = ['id', 'name']
+    filterset_fields = {
+        'name': ['exact', 'icontains'],
+    }
 
     def _order_by(self):
         """
         Returns the field with respect to which queries are to be ordered.
         """
-        return BlocksView._order_by(self)
+        return 'name'
 
     def _get_list_serializer_class(self):
         """
@@ -94,47 +50,45 @@ class BlocksListCreateDestroyView(CoreListCreateDestroyView, BlocksView):
         """
         return BlockCreateSerializer
 
-    def _define_get_queryset_by_group_fn(self):
+    def _define_api_handler_by_group(self):
         """
-        Returns a dictionary mapping user group to get_queryset function
+        Returns a dictionary mapping user group to rest api handler functions
         that will be called if the request user is in that user group.
         """
+        api_handler_by_group = super()._define_api_handler_by_group()
         return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._get_organization_admin_queryset,
-            UserGroups.EMPLOYEE_GROUP:
-                self._get_employee_queryset,
+            'get': {
+                **api_handler_by_group['get'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._get_organization_admin_queryset,
+                UserGroups.EMPLOYEE_GROUP:
+                    self._get_employee_queryset,
+            },
+            'create': {
+                **api_handler_by_group['create'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._perform_create_by_organization_admin
+            }
         }
 
-    def _define_perform_create_by_group_fn(self):
-        """
-        Returns a dictionary mapping user group to perform_create function
-        that will be called if the request user is in that user group.
-        """
-        return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._perform_create_by_organization_admin
-        }
-
-    def _get_organization_admin_queryset(self):
+    def _get_organization_admin_queryset(self, request):
         """
         For organization admin, all blocks are returned within the queried
         floor/location as long as the location is authorized.
         """
 
-        locations = get_organization_admin_authorized_locations(
-            self.request.user)
-        blocks = self._filter_blocks_with_locations(locations)
+        locations = get_organization_admin_authorized_locations(request.user)
+        blocks = filter_blocks_with_locations(request, locations)
         return blocks
 
-    def _get_employee_queryset(self):
+    def _get_employee_queryset(self, request):
         """
         For employee, all blocks are returned within the queried
         floor/location as long as the location is authorized.
         """
 
-        locations = get_employee_authorized_locations(self.request.user)
-        return self._filter_blocks_with_locations(locations)
+        locations = get_employee_authorized_locations(request.user)
+        return filter_blocks_with_locations(request, locations)
 
     def _perform_create_by_organization_admin(self, serializer):
         """
@@ -165,21 +119,13 @@ class BlocksListCreateDestroyView(CoreListCreateDestroyView, BlocksView):
         serializer.save()
 
 
-class BlocksRetrieveUpdateDestroyView(
-        CoreRetrieveUpdateDestroyView, BlocksView):
+class BlocksRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
     """
     Defines the retrieve-update-destroy view for blocks.
     """
 
     queryset = Block.objects.none()  # Added for model permissions
     permission_classes = (BlocksRetrieveUpdateDestroyPermission,)
-
-    def _get_model(self):
-        """
-        Returns the view model.
-        """
-
-        return BlocksView._get_model(self)
 
     def _get_detail_serializer_class(self):
         """
@@ -193,46 +139,44 @@ class BlocksRetrieveUpdateDestroyView(
         """
         return BlockUpdateSerializer
 
-    def _define_get_queryset_by_group_fn(self):
+    def _define_api_handler_by_group(self):
         """
-        Returns a dictionary mapping user group to get_queryset function
+        Returns a dictionary mapping user group to rest api handler functions
         that will be called if the request user is in that user group.
         """
+        api_handler_by_group = super()._define_api_handler_by_group()
         return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._get_organization_admin_queryset,
-            UserGroups.EMPLOYEE_GROUP:
-                self._get_employee_queryset,
+            'get': {
+                **api_handler_by_group['get'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._get_organization_admin_queryset,
+                UserGroups.EMPLOYEE_GROUP:
+                    self._get_employee_queryset,
+            },
+            'update': {
+                **api_handler_by_group['update'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._perform_update_by_organization_admin
+            }
         }
 
-    def _define_perform_update_by_group_fn(self):
-        """
-        Returns a dictionary mapping user group to perform_update function
-        that will be called if the request user is in that user group.
-        """
-        return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._perform_update_by_organization_admin
-        }
-
-    def _get_organization_admin_queryset(self):
+    def _get_organization_admin_queryset(self, request):
         """
         For organization admin, all blocks are returned within the queried
         floor/location as long as the location is authorized.
         """
 
-        locations = get_organization_admin_authorized_locations(
-            self.request.user)
-        return self._filter_blocks_with_locations(locations)
+        locations = get_organization_admin_authorized_locations(request.user)
+        return filter_blocks_with_locations(request, locations)
 
-    def _get_employee_queryset(self):
+    def _get_employee_queryset(self, request):
         """
         For employee, all blocks are returned within the queried
         floor/location as long as the location is authorized.
         """
 
-        locations = get_employee_authorized_locations(self.request.user)
-        return self._filter_blocks_with_locations(locations)
+        locations = get_employee_authorized_locations(request.user)
+        return filter_blocks_with_locations(request, locations)
 
     def _perform_update_by_organization_admin(self, serializer):
         """
