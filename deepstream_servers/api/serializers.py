@@ -13,16 +13,16 @@ from deepstream_servers.models import (DeepstreamDiagnostics,
 class DeepstreamServerListSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeepstreamServer
-        fields = ('id', 'mac_addr', 'block')
+        fields = ('id', 'mac_addr', 'organization')
 
 
 class DeepstreamServerCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeepstreamServer
-        fields = ('id', 'mac_addr', 'block')
+        fields = ('id', 'mac_addr', 'organization')
         extra_kwargs = {
             'mac_addr': {'required': True},
-            'block': {'required': True},
+            'organization': {'required': True},
         }
 
     def create(self, validated_data):
@@ -82,7 +82,7 @@ class DeepstreamServerDetailSerializer(serializers.ModelSerializer):
             'status',
             'connected_at',
             'last_echo_at',
-            'block',
+            'organization',
             'log_entries',
             'diagnostics')
 
@@ -91,7 +91,7 @@ class DeepstreamServerUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DeepstreamServer
-        fields = ('id', 'mac_addr', 'block')
+        fields = ('id', 'mac_addr', 'organization')
 
     def update(self, instance, validated_data):
         try:

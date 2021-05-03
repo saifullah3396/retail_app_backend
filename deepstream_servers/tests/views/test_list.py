@@ -56,8 +56,8 @@ class DSListTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.ds_b1_f0_l1_o1_dict) +
-                                len(self.ds_b1_f0_l1_sub1_o1_dict))
+                                len(self.ds_o1_dict) +
+                                len(self.ds_sub1_o1_dict))
                         )
                     },
                     {   # get deepstream_servers list by sub-org admin
@@ -68,7 +68,7 @@ class DSListTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.ds_b1_f0_l1_sub1_o1_dict))
+                                len(self.ds_sub1_o1_dict))
                         )
                     },
                     {   # get deepstream_servers list by another org admin
@@ -79,8 +79,8 @@ class DSListTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.ds_b1_f0_l1_o2_dict) +
-                                len(self.ds_b1_f0_l1_sub1_o2_dict))
+                                len(self.ds_o2_dict) +
+                                len(self.ds_sub1_o2_dict))
                         )
                     },
                     {   # get deepstream_servers list by employee, okay
@@ -91,7 +91,7 @@ class DSListTests(TestsBase):
                         'response_check': lambda test, data: (
                             test.assertEqual(
                                 len(data.get('results', None)),
-                                len(self.ds_b1_f0_l1_sub1_o1_dict)
+                                len(self.ds_sub1_o1_dict)
                             )
                         )
                     },

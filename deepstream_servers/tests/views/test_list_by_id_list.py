@@ -40,9 +40,9 @@ class DSListByIdListTests(TestsBase):
                         'test_name': 'test_get_deepstream_servers_list_by_ids_by_staff',
                         'query_params': [
                             ('id',
-                             self.deepstream_servers['ds0_b1_f0_l1_o1'].id),
+                             self.deepstream_servers['ds0_o1'].id),
                             ('id',
-                             self.deepstream_servers['ds1_b1_f0_l1_o1'].id),
+                             self.deepstream_servers['ds1_o1'].id),
                         ],
                         'user': 'staff_user',
                         'status': status.HTTP_200_OK,
@@ -56,9 +56,9 @@ class DSListByIdListTests(TestsBase):
                             'test_get_org_1_deepstream_servers_by_id_by_org_2_admin',
                         'query_params': [
                             ('id',
-                             self.deepstream_servers['ds0_b1_f0_l1_o1'].id),
+                             self.deepstream_servers['ds0_o1'].id),
                             ('id',
-                             self.deepstream_servers['ds1_b1_f0_l1_o1'].id),
+                             self.deepstream_servers['ds1_o1'].id),
                         ],
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
@@ -69,9 +69,9 @@ class DSListByIdListTests(TestsBase):
                             'test_get_org_2_deepstream_servers_by_id_by_sub_org_1_admin',
                         'query_params': [
                             ('id',
-                             self.deepstream_servers['ds0_b1_f0_l1_o2'].id),
+                             self.deepstream_servers['ds0_o2'].id),
                             ('id',
-                             self.deepstream_servers['ds1_b1_f0_l1_sub1_o2'].id),
+                             self.deepstream_servers['ds1_sub1_o2'].id),
                         ],
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
@@ -82,9 +82,9 @@ class DSListByIdListTests(TestsBase):
                             'test_get_org_1_deepstream_servers_by_id_by_sub_org_1_admin',
                         'query_params': [
                             ('id',
-                             self.deepstream_servers['ds0_b1_f0_l1_o1'].id),
+                             self.deepstream_servers['ds0_o1'].id),
                             ('id',
-                             self.deepstream_servers['ds1_b1_f0_l1_o1'].id),
+                             self.deepstream_servers['ds1_o1'].id),
                         ],
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
@@ -96,9 +96,9 @@ class DSListByIdListTests(TestsBase):
                             'admin',
                         'query_params': [
                             ('id',
-                             self.deepstream_servers['ds0_b1_f0_l1_sub1_o1'].id),
+                             self.deepstream_servers['ds0_sub1_o1'].id),
                             ('id',
-                             self.deepstream_servers['ds1_b1_f0_l1_sub1_o1'].id),
+                             self.deepstream_servers['ds1_sub1_o1'].id),
                         ],
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_200_OK,
@@ -112,9 +112,9 @@ class DSListByIdListTests(TestsBase):
                             'test_get_org_1_deepstream_servers_by_id_by_org_1_admin',
                         'query_params': [
                             ('id',
-                             self.deepstream_servers['ds0_b1_f0_l1_o1'].id),
+                             self.deepstream_servers['ds0_o1'].id),
                             ('id',
-                             self.deepstream_servers['ds1_b1_f0_l1_o1'].id),
+                             self.deepstream_servers['ds1_o1'].id),
                         ],
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_200_OK,
@@ -128,9 +128,9 @@ class DSListByIdListTests(TestsBase):
                             'test_get_sub1_org_1_deepstream_servers_by_id_by_employee_user',
                         'query_params': [
                             ('id',
-                             self.deepstream_servers['ds0_b1_f0_l1_sub1_o1'].id),
+                             self.deepstream_servers['ds0_sub1_o1'].id),
                             ('id',
-                             self.deepstream_servers['ds1_b1_f0_l1_sub1_o1'].id),
+                             self.deepstream_servers['ds1_sub1_o1'].id),
                         ],
                         'user': 'employee_user',
                         'status': status.HTTP_200_OK,
@@ -142,9 +142,9 @@ class DSListByIdListTests(TestsBase):
                         'test_name': 'test_get_deepstream_servers_by_other_user',
                         'query_params': [
                             ('id',
-                             self.deepstream_servers['ds0_b1_f0_l1_sub1_o1'].id),
+                             self.deepstream_servers['ds0_sub1_o1'].id),
                             ('id',
-                             self.deepstream_servers['ds1_b1_f0_l1_sub1_o1'].id),
+                             self.deepstream_servers['ds1_sub1_o1'].id),
                         ],
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN

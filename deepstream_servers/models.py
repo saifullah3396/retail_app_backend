@@ -9,7 +9,7 @@ from django.core.validators import MaxValueValidator
 from django.db import models
 from django.utils import timezone
 
-from core.utils import MAC_ADDRESS_VALIDATOR_REGEX
+MAC_ADDRESS_VALIDATOR_REGEX = '([0-9a-fA-F]{2}[:]){5}([0-9a-fA-F]{2})'
 
 
 class DeepstreamLogEntry(models.Model):
@@ -108,9 +108,6 @@ class DeepstreamServer(models.Model):
     """MAC address of the server."""
     mac_addr = models.CharField(max_length=17, unique=True)
 
-    """Block with which this server is associated."""
-    block = models.ForeignKey("locations.Block", on_delete=models.PROTECT)
-
     """Status of the server whether it is currently online or offline"""
     status = models.CharField(
         max_length=20, choices=STATUS,
@@ -124,6 +121,10 @@ class DeepstreamServer(models.Model):
     """Time field that is updated whenever the associated server is
         disconnected"""
     last_echo_at = models.DateTimeField(null=True, blank=True)
+
+    """Organization with which this server is associated."""
+    organization = models.ForeignKey(
+        "organizations.Organization", on_delete=models.PROTECT)
 
     def clean(self, *args, **kwargs):
         # validate mac address

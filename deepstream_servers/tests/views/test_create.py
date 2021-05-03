@@ -2,13 +2,12 @@
 Defines the unit tests related to 'create' api requests for this application.
 """
 from django.urls import include, path
-from django.utils import timezone
 from rest_framework import status
 
 from core.tests import TestsBase
 
 
-# pylint: disable=pointless-string-statement, invalid-names, line-too-long
+# pylint: disable=pointless-string-statement, invalid-name, line-too-long
 class DSCreateTests(TestsBase):
     """
     Defines unit tests for 'create' api requests for views defined at
@@ -47,10 +46,10 @@ class DSCreateTests(TestsBase):
                         # already exists in this block
                         'test_name': 'create_deepstream_server_by_staff_not_unique',
                         'data': {
-                            'mac_addr': self.deepstream_servers['ds0_b1_f0_l1_o1'].mac_addr,
+                            'mac_addr': self.deepstream_servers['ds0_o1'].mac_addr,
                             # 'connected_at': test_connected_at,
                             # 'last_echo_at': test_last_echo_at,
-                            'block': self.blocks['b1_f0_l1_o1'].id
+                            'organization': self.orgs['o1'].id
                         },
                         'user': 'staff_user',
                         'status': status.HTTP_400_BAD_REQUEST,
@@ -59,7 +58,7 @@ class DSCreateTests(TestsBase):
                         'test_name': 'create_deepstream_server_by_staff',
                         'data': {
                             'mac_addr': test_mac_addrs[1],
-                            'block': self.blocks['b1_f0_l1_o1'].id
+                            'organization': self.orgs['o1'].id
                         },
                         'user': 'staff_user',
                         'status': status.HTTP_201_CREATED,
@@ -67,7 +66,7 @@ class DSCreateTests(TestsBase):
                             test.assertDictContainsSubset(
                                 {
                                     'mac_addr': test_mac_addrs[1],
-                                    'block': self.blocks['b1_f0_l1_o1'].id
+                                    'organization': self.orgs['o1'].id
                                 }, data)
                         )
                     },
@@ -75,7 +74,7 @@ class DSCreateTests(TestsBase):
                         'test_name': 'create_deepstream_server_org_admin_1_in_org_1',
                         'data': {
                             'mac_addr': test_mac_addrs[2],
-                            'block': self.blocks['b1_f0_l1_o1'].id
+                            'organization': self.orgs['o1'].id
                         },
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_201_CREATED,
@@ -83,7 +82,7 @@ class DSCreateTests(TestsBase):
                             test.assertDictContainsSubset(
                                 {
                                     'mac_addr': test_mac_addrs[2],
-                                    'block': self.blocks['b1_f0_l1_o1'].id
+                                    'organization': self.orgs['o1'].id
                                 }, data)
                         )
                     },
@@ -92,7 +91,7 @@ class DSCreateTests(TestsBase):
                             'create_deepstream_server_org_admin_1_in_sub_1_org_1',
                         'data': {
                             'mac_addr': test_mac_addrs[3],
-                            'block': self.blocks['b1_f0_l1_sub1_o1'].id
+                            'organization': self.orgs['sub1_o1'].id
                         },
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_201_CREATED,
@@ -100,7 +99,7 @@ class DSCreateTests(TestsBase):
                             test.assertDictContainsSubset(
                                 {
                                     'mac_addr': test_mac_addrs[3],
-                                    'block': self.blocks['b1_f0_l1_sub1_o1'].id
+                                    'organization': self.orgs['sub1_o1'].id
                                 }, data)
                         )
                     },
@@ -109,7 +108,7 @@ class DSCreateTests(TestsBase):
                         'test_name': 'create_deepstream_server_org_admin_1_in_org_2',
                         'data': {
                             'mac_addr': test_mac_addrs[4],
-                            'block': self.blocks['b1_f0_l1_o2'].id
+                            'organization': self.orgs['o2'].id
                         },
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_400_BAD_REQUEST
@@ -118,7 +117,7 @@ class DSCreateTests(TestsBase):
                         'test_name': 'create_deepstream_server_sub_org_admin_1_in_org_1',
                         'data': {
                             'mac_addr': test_mac_addrs[4],
-                            'block': self.blocks['b1_f0_l1_o1'].id
+                            'organization': self.orgs['o1'].id
                         },
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_400_BAD_REQUEST
@@ -128,7 +127,7 @@ class DSCreateTests(TestsBase):
                             'create_deepstream_server_sub_org_admin_1_in_sub_1_org_1',
                         'data': {
                             'mac_addr': test_mac_addrs[5],
-                            'block': self.blocks['b1_f0_l1_sub1_o1'].id
+                            'organization': self.orgs['sub1_o1'].id
                         },
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_201_CREATED,
@@ -136,7 +135,7 @@ class DSCreateTests(TestsBase):
                             test.assertDictContainsSubset(
                                 {
                                     'mac_addr': test_mac_addrs[5],
-                                    'block': self.blocks['b1_f0_l1_sub1_o1'].id
+                                    'organization': self.orgs['sub1_o1'].id
                                 }, data)
                         )
                     },
@@ -144,7 +143,7 @@ class DSCreateTests(TestsBase):
                         'test_name': 'create_deepstream_server_employee_user',
                         'data': {
                             'mac_addr': test_mac_addrs[6],
-                            'block': self.blocks['b1_f0_l1_sub1_o1'].id
+                            'organization': self.orgs['sub1_o1'].id
                         },
                         'user': 'employee_user',
                         'status': status.HTTP_403_FORBIDDEN
@@ -153,7 +152,7 @@ class DSCreateTests(TestsBase):
                         'test_name': 'create_deepstream_server_other_user',
                         'data': {
                             'mac_addr': test_mac_addrs[6],
-                            'block': self.blocks['b1_f0_l1_sub1_o1'].id
+                            'organization': self.orgs['sub1_o1'].id
                         },
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN

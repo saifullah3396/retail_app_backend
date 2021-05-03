@@ -44,67 +44,67 @@ class DSUpdateTests(TestsBase):
                     {   # update deepstream_server by id. change addr to an existing
                         # deepstream_server name inside the floor, bad
                         'test_name': 'rename_ds0',
-                        'args': {'pk': self.deepstream_servers['ds0_b1_f0_l1_o1'].id},
+                        'args': {'pk': self.deepstream_servers['ds0_o1'].id},
                         'user': 'staff_user',
                         'data': {
                             # check uniqueness
-                            'mac_addr': self.deepstream_servers['ds1_b1_f0_l1_o1'].mac_addr
+                            'mac_addr': self.deepstream_servers['ds1_o1'].mac_addr
                         },
                         'status': status.HTTP_400_BAD_REQUEST,
                     },
-                    {   # update deepstream_server by id. change block to another block,
+                    {   # update deepstream_server by id. change org to another org,
                         # okay
-                        'test_name': 'change_ds0_block',
-                        'args': {'pk': self.deepstream_servers['ds0_b1_f0_l1_o1'].id},
+                        'test_name': 'change_ds0_org',
+                        'args': {'pk': self.deepstream_servers['ds0_o1'].id},
                         'user': 'staff_user',
                         'data': {
-                            'block': self.blocks['b2_f0_l1_o1'].id
+                            'organization': self.orgs['o1'].id
                         },
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertDictContainsSubset(
                                 {
-                                    'block': self.blocks['b2_f0_l1_o1'].id
+                                    'organization': self.orgs['o1'].id
                                 }, data)
                         )
                     },
                     {   # update deepstream_server by id, okay for staff
-                        'test_name': 'update_ds0_b1_f0_l1_o1_by_staff',
-                        'args': {'pk': self.deepstream_servers['ds0_b1_f0_l1_o1'].id},
+                        'test_name': 'update_ds0_o1_by_staff',
+                        'args': {'pk': self.deepstream_servers['ds0_o1'].id},
                         'user': 'staff_user',
                         'data': {
                             'mac_addr': test_mac_addrs[0],
-                            'block': self.blocks['b2_f0_l1_o1'].id
+                            'organization': self.orgs['o1'].id
                         },
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertDictContainsSubset(
                                 {
                                     'mac_addr': test_mac_addrs[0],
-                                    'block': self.blocks['b2_f0_l1_o1'].id
+                                    'organization': self.orgs['o1'].id
                                 }, data)
                         )
                     },
                     {   # update deepstream_server by id, okay for org_1_admin
-                        'test_name': 'update_ds0_b1_f0_l1_o1_by_org_1_admin',
-                        'args': {'pk': self.deepstream_servers['ds0_b1_f0_l1_o1'].id},
+                        'test_name': 'update_ds0_o1_by_org_1_admin',
+                        'args': {'pk': self.deepstream_servers['ds0_o1'].id},
                         'user': 'org_1_admin_user',
                         'data': {
                             'mac_addr': test_mac_addrs[1],
-                            'block': self.blocks['b2_f0_l1_o1'].id
+                            'organization': self.orgs['o1'].id
                         },
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertDictContainsSubset(
                                 {
                                     'mac_addr': test_mac_addrs[1],
-                                    'block': self.blocks['b2_f0_l1_o1'].id
+                                    'organization': self.orgs['o1'].id
                                 }, data)
                         )
                     },
                     {   # update non-available fields, bad
-                        'test_name': 'update_non_fields_1_ds0_b1_f0_l1_o1',
-                        'args': {'pk': self.deepstream_servers['ds0_b1_f0_l1_o1'].id},
+                        'test_name': 'update_non_fields_1_ds0_o1',
+                        'args': {'pk': self.deepstream_servers['ds0_o1'].id},
                         'user': 'org_1_admin_user',
                         'data': {
                             'status': DeepstreamServer.ONLINE
@@ -112,13 +112,13 @@ class DSUpdateTests(TestsBase):
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertTrue(
-                                self.deepstream_servers['ds0_b1_f0_l1_o1'].status !=
+                                self.deepstream_servers['ds0_o1'].status !=
                                 DeepstreamServer.ONLINE)
                         )
                     },
                     {   # update non-available fields, bad
-                        'test_name': 'update_non_fields_2_ds0_b1_f0_l1_o1',
-                        'args': {'pk': self.deepstream_servers['ds0_b1_f0_l1_o1'].id},
+                        'test_name': 'update_non_fields_2_ds0_o1',
+                        'args': {'pk': self.deepstream_servers['ds0_o1'].id},
                         'user': 'org_1_admin_user',
                         'data': {
                             'connected_at': test_connected_at
@@ -126,13 +126,13 @@ class DSUpdateTests(TestsBase):
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertTrue(
-                                str(self.deepstream_servers['ds0_b1_f0_l1_o1'].connected_at) !=
+                                str(self.deepstream_servers['ds0_o1'].connected_at) !=
                                 str(test_connected_at))
                         )
                     },
                     {   # update non-available fields, bad
-                        'test_name': 'update_non_fields_3_ds0_b1_f0_l1_o1',
-                        'args': {'pk': self.deepstream_servers['ds0_b1_f0_l1_o1'].id},
+                        'test_name': 'update_non_fields_3_ds0_o1',
+                        'args': {'pk': self.deepstream_servers['ds0_o1'].id},
                         'user': 'org_1_admin_user',
                         'data': {
                             'last_echo_at': test_last_echo_at
@@ -140,25 +140,25 @@ class DSUpdateTests(TestsBase):
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertTrue(
-                                str(self.deepstream_servers['ds0_b1_f0_l1_o1'].last_echo_at) !=
+                                str(self.deepstream_servers['ds0_o1'].last_echo_at) !=
                                 str(test_last_echo_at))
                         )
                     },
                     {   # update deepstream_server of org, forbidden for sub-org admin
-                        'test_name': 'update_ds0_b1_f0_l1_o1_by_sub_org_1_admin',
-                        'args': {'pk': self.deepstream_servers['ds0_b1_f0_l1_o1'].id},
+                        'test_name': 'update_ds0_o1_by_sub_org_1_admin',
+                        'args': {'pk': self.deepstream_servers['ds0_o1'].id},
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
                     {   # update deepstream_server, bad for other org-admin
-                        'test_name': 'update_ds0_b1_f0_l1_o1_by_org_2_admin',
-                        'args': {'pk': self.deepstream_servers['ds0_b1_f0_l1_o1'].id},
+                        'test_name': 'update_ds0_o1_by_org_2_admin',
+                        'args': {'pk': self.deepstream_servers['ds0_o1'].id},
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
                     {   # update deepstream_server by id, forbidden for random user
-                        'test_name': 'update_ds0_b1_f0_l1_o1_by_other_user',
-                        'args': {'pk': self.deepstream_servers['ds0_b1_f0_l1_o1'].id},
+                        'test_name': 'update_ds0_o1_by_other_user',
+                        'args': {'pk': self.deepstream_servers['ds0_o1'].id},
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN
                     },
@@ -170,79 +170,79 @@ class DSUpdateTests(TestsBase):
                 'path_name': 'deepstream_servers_retrieve_update_delete',
                 'request': [
                     {   # update sub-org deepstream_server by id, okay for staff
-                        'test_name': 'update_ds0_b1_f0_l1_sub1_o1_by_staff',
-                        'args': {'pk': self.deepstream_servers['ds0_b1_f0_l1_sub1_o1'].id},
+                        'test_name': 'update_ds0_sub1_o1_by_staff',
+                        'args': {'pk': self.deepstream_servers['ds0_sub1_o1'].id},
                         'user': 'staff_user',
                         'data': {
                             'mac_addr': test_mac_addrs[3],
-                            'block': self.blocks['b2_f0_l1_o1'].id
+                            'organization': self.orgs['o1'].id
                         },
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertDictContainsSubset(
                                 {
                                     'mac_addr': test_mac_addrs[3],
-                                    'block': self.blocks['b2_f0_l1_o1'].id
+                                    'organization': self.orgs['o1'].id
                                 }, data)
                         )
                     },
                     {   # update sub-org deepstream_server by id, okay for org admin itself
                         # under which this sub-org exists
                         'test_name':
-                            'update_ds0_b1_f0_l1_sub1_o1_by_org_1_admin',
-                        'args': {'pk': self.deepstream_servers['ds0_b1_f0_l1_sub1_o1'].id},
+                            'update_ds0_sub1_o1_by_org_1_admin',
+                        'args': {'pk': self.deepstream_servers['ds0_sub1_o1'].id},
                         'user': 'org_1_admin_user',
                         'data': {
                             'mac_addr': test_mac_addrs[4],
-                            'block': self.blocks['b2_f0_l1_sub1_o1'].id
+                            'organization': self.orgs['sub1_o1'].id
                         },
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertDictContainsSubset(
                                 {
                                     'mac_addr': test_mac_addrs[4],
-                                    'block': self.blocks['b2_f0_l1_sub1_o1'].id
+                                    'organization': self.orgs['sub1_o1'].id
                                 }, data)
                         )
                     },
                     {   # update sub-org deepstream_server by id, okay for sub-org admin
                         # itself
                         'test_name':
-                            'update_ds0_b1_f0_l1_sub1_o1_by_sub_1_org_1_admin',
-                        'args': {'pk': self.deepstream_servers['ds0_b1_f0_l1_sub1_o1'].id},
+                            'update_ds0_sub1_o1_by_sub_1_org_1_admin',
+                        'args': {'pk': self.deepstream_servers['ds0_sub1_o1'].id},
                         'user': 'sub_org_11_admin_user',
                         'data': {
                             'mac_addr': test_mac_addrs[5],
-                            'block': self.blocks['b1_f0_l1_sub1_o1'].id
+                            'organization': self.orgs['sub1_o1'].id
                         },
                         'status': status.HTTP_200_OK,
                         'response_check': lambda test, data: (
                             test.assertDictContainsSubset(
                                 {
                                     'mac_addr': test_mac_addrs[5],
-                                    'block': self.blocks['b1_f0_l1_sub1_o1'].id
+                                    'organization': self.orgs['sub1_o1'].id
                                 }, data)
                         )
                     },
-                    {   # update sub-org deepstream_server by id, send unauth block id
+                    {   # update sub-org deepstream_server by id, send unauth org id
                         'test_name':
-                            'update_ds0_b1_f0_l1_sub1_o1_by_sub_1_org_1_admin_bad_block',
-                        'args': {'pk': self.deepstream_servers['ds0_b1_f0_l1_sub1_o1'].id},
+                            'update_ds0_sub1_o1_by_sub_1_org_1_admin_bad_org',
+                        'args': {'pk': self.deepstream_servers['ds0_sub1_o1'].id},
                         'user': 'sub_org_11_admin_user',
                         'data': {
                             'mac_addr': test_mac_addrs[5],
-                            'block': self.blocks['b1_f0_l1_o1'].id
+                            'organization': self.orgs['o1'].id
                         },
                         'status': status.HTTP_400_BAD_REQUEST
                     },
                     {   # update sub-org deepstream_server by id, bad for other
                         # org-admin under which this sub-org does not exist
                         'test_name':
-                            'update_ds0_b1_f0_l1_sub1_o1_by_org_2_admin',
-                        'args': {'pk': self.deepstream_servers['ds0_b1_f0_l1_sub1_o1'].id},
+                            'update_ds0_sub1_o1_by_org_2_admin',
+                        'args': {'pk': self.deepstream_servers['ds0_sub1_o1'].id},
                         'data': {
                             'mac_addr': test_mac_addrs[6],
-                            'block': self.blocks['b2_f0_l1_o1'].id
+                            'organization': self.orgs['o1'].id
                         },
                         'user': 'org_2_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
@@ -250,28 +250,28 @@ class DSUpdateTests(TestsBase):
                     {   # update sub-org deepstream_server by id, bad for other
                         # sub-org admin to which this sub-org does not exist
                         'test_name':
-                            'update_ds0_b1_f0_l1_sub1_o1_by_sub_1_org_2_admin',
-                        'args': {'pk': self.deepstream_servers['ds0_b1_f0_l1_sub1_o1'].id},
+                            'update_ds0_sub1_o1_by_sub_1_org_2_admin',
+                        'args': {'pk': self.deepstream_servers['ds0_sub1_o1'].id},
                         'data': {
                             'mac_addr': test_mac_addrs[7],
-                            'block': self.blocks['b2_f0_l1_o1'].id
+                            'organization': self.orgs['o1'].id
                         },
                         'user': 'sub_org_12_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
                     },
                     {   # update sub-org deepstream_server by id, forbidden for employees
-                        'test_name': 'update_ds0_b1_f0_l1_sub1_o1_by_employee',
-                        'args': {'pk': self.deepstream_servers['ds0_b1_f0_l1_sub1_o1'].id},
+                        'test_name': 'update_ds0_sub1_o1_by_employee',
+                        'args': {'pk': self.deepstream_servers['ds0_sub1_o1'].id},
                         'user': 'employee_user',
                         'data': {
                             'mac_addr': test_mac_addrs[8],
-                            'block': self.blocks['b2_f0_l1_o1'].id
+                            'organization': self.orgs['o1'].id
                         },
                         'status': status.HTTP_403_FORBIDDEN,
                     },
                     {   # update sub-org by id, forbidden for random user
-                        'test_name': 'update_ds0_b1_f0_l1_o1_by_other_user',
-                        'args': {'pk': self.deepstream_servers['ds0_b1_f0_l1_o1'].id},
+                        'test_name': 'update_ds0_o1_by_other_user',
+                        'args': {'pk': self.deepstream_servers['ds0_o1'].id},
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN
                     }

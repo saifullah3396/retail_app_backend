@@ -41,7 +41,7 @@ class DSDeleteByIdListTests(TestsBase):
                     #     # protected
                     #     'test_name': 'delete_deepstream_server_by_staff',
                     #     'query_params': [
-                    #         ('id', self.deepstream_servers['ds0_b1_f0_l1_o1'].id),
+                    #         ('id', self.deepstream_servers['ds0_o1'].id),
                     #     ],
                     #     'user': 'staff_user',
                     #     'status': status.HTTP_400_BAD_REQUEST
@@ -51,9 +51,9 @@ class DSDeleteByIdListTests(TestsBase):
                         'test_name': 'delete_deepstream_server_org_admin_1_in_org_2',
                         'query_params': [
                             ('id',
-                             self.deepstream_servers['ds0_b1_f0_l1_o2'].id),
+                             self.deepstream_servers['ds0_o2'].id),
                             ('id',
-                             self.deepstream_servers['ds1_b1_f0_l1_o2'].id),
+                             self.deepstream_servers['ds1_o2'].id),
                         ],
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
@@ -64,9 +64,9 @@ class DSDeleteByIdListTests(TestsBase):
                             'delete_deepstream_server_org_admin_1_in_sub_1_org_2',
                         'query_params': [
                             ('id',
-                             self.deepstream_servers['ds0_b1_f0_l1_sub1_o2'].id),
+                             self.deepstream_servers['ds0_sub1_o2'].id),
                             ('id',
-                             self.deepstream_servers['ds1_b1_f0_l1_sub1_o2'].id),
+                             self.deepstream_servers['ds1_sub1_o2'].id),
                         ],
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
@@ -75,9 +75,9 @@ class DSDeleteByIdListTests(TestsBase):
                         'test_name': 'delete_deepstream_server_sub_org_admin_1_in_org_1',
                         'query_params': [
                             ('id',
-                             self.deepstream_servers['ds0_b1_f0_l1_o1'].id),
+                             self.deepstream_servers['ds0_o1'].id),
                             ('id',
-                             self.deepstream_servers['ds1_b1_f0_l1_o1'].id),
+                             self.deepstream_servers['ds1_o1'].id),
                         ],
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_404_NOT_FOUND
@@ -86,9 +86,9 @@ class DSDeleteByIdListTests(TestsBase):
                         'test_name': 'delete_deepstream_server_other_user',
                         'query_params': [
                             ('id',
-                             self.deepstream_servers['ds0_b1_f0_l1_sub1_o1'].id),
+                             self.deepstream_servers['ds0_sub1_o1'].id),
                             ('id',
-                             self.deepstream_servers['ds1_b1_f0_l1_sub1_o1'].id),
+                             self.deepstream_servers['ds1_sub1_o1'].id),
                         ],
                         'user': 'employee_user',
                         'status': status.HTTP_403_FORBIDDEN
@@ -97,9 +97,9 @@ class DSDeleteByIdListTests(TestsBase):
                         'test_name': 'delete_deepstream_server_other_user',
                         'query_params': [
                             ('id',
-                             self.deepstream_servers['ds0_b1_f0_l1_sub1_o1'].id),
+                             self.deepstream_servers['ds0_sub1_o1'].id),
                             ('id',
-                             self.deepstream_servers['ds1_b1_f0_l1_sub1_o1'].id),
+                             self.deepstream_servers['ds1_sub1_o1'].id),
                         ],
                         'user': 'other_user',
                         'status': status.HTTP_403_FORBIDDEN
@@ -108,9 +108,9 @@ class DSDeleteByIdListTests(TestsBase):
                         'test_name': 'delete_deepstream_server_by_staff',
                         'query_params': [
                             ('id',
-                             self.deepstream_servers['ds2_del_b1_f0_l1_o1'].id),
+                             self.deepstream_servers['ds2_del_o1'].id),
                             ('id',
-                             self.deepstream_servers['ds3_del_b1_f0_l1_o1'].id),
+                             self.deepstream_servers['ds3_del_o1'].id),
                         ],
                         'user': 'staff_user',
                         'status': status.HTTP_200_OK
@@ -119,9 +119,9 @@ class DSDeleteByIdListTests(TestsBase):
                         'test_name': 'delete_dup_deepstream_server_by_staff',
                         'query_params': [
                             ('id',
-                             self.deepstream_servers['ds2_del_b1_f0_l1_o1'].id),
+                             self.deepstream_servers['ds2_del_o1'].id),
                             ('id',
-                             self.deepstream_servers['ds3_del_b1_f0_l1_o1'].id),
+                             self.deepstream_servers['ds3_del_o1'].id),
                         ],
                         'user': 'staff_user',
                         'status': status.HTTP_404_NOT_FOUND
@@ -130,9 +130,9 @@ class DSDeleteByIdListTests(TestsBase):
                         'test_name': 'delete_deepstream_server_org_admin_1_in_org_1',
                         'query_params': [
                             ('id',
-                             self.deepstream_servers['ds4_del_b1_f0_l1_o1'].id),
+                             self.deepstream_servers['ds4_del_o1'].id),
                             ('id',
-                             self.deepstream_servers['ds5_del_b1_f0_l1_o1'].id),
+                             self.deepstream_servers['ds5_del_o1'].id),
                         ],
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_200_OK
@@ -142,9 +142,9 @@ class DSDeleteByIdListTests(TestsBase):
                             'delete_deepstream_server_org_admin_1_in_sub_1_org_1',
                         'query_params': [
                             ('id',
-                             self.deepstream_servers['ds2_del_b1_f0_l1_sub1_o1'].id),
+                             self.deepstream_servers['ds2_del_sub1_o1'].id),
                             ('id',
-                             self.deepstream_servers['ds3_del_b1_f0_l1_sub1_o1'].id),
+                             self.deepstream_servers['ds3_del_sub1_o1'].id),
                         ],
                         'user': 'org_1_admin_user',
                         'status': status.HTTP_200_OK
@@ -154,9 +154,9 @@ class DSDeleteByIdListTests(TestsBase):
                             'delete_deepstream_server_sub_org_admin_2_in_sub_1_org_2',
                         'query_params': [
                             ('id',
-                             self.deepstream_servers['ds4_del_b1_f0_l1_sub1_o1'].id),
+                             self.deepstream_servers['ds4_del_sub1_o1'].id),
                             ('id',
-                             self.deepstream_servers['ds5_del_b1_f0_l1_sub1_o1'].id),
+                             self.deepstream_servers['ds5_del_sub1_o1'].id),
                         ],
                         'user': 'sub_org_11_admin_user',
                         'status': status.HTTP_200_OK

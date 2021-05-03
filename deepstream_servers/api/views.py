@@ -5,29 +5,27 @@ from rest_framework import exceptions
 
 from core.permissions import UserGroups
 from core.utils import (field_invalid_error, get_employee_authorized_locations,
-                        get_object_by_id,
-                        get_organization_admin_authorized_locations)
+                        get_object_by_id, get_organization_servers)
 from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
 from deepstream_servers.api.serializers import (
     DeepstreamServerCreateSerializer, DeepstreamServerDetailSerializer,
     DeepstreamServerListSerializer, DeepstreamServerUpdateSerializer)
-from deepstream_servers.api.utils import filter_servers_with_locations
+from deepstream_servers.api.utils import filter_servers
 from deepstream_servers.models import DeepstreamServer
 from deepstream_servers.permissions import (
     DeepstreamServersListCreateDestroyPermission,
     DeepstreamServersRetrieveUpdateDestroyPermission)
-from locations.models import Block
 
 
 class DeepstreamServersListCreateDestroyView(CoreListCreateDestroyView):
     """
-    Defines the organizations retrieve-update-destroy view.
+    Defines the deepstream servers retrieve-update-destroy view.
     """
     queryset = DeepstreamServer.objects.none()
     permission_classes = (DeepstreamServersListCreateDestroyPermission,)
-    ordering_fields = ['id', 'ip_addr', 'block']
+    ordering_fields = ['id', 'ip_addr', 'organization']
     filterset_fields = {
-        'block__name': ['icontains'],
+        'organization__name': ['icontains'],
     }
 
     def _order_by(self):
@@ -60,7 +58,7 @@ class DeepstreamServersListCreateDestroyView(CoreListCreateDestroyView):
                 UserGroups.ORGANIZATION_ADMIN_GROUP:
                     self._get_organization_admin_queryset,
                 UserGroups.EMPLOYEE_GROUP:
-                    self._get_employee_queryset,
+                    self._get_employee_queryset
             },
             'create': {
                 **api_handler_by_group['create'],
@@ -73,15 +71,16 @@ class DeepstreamServersListCreateDestroyView(CoreListCreateDestroyView):
         """
         Returns all servers within user authorized locations.
         """
-        locations = get_organization_admin_authorized_locations(request.user)
-        return filter_servers_with_locations(request, locations)
+        servers = get_organization_servers(request.user.organization)
+        return filter_servers(request, servers)
 
     def _get_employee_queryset(self, request):
         """
-        Returns all servers within user authorized locations.
+        Returns all servers are returned within the users
+        authorized locations.
         """
-        locations = get_employee_authorized_locations(request.user)
-        return filter_servers_with_locations(request, locations)
+        servers = get_organization_servers(request.user.organization)
+        return filter_servers(request, servers)
 
     def _perform_create_by_organization_admin(self, serializer):
         """
@@ -89,22 +88,14 @@ class DeepstreamServersListCreateDestroyView(CoreListCreateDestroyView):
         user authorized locations.
         """
 
-        block = get_object_by_id(
-            Block, self.request.data.get('block', None))
-
-        if not block:
+        # see if the organization of requested server is within
+        # descendents of this admin
+        descendents = self.request.user.organization.get_descendants(
+            include_self=True)
+        if not descendents.filter(id=self.request.data['organization']):
             raise exceptions.ValidationError(
                 {
-                    'block': field_invalid_error()
-                })
-
-        # see whether block location is within authorized locations
-        locations = get_organization_admin_authorized_locations(
-            self.request.user)
-        if not locations.filter(id=block.floor.location.id).exists():
-            raise exceptions.ValidationError(
-                {
-                    'block': field_invalid_error()
+                    'organization': field_invalid_error()
                 })
 
         # create floor in db
@@ -142,7 +133,7 @@ class DeepstreamServersRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
                 UserGroups.ORGANIZATION_ADMIN_GROUP:
                     self._get_organization_admin_queryset,
                 UserGroups.EMPLOYEE_GROUP:
-                    self._get_employee_queryset,
+                    self._get_employee_queryset
             },
             'update': {
                 **api_handler_by_group['update'],
@@ -156,39 +147,30 @@ class DeepstreamServersRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
         Returns all servers are returned within the users
         authorized locations.
         """
-        locations = get_organization_admin_authorized_locations(request.user)
-        return filter_servers_with_locations(request, locations)
+        servers = get_organization_servers(request.user.organization)
+        return filter_servers(request, servers)
 
     def _get_employee_queryset(self, request):
         """
         Returns all servers are returned within the users
         authorized locations.
         """
-        locations = get_employee_authorized_locations(request.user)
-        return filter_servers_with_locations(request, locations)
+        servers = get_organization_servers(request.user.organization)
+        return filter_servers(request, servers)
 
     def _perform_update_by_organization_admin(self, serializer):
         """
         Updates the model based on validated data.
         """
 
-        if 'block' in self.request.data:
-            # get block
-            block = get_object_by_id(
-                Block, self.request.data.get('block', None))
-
-            if not block:
+        if 'organization' in self.request.data:
+            # see if the organization of requested server is within
+            # descendents of this admin
+            descendents = self.request.user.organization.get_descendants(
+                include_self=True)
+            if not descendents.filter(id=self.request.data['organization']):
                 raise exceptions.ValidationError(
                     {
-                        'block': field_invalid_error()
-                    })
-
-            # see whether block location is within authorized locations
-            locations = get_organization_admin_authorized_locations(
-                self.request.user)
-            if not locations.filter(id=block.floor.location.id).exists():
-                raise exceptions.ValidationError(
-                    {
-                        'block': field_invalid_error()
+                        'organization': field_invalid_error()
                     })
         serializer.save()
