@@ -620,38 +620,37 @@ class TestsBase(APITransactionTestCase, URLPatternsTestCase):
             'point_coords_in_image': [0, 1, 2, 3, 4, 5, 6, 7],
         }
 
-        self.c_b1_f0_l1_o1_dict =\
+        self.cs_b1_f0_l1_o1_dict =\
             generate_cameras_for_block(
                 ['c0', 'c1', 'c2_del', 'c3_del', 'c4_del', 'c5_del'],
                 'b1_f0_l1_o1',
                 camera_data)
-        self.c_b1_f0_l1_o2_dict =\
+        self.cs_b1_f0_l1_o2_dict =\
             generate_cameras_for_block(
                 ['c0', 'c1', 'c2_del', 'c3_del', 'c4_del', 'c5_del'],
                 'b1_f0_l1_o2',
                 camera_data)
-        self.c_b1_f0_l1_sub1_o1_dict =\
+        self.cs_b1_f0_l1_sub1_o1_dict =\
             generate_cameras_for_block(
                 ['c0', 'c1', 'c2_del', 'c3_del', 'c4_del', 'c5_del'],
                 'b1_f0_l1_sub1_o1',
                 camera_data)
-        self.c_b1_f0_l1_sub1_o2_dict =\
+        self.cs_b1_f0_l1_sub1_o2_dict =\
             generate_cameras_for_block(
                 ['c0', 'c1', 'c2_del', 'c3_del'],
                 'b1_f0_l1_sub1_o2',
                 camera_data)
 
-        self.c_dict = {
-            **self.c_b1_f0_l1_o1_dict,
-            **self.c_b1_f0_l1_o2_dict,
-            **self.c_b1_f0_l1_sub1_o1_dict,
-            **self.c_b1_f0_l1_sub1_o2_dict,
+        self.cs_dict = {
+            **self.cs_b1_f0_l1_o1_dict,
+            **self.cs_b1_f0_l1_o2_dict,
+            **self.cs_b1_f0_l1_sub1_o1_dict,
+            **self.cs_b1_f0_l1_sub1_o2_dict,
         }
 
         # generate blocks in database
         self.cameras = \
-            self.create_cameras_from_data(self.c_dict, self.blocks)
-        print(self.cameras)
+            self.create_cameras_from_data(self.cs_dict, self.blocks)
 
     def setUp(self):
         """

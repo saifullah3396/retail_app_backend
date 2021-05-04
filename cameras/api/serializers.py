@@ -5,6 +5,7 @@ Defines the serializers used in the Cameras api.
 from django.db import IntegrityError
 from rest_framework import serializers
 
+from cameras.api.utils import camera_to_representation
 from cameras.models import Camera
 
 
@@ -15,25 +16,22 @@ class CameraListSerializer(serializers.ModelSerializer):
         fields = ('id', 'ip_addr', 'coords', 'block')
 
     def to_representation(self, instance):
-        data = super().to_representation(instance)
-
-        repr_data = {}
-        repr_data['id'] = data['id']
-        repr_data['ip_addr'] = data['ip_addr']
-        if data['coords']:
-            repr_data['coords'] = {
-                "x": data['coords'][0],
-                "y": data['coords'][1]
-            }
-        repr_data['block'] = data['block']
-        return repr_data
+        return camera_to_representation(super().to_representation(instance))
 
 
 # pylint: disable=missing-class-docstring
 class CameraCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Camera
-        fields = ('id', 'ip_addr', 'coords', 'block')
+        fields = (
+            'id',
+            'ip_addr',
+            'coords',
+            'point_coords_in_frame',
+            'point_coords_in_image',
+            'block',
+            'deepstream_server',
+            'measurement_frame')
         extra_kwargs = {
             'ip_addr': {'required': True},
             'coords': {'required': True},
@@ -41,18 +39,7 @@ class CameraCreateSerializer(serializers.ModelSerializer):
         }
 
     def to_representation(self, instance):
-        data = super().to_representation(instance)
-
-        repr_data = {}
-        repr_data['id'] = data['id']
-        repr_data['ip_addr'] = data['ip_addr']
-        if data['coords']:
-            repr_data['coords'] = {
-                "x": data['coords'][0],
-                "y": data['coords'][1]
-            }
-        repr_data['block'] = data['block']
-        return repr_data
+        return camera_to_representation(super().to_representation(instance))
 
     def create(self, validated_data):
         try:
@@ -74,6 +61,9 @@ class CameraDetailSerializer(serializers.ModelSerializer):
             'deepstream_server',
             'measurement_frame')
 
+    def to_representation(self, instance):
+        return camera_to_representation(super().to_representation(instance))
+
 
 class CameraUpdateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -87,6 +77,12 @@ class CameraUpdateSerializer(serializers.ModelSerializer):
             'point_coords_in_image',
             'deepstream_server',
             'measurement_frame')
+        extra_kwargs = {
+            'block': {'read_only': True},
+        }
+
+    def to_representation(self, instance):
+        return camera_to_representation(super().to_representation(instance))
 
     def update(self, instance, validated_data):
         try:

@@ -81,7 +81,7 @@ class CamerasListCreateDestroyView(CoreListCreateDestroyView):
         locations = get_organization_admin_authorized_locations(request.user)
         return filter_cameras_with_locations(request, locations)
 
-    def _get_employee_queryset(self):
+    def _get_employee_queryset(self, request):
         """
         Return all cameras in authorized locations.
         """
