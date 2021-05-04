@@ -4,7 +4,8 @@ Defines the urls for the views defined in the organizations api.
 
 from django.urls import path
 
-from .views import *
+from organizations.api.views import (OrganizationsListCreateDestroyView,
+                                     OrganizationsRetrieveUpdateDestroyView)
 
 urlpatterns = [
     path(

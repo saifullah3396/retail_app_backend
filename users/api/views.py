@@ -1,27 +1,38 @@
-from core.utils import *
-from core.views import *
-from django.contrib.auth.models import Group
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import *
-from rest_framework import filters, pagination
-from rest_framework.generics import *
-from rest_framework.response import Response
-from rest_framework_jwt import authentication
+"""
+Defines the REST API views for users models.
+"""
 
-from ..models import AppUser
-from ..permissions import *
-from .serializers import *
+from rest_framework import exceptions, serializers, status
+from rest_framework.response import Response
+
+from core.permissions import UserGroups
+from core.utils import is_employee, is_organization_admin
+from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
+from locations.models import Location
+from users.api.serializers import (
+    AppUserDetailEmployeeUpdateSerializer,
+    AppUserDetailOrganizationAdminUpdateSerializer,
+    AppUserDetailRetrieveSerializer, AppUserDetailUpdateSerializer,
+    AppUserListSerializer)
+from users.models import AppUser
+from users.permissions import (AppUsersListCreateDestroyPermission,
+                               AppUsersRetrieveUpdateDestroyPermission)
 
 
 class AppUsersView:
+    """
+    Defines the base class for the organizations rest api views.
+    """
+
     ordering_fields = ['id', 'username']
     filterset_fields = {
         'username': ['exact', 'icontains'],
     }
+    organizations_tree_wrt_request = []
 
     def _get_model(self):
         """
-        Returns the get queryset for staff users.
+        Returns the view model.
         """
 
         return AppUser
@@ -31,14 +42,6 @@ class AppUsersView:
         Returns the field with respect to which queries are to be ordered.
         """
         return 'first_name'
-
-    def _get_organizations_tree(self, organization):
-        """
-        Returns the organizations descendents tree given the request type and
-        organzation.
-        """
-        return self.organizations_tree_wrt_request[self.request.method](
-            organization)
 
     def _get_users_in_organizations(self, organizations):
         """
@@ -51,7 +54,7 @@ class AppUsersView:
 class AppUsersListCreateDestroyView(
         CoreListCreateDestroyView, AppUsersView):
     """
-    Defines the organizations list-create-destroy view.
+    Defines the users list-create-destroy view.
     """
 
     queryset = AppUser.objects.none()
@@ -69,9 +72,8 @@ class AppUsersListCreateDestroyView(
 
     def _get_model(self):
         """
-        Returns the get queryset for staff users.
+        Returns the view model.
         """
-
         return AppUsersView._get_model(self)
 
     def _order_by(self):
@@ -103,10 +105,10 @@ class AppUsersListCreateDestroyView(
         organization are returned. In case a list of ids is provided, the
         users are filtered further by ids.
         """
-        print("_get_organization_admin_queryset")
         id_list = self._get_id_list()
-        organizations_tree = self._get_organizations_tree(
-            self.request.user.organization)
+        organizations_tree = \
+            self.organizations_tree_wrt_request[self.request.method](
+                self.request.user.organization)
 
         # get all users in the organizations tree
         users_in_tree = self._get_users_in_organizations(
@@ -119,14 +121,7 @@ class AppUsersListCreateDestroyView(
 
         return users_in_tree
 
-        # get the organization tree of the user if its an admin
-        if id_list:
-            return self._filter_objects_by_id_list(
-                organizations_tree, id_list
-            )
-        return organizations_tree
-
-    def perform_create(self, serializer):
+    def perform_create(self):
         """
         User creation is done through RegisterView from django rest-auth
         """
@@ -144,10 +139,19 @@ class AppUsersRetrieveUpdateDestroyView(
     permission_classes = (AppUsersRetrieveUpdateDestroyPermission,)
 
     def get_serializer_class(self):
+        """
+        Returns separate serializer classes for get/put/patch requests.
+        """
+
         if self.request.method == 'GET':
             return AppUserDetailRetrieveSerializer
         if self.request.method == 'PUT' or self.request.method == 'PATCH':
-            return AppUserDetailUpdateSerializer
+            if self.request.user.is_staff:
+                return AppUserDetailUpdateSerializer
+            elif is_organization_admin(self.request.user):
+                return AppUserDetailOrganizationAdminUpdateSerializer
+            elif is_employee(self.request.user):
+                return AppUserDetailEmployeeUpdateSerializer
         return AppUserDetailRetrieveSerializer
 
     # Define the mapping from request type to query that returns the
@@ -165,7 +169,7 @@ class AppUsersRetrieveUpdateDestroyView(
 
     def _get_model(self):
         """
-        Returns the get queryset for staff users.
+        Returns the view model.
         """
 
         return AppUsersView._get_model(self)
@@ -174,8 +178,8 @@ class AppUsersRetrieveUpdateDestroyView(
         """
         Implements the customized get_queryset functionalty.
         """
-        pk = self.kwargs.get('pk')
-        if pk == "me":
+        primary_key = self.kwargs.get('pk')
+        if primary_key == "self":
             self.kwargs['pk'] = self.request.user.id
             return self._get_model().objects.filter(id=self.request.user.id)
         else:
@@ -210,9 +214,11 @@ class AppUsersRetrieveUpdateDestroyView(
         """
         Returns the get_queryset for organization admin user group
         """
+
         # get all organizations under this users organization
-        organizations_tree = self._get_organizations_tree(
-            self.request.user.organization)
+        organizations_tree = \
+            self.organizations_tree_wrt_request[self.request.method](
+                self.request.user.organization)
 
         # get all users in the tree
         users_in_tree = self._get_users_in_organizations(
@@ -234,14 +240,14 @@ class AppUsersRetrieveUpdateDestroyView(
         # make sure user to be updated is within the admin's authorization
         request_user_organizations = request_user.organization.get_descendants(
             include_self=True)
-        current_organization = app_user_to_update.organization
-        if app_user_to_update.organization not in request_user_organizations:
+        if not request_user_organizations.filter(
+                id=app_user_to_update.organization.id).exists():
             raise exceptions.ValidationError(
                 "Invalid user id.")
 
         to_organization = data.get('organization', None)
-        if to_organization is not None and \
-                to_organization not in request_user_organizations:
+        if to_organization and not request_user_organizations.filter(
+                id=to_organization.id).exists():
             raise exceptions.ValidationError({
                 "organization": "Invalid field."
             })
@@ -268,25 +274,11 @@ class AppUsersRetrieveUpdateDestroyView(
         serializer.save()
 
     def _perform_update_by_employee(self, serializer):
-        data = serializer.validated_data()
         request_user = self.request.user
         app_user_to_update = self.get_object()
 
         # make sure employee is only able to update himself
         if request_user is not app_user_to_update:
             raise exceptions.PermissionDenied()
-
-        # make sure employee cannot update the organization,
-        # authorized_locations and the user groups
-        error = {}
-        request_invalid = False
-        invalid_inputs = ['authorized_locations', 'organizations', 'group']
-        for field in invalid_inputs:
-            if data.get(field, None) is not None:
-                error[field] = "Not authorized to update this field."
-                request_invalid = True
-
-        if request_invalid:
-            raise exceptions.ValidationError(error)
 
         serializer.save()

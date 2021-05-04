@@ -2,14 +2,26 @@
 Defines the base functionality for unit tests generation for our applications.
 """
 
+import random
+import tempfile
+
+from django.conf import settings as django_settings
 from django.contrib.auth.models import Group
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
-from django.urls import include, path, reverse
-from locations.models import Block, Floor, Location
-from organizations.models import Organization
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.http import urlencode
 from rest_framework.authtoken.models import Token
-from rest_framework.test import APITestCase, URLPatternsTestCase
+from rest_framework.test import APITransactionTestCase, URLPatternsTestCase
 from rest_framework_jwt.settings import api_settings
+
+from backend.settings import MEDIA_ROOT
+from cameras.models import Camera
+from deepstream_servers.models import DeepstreamServer
+from locations.models import Block, Floor, Location
+from measurement_frames.models import MeasurementFrame
+from organizations.models import Organization
 from users.models import AppUser
 
 from .permissions import UserGroups
@@ -24,7 +36,8 @@ JWT_ENCODE_HANDLER = api_settings.JWT_ENCODE_HANDLER
 JWT_AUTH = True
 
 
-class TestsBase(APITestCase, URLPatternsTestCase):
+class TestsBase(APITransactionTestCase, URLPatternsTestCase):
+    # pylint: disable=attribute-defined-outside-init
     """
     Generates a test database with example values for different models for
     performing tests
@@ -42,104 +55,163 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             groups[group_name].save()
         return groups
 
-    def create_orgs(self, org_names):
+    def create_orgs_from_data(self, data, orgs=None):
         """
-        Creates new organizations with given name list in the test database
+        Creates new organizations with given data
 
-        :param org_names: List of organization names ['org_1',...'org_n']
-        """
-        orgs = {}
-        for org_name in org_names:
-            orgs[org_name] = Organization(name=org_name)
-            orgs[org_name].save()
-        return orgs
-
-    def create_sub_orgs(self, sub_org_dict, orgs):
-        """
-        Creates new sub-organizations with input sub-organization dictionary
-        mapping sub-organizations to organizations in the test database
-        :param sub_org_dict: Dict of sub_organization, for example
-            {
-                'sub_org_1: 'org_1',
+        :param data: Data of type {
+                'o1': { 'name': 'o1' },
                 ...
-                'sub_org_n': 'org_n'
+                'o2': { 'name': 'o2' },
+                'o3': { 'name': 'o3', parent: 'o1' },
             }
+        :parma orgs: List of already created organizations for parent
+            assignment
         """
-        sub_orgs = {}
-        for (sub_org_name, org_name) in sub_org_dict.items():
-            sub_orgs[sub_org_name] = Organization(
-                name=sub_org_name, parent=orgs.get(org_name))
-            sub_orgs[sub_org_name].save()
-        return sub_orgs
+        item_dict = {}
+        for (item_name, data) in data.items():
+            if orgs:
+                item_dict[item_name] = Organization(
+                    name=data['name'],
+                    parent=orgs.get(data['parent']))
+            else:
+                item_dict[item_name] = Organization(name=data['name'])
+            item_dict[item_name].save()
+        return item_dict
 
-    def create_locations(self, locations_dict, orgs):
+    def create_locations_from_data(self, data, orgs):
         """
-        Creates new locations in the test database according to input
-        locations dictionary mapping locations to organizations
+        Creates new locations with given data
 
-        :param locations_dict: Dict of locations, for example
-            {
-                'location_1': 'org_1',
+        :param data: Data of type {
+                'l1': { 'name': 'l1, organization: 'o1' },
                 ...
-                'location_2': 'org_2',
-                'location_n': 'sub_org_n',
+                'l2': { 'name': 'l2', organization: 'o2' },
+                'l3': { 'name': 'l3', organization: 'o1' },
             }
+        :parma orgs: List of already created organizations for parent
+            assignment
         """
-        locations = {}
-        for (location_name, org_name) in locations_dict.items():
-            locations[location_name] = Location(
-                name=location_name,
-                organization=orgs.get(org_name))
-            locations[location_name].save()
-        return locations
+        item_dict = {}
+        for (item_name, data) in data.items():
+            item_dict[item_name] = \
+                Location(
+                    name=data['name'],
+                    organization=orgs.get(data['organization']))
+            item_dict[item_name].save()
+        return item_dict
 
-    def create_floors(self, floors_dict, locations):
+    def create_floors_from_data(self, data, locations):
         """
-        Creates new floors in the test database according to input
-        floors dictionary mapping floors to locations
+        Creates new floors with given data
 
-        :param floors_dict: Dict of floors, for example
-            {
-                'floor_0_location_1': {
-                    'number': 0, 'location': 'location_1_org_1'},
+        :param data: Data of type {
+                'f0_l1': {
+                    'number': 0, 'location': 'l1_o1'},
                 ...
-                'floor_1_location_1': {
-                    'number': 1, 'location': 'location_1_org_1'},
-                'floor_n_location_1': {
-                    'number': n, 'location': 'location_1_org_1'},
+                'f1_l1': {
+                    'number': 1, 'location': 'l1_o1'},
+                'fn_l1': {
+                    'number': n, 'location': 'l1_o1'},
             }
+        :parma locations: List of already created locations
         """
-        floors = {}
-        for (floor_name, mapping) in floors_dict.items():
-            floors[floor_name] = Floor(
-                number=mapping['number'],
-                location=locations.get(mapping['location']))
-            floors[floor_name].save()
-        return floors
+        item_dict = {}
+        for (item_name, data) in data.items():
+            item_dict[item_name] = Floor(
+                number=data['number'],
+                location=locations.get(data['location']))
+            item_dict[item_name].save()
+        return item_dict
 
-    def create_blocks(self, blocks_dict, floors):
+    def create_blocks_from_data(self, data, floors):
         """
-        Creates new blocks in the test database according to input
-        blocks dictionary mapping blocks to floors
+        Creates new blocks with given data
 
-        :param blocks_dict: Dict of blocks, for example
-            {
-                'block_0_floor_0_location_1': {
-                    'floor': 'floor_0_location_1'},
+        :param data: Data of type {
+                'b0_f0_l1': { 'floor': 'f0', **data },
                 ...
-                'block_1_floor_0_location_1': {
-                    'floor': 'floor_0_location_1'},
-                'block_n_floor_0_location_1': {
-                    'floor': 'floor_0_location_1'},
+                'b1_f0_l1': { 'floor': 'f0', **data },
+                'b2_f2_l1': { 'floor': 'f2', **data },
             }
+        :parma floors: List of already created floors
         """
-        blocks = {}
-        for (block_name, mapping) in blocks_dict.items():
-            blocks[block_name] = Block(
-                name=block_name,
-                floor=floors.get(mapping['floor']))
-            blocks[block_name].save()
-        return blocks
+        item_dict = {}
+        for (item_name, data) in data.items():
+            item_dict[item_name] = Block(
+                name=data['name'],
+                pixels_to_m_x=data['pixels_to_m_x'],
+                pixels_to_m_y=data['pixels_to_m_y'],
+                floor_map=data['floor_map'],
+                floor=floors.get(data['floor']))
+            item_dict[item_name].save()
+        return item_dict
+
+    def create_frames_from_data(self, data, blocks):
+        """
+        Creates new frames with given data
+
+        :param data: Data of type {
+                'f0': { 'block': 'b0_f1_l1', **data },
+                ...
+                'f1': { 'block': 'b0_f2_l1', **data },
+            }
+        :parma blocks: List of already created blocks
+        """
+        item_dict = {}
+        for (item_name, data) in data.items():
+            item_dict[item_name] = MeasurementFrame(
+                name=data['name'],
+                pixel_pose_x=data['pixel_pose_x'],
+                pixel_pose_y=data['pixel_pose_y'],
+                pixel_pose_theta=data['pixel_pose_theta'],
+                block=blocks.get(data['block']))
+            item_dict[item_name].save()
+        return item_dict
+
+    def create_servers_from_data(self, data, orgs):
+        """
+        Creates new deepstream servers with given data
+
+        :param data: Data of type {
+                'd0': { 'block': 'b0_f1_l1', **data },
+                ...
+                'd1': { 'block': 'b0_f2_l1', **data },
+            }
+        :parma orgs: List of already created organizations
+        """
+        item_dict = {}
+        for (item_name, data) in data.items():
+            item_dict[item_name] = DeepstreamServer(
+                ip_addr=data['ip_addr'],
+                mac_addr=data['mac_addr'],
+                connected_at=data['connected_at'],
+                last_echo_at=data['last_echo_at'],
+                organization=orgs.get(data['organization']))
+            item_dict[item_name].save()
+        return item_dict
+
+    def create_cameras_from_data(self, data, blocks):
+        """
+        Creates new cameras with given data
+
+        :param data: Data of type {
+                'c0': { 'block': 'b0_f1_l1', **data },
+                ...
+                'c1': { 'block': 'b0_f2_l1', **data },
+            }
+        :parma blocks: List of already created blocks
+        """
+        item_dict = {}
+        for (item_name, data) in data.items():
+            item_dict[item_name] = Camera(
+                ip_addr=data['ip_addr'],
+                coords=data['coords'],
+                point_coords_in_frame=data['point_coords_in_frame'],
+                point_coords_in_image=data['point_coords_in_image'],
+                block=blocks.get(data['block']))
+            item_dict[item_name].save()
+        return item_dict
 
     def create_users(self, users_dict, groups, orgs, locations):
         """
@@ -151,7 +223,7 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             {
                 'user_1': {
                     'group': 'group_1',
-                    'organization': 'org_1',
+                    'organization': 'o1',
                     'sub_organization': 'sub_org_1',
                 },
                 ...
@@ -170,11 +242,11 @@ class TestsBase(APITestCase, URLPatternsTestCase):
         For employees, authorized_locations must be provided like this:
         'employee_user': {
                     'group': 'employee',
-                    'organization': 'org_1',
+                    'organization': 'o1',
                     'sub_organization': 'sub_org_1',
                     'authorized_locations': [
-                        'location_1_sub_1_org_1',
-                        'location_2_sub_1_org_1'
+                        'l1_sub1_o1',
+                        'l2_sub1_o1'
                     ]
                 },
         """
@@ -209,10 +281,384 @@ class TestsBase(APITestCase, URLPatternsTestCase):
                 tokens[user_name].save()
         return users, tokens
 
+    def get_test_floor_map_image(self):
+        """
+        Returns an uploaded test image.
+        """
+        return SimpleUploadedFile(
+            "test_image.png",
+            content=open(
+                "{}/maps/wing_l.png".format(MEDIA_ROOT), 'rb').read(),
+            content_type='image/png')
+
+    def generate_test_organizations(self):
+        """
+        Generates organizations data in test database for testing purposes.
+        """
+        def generate_organizations_for_parent(org_names, parent_name=None):
+            item_dict = {}
+            for name in org_names:
+                if parent_name:
+                    item_dict['{}_{}'.format(name, parent_name)] = {
+                        'name': name,
+                        'parent': parent_name
+                    }
+                else:
+                    item_dict['{}'.format(name)] = {
+                        'name': name
+                    }
+            return item_dict
+
+        self.os_dict = \
+            generate_organizations_for_parent(
+                ['o1', 'o1', 'o2', 'o3', 'o4_del', 'o5_del'])
+
+        # generate organizations in database
+        self.orgs = self.create_orgs_from_data(self.os_dict)
+
+        # generate sub organizations
+        self.subs_o1_dict = \
+            generate_organizations_for_parent(
+                ['sub1', 'sub2', 'sub3_del', 'sub4_del', 'sub5_del'], 'o1')
+
+        self.subs_o2_dict = \
+            generate_organizations_for_parent(
+                ['sub1', 'sub2', 'sub3', 'sub4_del', 'sub5_del'], 'o2')
+
+        self.subs_o3_dict = \
+            generate_organizations_for_parent(
+                ['sub1', 'sub2', 'sub3_del'], 'o3')
+
+        # generate sub organizations dictionary
+        self.subs_dict = {
+            **self.subs_o1_dict,
+            **self.subs_o2_dict,
+            **self.subs_o3_dict,
+        }
+
+        # update organizations list with sub_organizations in database
+        self.orgs.update(
+            self.create_orgs_from_data(self.subs_dict, self.orgs))
+
+    def generate_test_locations(self):
+        """
+        Generates location data in test database for testing purposes.
+        """
+        def generate_locations_for_organization(
+                location_names, organization_name):
+            item_dict = {}
+            for name in location_names:
+                item_dict['{}_{}'.format(name, organization_name)] = {
+                    'name': name,
+                    'organization': organization_name
+                }
+            return item_dict
+
+        self.ls_o1_dict = \
+            generate_locations_for_organization(
+                ['l1', 'l2', 'l3', 'l4', 'l5'], 'o1')
+
+        self.ls_sub1_o1_dict = \
+            generate_locations_for_organization(
+                ['l1', 'l2', 'l3', 'l4'], 'sub1_o1')
+
+        self.ls_o2_dict = \
+            generate_locations_for_organization(['l1', 'l2', 'l3', 'l4'], 'o2')
+
+        self.ls_sub1_o2_dict = \
+            generate_locations_for_organization(['l1', 'l2'], 'sub1_o2')
+
+        # generate locations of org_3
+        self.ls_o3_dict = \
+            generate_locations_for_organization(['l1', 'l2'], 'o3')
+
+        # generate locations dictionary
+        self.ls_dict = {
+            **self.ls_o1_dict,
+            **self.ls_sub1_o1_dict,
+            **self.ls_o2_dict,
+            **self.ls_sub1_o2_dict,
+            **self.ls_o3_dict,
+        }
+
+        # generate locations in database
+        self.locations = self.create_locations_from_data(
+            self.ls_dict, self.orgs)
+
+    def generate_test_floors(self):
+        """
+        Generates floor data in test database for testing purposes.
+        """
+        def generate_floors_for_location(floor_names, location_name):
+            item_dict = {}
+            for name in floor_names:
+                number = int(''.join([n for n in name if n.isdigit()]))
+                item_dict['{}_{}'.format(name, location_name)] = {
+                    'number': number,
+                    'location': location_name
+                }
+            return item_dict
+
+        self.fs_l1_o1_dict = \
+            generate_floors_for_location(
+                ['f0', 'f1', 'f2', 'f3_del', 'f4_del'],
+                'l1_o1')
+
+        self.fs_l1_sub1_o1_dict = \
+            generate_floors_for_location(
+                ['f0', 'f1', 'f2', 'f3', 'f4'],
+                'l1_sub1_o1')
+
+        self.fs_l1_o2_dict = \
+            generate_floors_for_location(
+                ['f0', 'f1', 'f2'],
+                'l1_o2')
+
+        self.fs_l1_sub1_o2_dict = \
+            generate_floors_for_location(
+                ['f0', 'f1', 'f2'],
+                'l1_sub1_o2')
+
+        self.fs_dict = {
+            **self.fs_l1_o1_dict,
+            **self.fs_l1_sub1_o1_dict,
+            **self.fs_l1_o2_dict,
+            **self.fs_l1_sub1_o2_dict,
+        }
+
+        self.floors = self.create_floors_from_data(
+            self.fs_dict, self.locations)
+
+    def generate_test_blocks(self):
+        """
+        Generates blocks data in test database for testing purposes.
+        """
+        def generate_blocks_for_floor(block_names, floor_name, data):
+            item_dict = {}
+            for name in block_names:
+                item_dict['{}_{}'.format(name, floor_name)] = {
+                    'name': name,
+                    'floor': floor_name,
+                    **data,
+                }
+            return item_dict
+
+        block_data = {
+            'pixels_to_m_x': 40,
+            'pixels_to_m_y': 40,
+            'floor_map': self.get_test_floor_map_image(),
+        }
+        self.bs_f0_l1_o1_dict = \
+            generate_blocks_for_floor(
+                ['b1', 'b2', 'b3_del', 'b4_del', 'b5_del', 'b6_del'],
+                'f0_l1_o1',
+                block_data)
+
+        self.bs_f1_l1_o1_dict = \
+            generate_blocks_for_floor(
+                ['b1', 'b2'],
+                'f1_l1_o1',
+                block_data)
+
+        self.bs_f0_l1_sub1_o1_dict = \
+            generate_blocks_for_floor(
+                ['b1', 'b2', 'b3_del', 'b4_del', 'b5_del'],
+                'f0_l1_sub1_o1',
+                block_data)
+
+        self.bs_f0_l1_o2_dict = \
+            generate_blocks_for_floor(
+                ['b1', 'b2_del', 'b3_del'],
+                'f0_l1_o2',
+                block_data)
+
+        self.bs_f0_l1_sub1_o2_dict = \
+            generate_blocks_for_floor(
+                ['b1', 'b2_del', 'b3_del'],
+                'f0_l1_sub1_o2',
+                block_data)
+
+        self.bs_dict = {
+            **self.bs_f0_l1_o1_dict,
+            **self.bs_f1_l1_o1_dict,
+            **self.bs_f0_l1_sub1_o1_dict,
+            **self.bs_f0_l1_o2_dict,
+            **self.bs_f0_l1_sub1_o2_dict
+        }
+
+        # generate blocks in database
+        self.blocks = self.create_blocks_from_data(self.bs_dict, self.floors)
+
+    def generate_random_mac_addr(self):
+        """
+        Generates a random mac address for testing purposes.
+        """
+        return "02:00:00:%02x:%02x:%02x" % (random.randint(0, 255),
+                                            random.randint(0, 255),
+                                            random.randint(0, 255))
+
+    def generate_test_frames(self):
+        """
+        Generates frames data in test database for testing purposes.
+        """
+        def generate_frames_for_block(frame_names, block_name, data):
+            item_dict = {}
+            for name in frame_names:
+                item_dict['{}_{}'.format(name, block_name)] = {
+                    'name': name,
+                    'block': block_name,
+                    **data,
+                }
+            return item_dict
+
+        frame_data = {
+            'pixel_pose_x': 200,
+            'pixel_pose_y': 100,
+            'pixel_pose_theta': 90,
+        }
+        self.mfs_b1_f0_l1_o1_dict = \
+            generate_frames_for_block(
+                ['mf0', 'mf1', 'mf2_del', 'mf3_del', 'mf4_del', 'mf5_del'],
+                'b1_f0_l1_o1',
+                frame_data)
+        self.mfs_b1_f0_l1_o2_dict = \
+            generate_frames_for_block(
+                ['mf0', 'mf1', 'mf2_del', 'mf3_del'],
+                'b1_f0_l1_o2',
+                frame_data)
+        self.mfs_b1_f0_l1_sub1_o1_dict = \
+            generate_frames_for_block(
+                ['mf0', 'mf1', 'mf2_del', 'mf3_del', 'mf4_del', 'mf5_del'],
+                'b1_f0_l1_sub1_o1',
+                frame_data)
+        self.mfs_b1_f0_l1_sub1_o2_dict = \
+            generate_frames_for_block(
+                ['mf0', 'mf1', 'mf2_del', 'mf3_del'],
+                'b1_f0_l1_sub1_o2',
+                frame_data)
+
+        self.mfs_dict = {
+            **self.mfs_b1_f0_l1_o1_dict,
+            **self.mfs_b1_f0_l1_o2_dict,
+            **self.mfs_b1_f0_l1_sub1_o1_dict,
+            **self.mfs_b1_f0_l1_sub1_o2_dict,
+        }
+
+        # generate blocks in database
+        self.frames = self.create_frames_from_data(self.mfs_dict, self.blocks)
+
+    def generate_test_deepstream_servers(self):
+        """
+        Generates deepstream servers data in test database for testing
+        purposes.
+        """
+        def generate_servers_for_block(names, organization_name, data):
+            item_dict = {}
+            for name in names:
+                item_dict['{}_{}'.format(name, organization_name)] = {
+                    'organization': organization_name,
+                    'mac_addr': self.generate_random_mac_addr(),
+                    **data,
+                }
+            return item_dict
+
+        server_data = {
+            'ip_addr': 'rtsp://192.168.1.1',
+            'connected_at': timezone.now(),
+            'last_echo_at': timezone.now()
+        }
+        self.ds_o1_dict =\
+            generate_servers_for_block(
+                ['ds0', 'ds1', 'ds2_del', 'ds3_del', 'ds4_del', 'ds5_del'],
+                'o1',
+                server_data)
+        self.ds_o2_dict =\
+            generate_servers_for_block(
+                ['ds0', 'ds1', 'ds2_del', 'ds3_del', 'ds4_del', 'ds5_del'],
+                'o2',
+                server_data)
+        self.ds_sub1_o1_dict =\
+            generate_servers_for_block(
+                ['ds0', 'ds1', 'ds2_del', 'ds3_del', 'ds4_del', 'ds5_del'],
+                'sub1_o1',
+                server_data)
+        self.ds_sub1_o2_dict =\
+            generate_servers_for_block(
+                ['ds0', 'ds1', 'ds2_del', 'ds3_del'],
+                'sub1_o2',
+                server_data)
+
+        self.ds_dict = {
+            **self.ds_o1_dict,
+            **self.ds_o2_dict,
+            **self.ds_sub1_o1_dict,
+            **self.ds_sub1_o2_dict,
+        }
+
+        # generate blocks in database
+        self.deepstream_servers = \
+            self.create_servers_from_data(self.ds_dict, self.orgs)
+
+    def generate_test_cameras(self):
+        """
+        Generates cameras data in test database for testing
+        purposes.
+        """
+        def generate_cameras_for_block(names, block_name, data):
+            item_dict = {}
+            for name in names:
+                item_dict['{}_{}'.format(name, block_name)] = {
+                    'block': block_name,
+                    **data,
+                }
+            return item_dict
+
+        camera_data = {
+            'ip_addr': 'rtsp://192.168.1.1',
+            'coords': [0, 0],
+            'point_coords_in_frame': [0, 1, 2, 3, 4, 5, 6, 7],
+            'point_coords_in_image': [0, 1, 2, 3, 4, 5, 6, 7],
+        }
+
+        self.cs_b1_f0_l1_o1_dict =\
+            generate_cameras_for_block(
+                ['c0', 'c1', 'c2_del', 'c3_del', 'c4_del', 'c5_del'],
+                'b1_f0_l1_o1',
+                camera_data)
+        self.cs_b1_f0_l1_o2_dict =\
+            generate_cameras_for_block(
+                ['c0', 'c1', 'c2_del', 'c3_del', 'c4_del', 'c5_del'],
+                'b1_f0_l1_o2',
+                camera_data)
+        self.cs_b1_f0_l1_sub1_o1_dict =\
+            generate_cameras_for_block(
+                ['c0', 'c1', 'c2_del', 'c3_del', 'c4_del', 'c5_del'],
+                'b1_f0_l1_sub1_o1',
+                camera_data)
+        self.cs_b1_f0_l1_sub1_o2_dict =\
+            generate_cameras_for_block(
+                ['c0', 'c1', 'c2_del', 'c3_del'],
+                'b1_f0_l1_sub1_o2',
+                camera_data)
+
+        self.cs_dict = {
+            **self.cs_b1_f0_l1_o1_dict,
+            **self.cs_b1_f0_l1_o2_dict,
+            **self.cs_b1_f0_l1_sub1_o1_dict,
+            **self.cs_b1_f0_l1_sub1_o2_dict,
+        }
+
+        # generate blocks in database
+        self.cameras = \
+            self.create_cameras_from_data(self.cs_dict, self.blocks)
+
     def setUp(self):
         """
         Sets up the test database with example values for different models
         """
+        # set media root to temp file
+        django_settings.MEDIA_ROOT = tempfile.mkdtemp()
+
         # generate test groups
         groups_list = [
             e.name for e in UserGroups]
@@ -220,183 +666,75 @@ class TestsBase(APITestCase, URLPatternsTestCase):
         self.groups = self.create_groups(groups_list)
 
         # generate test organizations
-        self.orgs_list = [
-            'org_1',
-            'org_2',
-            'org_3',
-            'org_4_for_deletion',
-            'org_5_for_deletion']
+        self.generate_test_organizations()
 
-        # generate organizations in database
-        self.orgs = self.create_orgs(self.orgs_list)
-
-        # generate sub organizations of org_1
-        self.org_1_sub_orgs = {
-            'sub_1_org_1': 'org_1',
-            'sub_2_org_1': 'org_1',
-            'sub_3_org_1_for_deletion': 'org_1',
-            'sub_4_org_1_for_deletion': 'org_1',
-            'sub_5_org_1_for_deletion': 'org_1',
-        }
-
-        # generate sub organizations of org_2
-        self.org_2_sub_orgs = {
-            'sub_1_org_2': 'org_2',
-            'sub_2_org_2': 'org_2',
-            'sub_3_org_2': 'org_2',
-            'sub_4_org_2_for_deletion': 'org_2',
-            'sub_5_org_2_for_deletion': 'org_2',
-        }
-
-        # generate sub organizations of org_3
-        self.org_3_sub_orgs = {
-            'sub_1_org_3': 'org_3',
-            'sub_2_org_3': 'org_3',
-            'sub_3_org_3_for_deletion': 'org_3',
-        }
-
-        # generate sub organizations of org_4
-        self.org_4_sub_orgs = {
-            'sub_1_org_4': 'org_4_for_deletion'
-        }
-
-        # generate sub organizations dictionary
-        self.sub_orgs_dict = {
-            **self.org_1_sub_orgs,
-            **self.org_2_sub_orgs,
-            **self.org_3_sub_orgs,
-            **self.org_4_sub_orgs,
-        }
-
-        # update organizations list with sub_organizations in database
-        self.orgs.update(self.create_sub_orgs(self.sub_orgs_dict, self.orgs))
-
-        # generate locations of org_1
-        self.org_1_locations = {
-            'location_1_org_1': 'org_1',
-            'location_2_org_1': 'org_1',
-            'location_3_org_1': 'org_1',
-            'location_4_org_1': 'org_1',
-            'location_5_org_1': 'org_1',
-        }
-
-        # generate locations of sub_1_org_1
-        self.sub_1_org_1_locations = {
-            'location_1_sub_1_org_1': 'sub_1_org_1',
-            'location_2_sub_1_org_1': 'sub_1_org_1',
-            'location_3_sub_1_org_1': 'sub_1_org_1',
-            'location_4_sub_1_org_1': 'sub_1_org_1',
-        }
-
-        # generate locations of org_2
-        self.org_2_locations = {
-            'location_1_org_2': 'org_2',
-            'location_2_org_2': 'org_2',
-            'location_3_org_2': 'org_2',
-        }
-
-        # generate locations of sub_1_org_2
-        self.sub_1_org_2_locations = {
-            'location_1_sub_1_org_2': 'sub_1_org_2',
-            'location_2_sub_1_org_2': 'sub_1_org_2',
-        }
-
-        # generate locations of org_3
-        self.org_3_locations = {
-            'location_1_org_3': 'org_3',
-            'location_2_org_3': 'org_3',
-        }
-
-        # generate locations dictionary
-        self.locations_dict = {
-            **self.org_1_locations,
-            **self.sub_1_org_1_locations,
-            **self.org_2_locations,
-            **self.sub_1_org_2_locations,
-            **self.org_3_locations,
-        }
-
-        # generate locations in database
-        self.locations = self.create_locations(self.locations_dict, self.orgs)
+        # generate test locations
+        self.generate_test_locations()
 
         # generate test floors
-        floors_dict = {
-            'floor_0_location_1': {
-                'number': 0, 'location': 'location_1_org_1'},
-            'floor_1_location_1': {
-                'number': 1, 'location': 'location_1_org_1'},
-            'floor_2_location_1': {
-                'number': 2, 'location': 'location_1_org_1'},
-        }
-        self.floors = self.create_floors(
-            floors_dict, self.locations)
+        self.generate_test_floors()
 
         # generate test blocks
-        blocks_dict = {
-            'block_0_floor_0_location_1': {
-                'floor': 'floor_0_location_1'},
-            'block_1_floor_0_location_1': {
-                'floor': 'floor_0_location_1'},
-            'block_2_floor_0_location_1': {
-                'floor': 'floor_0_location_1'},
-        }
+        self.generate_test_blocks()
 
-        # generate blocks in database
-        self.blocks = self.create_blocks(blocks_dict, self.floors)
+        # generate measurement frames in database
+        self.generate_test_frames()
+
+        # generate deepstream servers data in database
+        self.generate_test_deepstream_servers()
+
+        # generate test cameras data in database
+        self.generate_test_cameras()
 
         # make a list of users with respective properties
         self.users_dict = {
             'staff_user': 'staff',
             'org_1_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'org_1',
+                'organization': 'o1',
             },
             'org_2_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'org_2',
+                'organization': 'o2',
             },
             'org_3_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'org_3',
+                'organization': 'o3',
             },
             'org_4_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'org_4_for_deletion',
+                'organization': 'o4_del',
             },
             'sub_org_11_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'sub_1_org_1',
+                'organization': 'sub1_o1',
             },
             'sub_org_12_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'sub_1_org_2',
+                'organization': 'sub1_o2',
             },
             'sub_org_21_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'sub_2_org_1',
+                'organization': 'sub2_o1',
             },
             'sub_org_22_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'sub_2_org_2',
+                'organization': 'sub2_o2',
             },
             'sub_org_13_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'sub_1_org_3',
+                'organization': 'sub1_o3',
             },
             'sub_org_23_admin_user': {
                 'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'sub_2_org_3',
-            },
-            'sub_org_14_admin_user': {
-                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
-                'organization': 'sub_1_org_4',
+                'organization': 'sub2_o3',
             },
             'employee_user': {
                 'group': UserGroups.EMPLOYEE_GROUP.name,
-                'organization': 'sub_1_org_1',
+                'organization': 'sub1_o1',
                 'authorized_locations': [
-                    'location_1_sub_1_org_1',
-                    'location_2_sub_1_org_1'
+                    'l1_sub1_o1',
+                    'l2_sub1_o1'
                 ]
             },
             'other_user': {
@@ -473,24 +811,34 @@ class TestsBase(APITestCase, URLPatternsTestCase):
         for request in config['request']:
             with self.subTest(request=request, test_name=config['test_name']):
                 if 'args' in request:
-                    url = reverse(path_name, args=request['args'])
+                    url = reverse(path_name, kwargs=request['args'])
                 else:
                     url = reverse(path_name)
 
+                query_params = None
+                if 'query_params' in request:
+                    query_params = urlencode(request['query_params'])
+                    url = '{}?{}'.format(url, query_params)
+
                 data = None
+                data_format = 'json'
                 if 'data' in request:
                     data = request['data']
+
+                if 'data_format' in request:
+                    data_format = request['data_format']
 
                 response_check = None
                 if 'response_check' in request:
                     response_check = request['response_check']
 
-                response = self.call_api(
+                self.call_api(
                     url,
                     data,
                     self.tokens[request['user']],
                     request['status'],
                     config['type'],
+                    data_format=data_format,
                     response_check=response_check)
 
     def call_api(
@@ -500,9 +848,9 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             token,
             status_code,
             api_type,
+            data_format='json',
             response_check=None,
-            debug=True,
-            make_assert=True):
+            debug=True):
         """
         Calls the rest api for tests cases as defined by the input parameters.
         """
@@ -532,7 +880,7 @@ class TestsBase(APITestCase, URLPatternsTestCase):
             response = rest_fn(
                 url,
                 data=data,
-                format='json',
+                format=data_format,
                 HTTP_AUTHORIZATION=auth_string)
         else:
             response = rest_fn(

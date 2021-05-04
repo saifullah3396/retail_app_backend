@@ -5,10 +5,9 @@ Defines the models of this application.
 import uuid
 
 from django.db import models
-from django.contrib.gis.db import models
-from django.contrib.gis.geos import Point
 
 
+# pylint: disable=pointless-string-statement
 class Location(models.Model):
     """
     A model of a location associated with any organization
@@ -18,13 +17,17 @@ class Location(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     """Location name."""
-    name = models.CharField(max_length=120, unique=True)
+    name = models.CharField(max_length=120)
 
     """Organization with which this location is associated."""
     organization = models.ForeignKey(
         'organizations.Organization',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
     )
+
+    class Meta:
+        """Don't allow non-unique locations for any given organization."""
+        unique_together = ('name', 'organization',)
 
     def __str__(self):
         """
@@ -43,12 +46,12 @@ class Floor(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     """Floor number."""
-    number = models.IntegerField(default=0)
+    number = models.PositiveIntegerField()
 
     """Location with which this floor is associated."""
     location = models.ForeignKey(
         'locations.Location',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
     )
 
     class Meta:
@@ -71,19 +74,19 @@ class Block(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     """Name number."""
-    name = models.CharField(default='Main Block', max_length=150)
+    name = models.CharField(max_length=150)
 
     """Block floor map image."""
-    floor_map = models.ImageField(
-        upload_to='maps', blank=True, null=True)
+    floor_map = models.ImageField(upload_to='maps')
 
-    """Local coordinate frame of the floor map of the block."""
-    coordinate_frame = models.PointField(default=Point(0, 0))
+    """Pixel to meters resolution of the block from map to real world"""
+    pixels_to_m_x = models.FloatField()
+    pixels_to_m_y = models.FloatField()
 
     """Floor with which this block is associated."""
     floor = models.ForeignKey(
         'locations.Floor',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
     )
 
     class Meta:

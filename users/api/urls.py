@@ -1,5 +1,11 @@
+"""
+Defines the urls for the views defined in the users api.
+"""
+
 from django.urls import path
-from .views import *
+
+from users.api.views import (AppUsersListCreateDestroyView,
+                             AppUsersRetrieveUpdateDestroyView)
 
 urlpatterns = [
     path(

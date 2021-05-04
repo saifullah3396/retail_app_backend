@@ -1,30 +1,36 @@
-
-from core.utils import *
-from core.views import *
-from django.contrib.auth.models import Group
-from django_filters.rest_framework import DjangoFilterBackend
-from locations.api.serializers import *
-from locations.models import Block, Location
-from locations.permissions import *
-from rest_framework import *
-from rest_framework import filters, pagination
-from rest_framework.generics import *
-from rest_framework.response import Response
-from rest_framework_jwt import authentication
+"""
+Defines the REST API views for floors models.
+"""
 
 
-class BlocksView:
+from rest_framework import exceptions
+
+from core.permissions import UserGroups
+from core.utils import (field_invalid_error, get_employee_authorized_locations,
+                        get_object_by_id,
+                        get_organization_admin_authorized_locations)
+from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
+from locations.api.serializers import (BlockCreateSerializer,
+                                       BlockDetailSerializer,
+                                       BlockListSerializer,
+                                       BlockUpdateSerializer)
+from locations.api.utils import filter_blocks_with_locations
+from locations.models import Block, Floor
+from locations.permissions import (BlocksListCreateDestroyPermission,
+                                   BlocksRetrieveUpdateDestroyPermission)
+
+
+class BlocksListCreateDestroyView(CoreListCreateDestroyView):
+    """
+    Defines the list-create-destroy view for Blocks.
+    """
+
+    queryset = Block.objects.none()  # Added for model permissions
+    permission_classes = (BlocksListCreateDestroyPermission,)
     ordering_fields = ['id', 'name']
     filterset_fields = {
         'name': ['exact', 'icontains'],
     }
-
-    def _get_model(self):
-        """
-        Returns the get queryset for staff users.
-        """
-
-        return Block
 
     def _order_by(self):
         """
@@ -32,306 +38,170 @@ class BlocksView:
         """
         return 'name'
 
-    def _get_queryset_by_staff(self):
+    def _get_list_serializer_class(self):
         """
-        Returns all the floors within any provided location for staff users.
+        Returns the list serializer.
         """
-        location = self._get_location_by_uuid(self.kwargs.get('location_id'))
-        floor = self._get_floor_by_uuid(self.kwargs.get('floor_id'))
-        return self._filter_blocks_with_location_and_floor(location, floor)
+        return BlockListSerializer
 
-    def _get_organizations_tree(self, organization):
+    def _get_create_serializer_class(self):
         """
-        Returns the organizations descendents tree given the request type and
-        organzation.
+        Returns the create serializer.
         """
-        return self.organizations_tree_wrt_request[self.request.method](
-            organization)
+        return BlockCreateSerializer
 
-    def _get_location_by_uuid(self, uuid):
+    def _define_api_handler_by_group(self):
         """
-        Returns the location given its id if it exists
-        """
-        try:
-            return Location.objects.get(id=uuid)
-        except Location.DoesNotExist:
-            raise exceptions.ValidationError(
-                "Queried location does not exist.")
-
-    def _get_floor_by_uuid(self, uuid):
-        """
-        Returns the floor given its id if it exists
-        """
-        try:
-            return Floor.objects.get(id=uuid)
-        except Floor.DoesNotExist:
-            raise exceptions.ValidationError(
-                "Queried floor does not exist.")
-
-    def _get_floors_in_location(self, location):
-        """
-        Returns all floors in given location
-        """
-        return Location.objects.filter(location=location)
-
-    def _get_blocks_in_floor(self, floor):
-        """
-        Returns all blocks in given floor
-        """
-        return Block.objects.filter(floor=floor)
-
-    def _filter_blocks_with_location_and_floor(self, location, floor):
-        """
-        Checks whether the location of the floor and requested location match.
-        After that it returns all the blocks in the given floor.
-        """
-
-        # match location of floor with requested location
-        if floor.location != location:
-            raise exceptions.ValidationError(
-                "Queried floor does not exist in queried location.")
-
-        # get all blocks in requested floor
-        blocks_in_floors = self._get_blocks_in_floor(floor)
-
-        # filter with ids if present
-        id_list = self._get_id_list()
-        if id_list:
-            return self._filter_objects_by_id_list(
-                blocks_in_floors, id_list)
-
-        return blocks_in_floors
-
-
-class BlocksListCreateDestroyView(CoreListCreateDestroyView, BlocksView):
-    """
-    Defines the list-create-destroy view for Block.
-    """
-
-    queryset = Block.objects.none()  # Added for model permissions
-    serializer_class = BlockListSerializer
-    permission_classes = (BlocksListCreateDestroyPermission,)
-
-    # Define the mapping from request type to query that returns the
-    # organizations tree that is used in the requests.
-    organizations_tree_wrt_request = {
-        'GET': lambda organization: organization.get_descendants(
-            include_self=True),
-        'POST': lambda organization: organization.get_descendants(
-            include_self=True),
-    }
-
-    def _get_model(self):
-        """
-        Returns the get queryset for staff users.
-        """
-
-        return BlocksView._get_model(self)
-
-    def _order_by(self):
-        """
-        Returns the field with respect to which queries are to be ordered.
-        """
-        return BlocksView._order_by(self)
-
-    def _get_queryset_by_staff(self):
-        """
-        Returns all the floors within any provided location for staff users.
-        """
-        return BlocksView._get_queryset_by_staff(self)
-
-    def _define_get_queryset_by_group_fn(self):
-        """
-        Returns a dictionary mapping user group to get_queryset function
+        Returns a dictionary mapping user group to rest api handler functions
         that will be called if the request user is in that user group.
         """
+        api_handler_by_group = super()._define_api_handler_by_group()
         return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._get_organization_admin_queryset,
-            UserGroups.EMPLOYEE_GROUP:
-                self._get_employee_queryset,
+            'get': {
+                **api_handler_by_group['get'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._get_organization_admin_queryset,
+                UserGroups.EMPLOYEE_GROUP:
+                    self._get_employee_queryset,
+            },
+            'create': {
+                **api_handler_by_group['create'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._perform_create_by_organization_admin
+            }
         }
 
-    def _define_perform_create_by_group_fn(self):
-        """
-        Returns a dictionary mapping user group to perform_create function
-        that will be called if the request user is in that user group.
-        """
-        return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._perform_create_by_organization_admin
-        }
-
-    def _get_organization_admin_queryset(self):
+    def _get_organization_admin_queryset(self, request):
         """
         For organization admin, all blocks are returned within the queried
-        location and floor as long as the location is within the organization
-        descendents.
+        floor/location as long as the location is authorized.
         """
 
-        # get location and floor
-        location = self._get_location_by_uuid(self.kwargs.get('location_id'))
-        floor = self._get_floor_by_uuid(self.kwargs.get('floor_id'))
+        locations = get_organization_admin_authorized_locations(request.user)
+        blocks = filter_blocks_with_locations(request, locations)
+        return blocks
 
-        # get organizations tree of this admin
-        organizations_tree = self._get_organizations_tree(
-            self.request.user.organization)
-
-        # see if the organization of the location is within descendents of
-        # the organization of this admin.
-        if not organizations_tree.exists(location.organization):
-            raise exceptions.ValidationError("Invalid location provided.")
-
-        return self._filter_blocks_with_location_and_floor(location, floor)
-
-    def _get_employee_queryset(self):
+    def _get_employee_queryset(self, request):
         """
-        For employees, all floors are returned within the queried
-        location as long as the location is within authorized_locations for the
-        employee.
+        For employee, all blocks are returned within the queried
+        floor/location as long as the location is authorized.
         """
 
-        # get location and floor
-        location = self._get_location_by_uuid(self.kwargs.get('location_id'))
-        floor = self._get_floor_by_uuid(self.kwargs.get('floor_id'))
-
-        # see if the organization of the location and the employee match
-        if location.organization != self.user.organization:
-            raise exceptions.ValidationError("Invalid location provided.")
-
-        # see if the location is within employees 'authorized_locations'
-        if location not in self.user.authorized_locations:
-            raise exceptions.ValidationError(
-                "Unauthorized location requested.")
-
-        return self._filter_blocks_with_location_and_floor(location, floor)
+        locations = get_employee_authorized_locations(request.user)
+        return filter_blocks_with_locations(request, locations)
 
     def _perform_create_by_organization_admin(self, serializer):
         """
-        For organization admin, the floor is created within the queried
-        location as long as the location is within the organization
-        descendents.
+        For organization admin, the block is created within the queried
+        floor/location as long as the location is authorized.
         """
 
-        # get location and floor
-        location = self._get_location_by_uuid(self.kwargs.get('location_id'))
-        floor = self._get_floor_by_uuid(self.kwargs.get('floor_id'))
+        # get floor
+        floor = get_object_by_id(
+            Floor, self.request.data.get('floor', None))
 
-        # get organizations tree of this admin
-        organizations_tree = self._get_organizations_tree(
-            self.request.user.organization)
+        if not floor:
+            raise exceptions.ValidationError(
+                {
+                    'floor': field_invalid_error()
+                })
 
-        # see if the organization of the location is within descendents of
-        # the organization of this admin.
-        if not organizations_tree.exists(location.organization):
-            raise exceptions.ValidationError("Invalid location provided.")
+        # see whether floor location is within authorized locations
+        locations = get_organization_admin_authorized_locations(
+            self.request.user)
+        if not locations.filter(id=floor.location.id).exists():
+            raise exceptions.ValidationError(
+                {
+                    'location': field_invalid_error()
+                })
 
         # create floor in db
         serializer.save()
 
 
-class BlocksRetrieveUpdateDestroyView(
-        CoreRetrieveUpdateDestroyView, BlocksView):
+class BlocksRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
     """
-    Defines the retrieve-update-destroy view for floors.
+    Defines the retrieve-update-destroy view for blocks.
     """
 
-    queryset = Location.objects.none()  # Added for model permissions
-    serializer_class = BlockDetailSerializer
-    permission_classes = (LocationsRetrieveUpdateDestroyPermission,)
+    queryset = Block.objects.none()  # Added for model permissions
+    permission_classes = (BlocksRetrieveUpdateDestroyPermission,)
 
-    # Define the mapping from request type to query that returns the
-    # organizations tree that is used in the requests.
-    organizations_tree_wrt_request = {
-        'GET': lambda organization: organization.get_descendants(
-            include_self=True),
-        'POST': lambda organization: organization.get_descendants(
-            include_self=True),
-        'PATCH': lambda organization: organization.get_descendants(
-            include_self=True),
-        'DELETE': lambda organization: organization.get_descendants(
-            include_self=True
-        )
-    }
+    def _get_detail_serializer_class(self):
+        """
+        Returns the detail serializer.
+        """
+        return BlockDetailSerializer
 
-    def _get_model(self):
+    def _get_update_serializer_class(self):
         """
-        Returns the get queryset for staff users.
+        Returns the update serializer.
         """
+        return BlockUpdateSerializer
 
-        return BlocksView._get_model(self)
-
-    def _get_queryset_by_staff(self):
+    def _define_api_handler_by_group(self):
         """
-        Returns all the floors within any provided location for staff users.
-        """
-        return BlocksView._get_queryset_by_staff(self)
-
-    def _define_get_queryset_by_group_fn(self):
-        """
-        Returns a dictionary mapping user group to get_queryset function
+        Returns a dictionary mapping user group to rest api handler functions
         that will be called if the request user is in that user group.
         """
+        api_handler_by_group = super()._define_api_handler_by_group()
         return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._get_organization_admin_queryset,
-            UserGroups.EMPLOYEE_GROUP:
-                self._get_employee_queryset,
+            'get': {
+                **api_handler_by_group['get'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._get_organization_admin_queryset,
+                UserGroups.EMPLOYEE_GROUP:
+                    self._get_employee_queryset,
+            },
+            'update': {
+                **api_handler_by_group['update'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._perform_update_by_organization_admin
+            }
         }
 
-    def _define_perform_update_by_group_fn(self):
-        """
-        Returns a dictionary mapping user group to perform_update function
-        that will be called if the request user is in that user group.
-        """
-        return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._perform_update_by_organization_admin
-        }
-
-    def _get_organization_admin_queryset(self):
+    def _get_organization_admin_queryset(self, request):
         """
         For organization admin, all blocks are returned within the queried
-        location and floor as long as the location is within the organization
-        descendents.
+        floor/location as long as the location is authorized.
         """
 
-        # get location and floor
-        location = self._get_location_by_uuid(self.kwargs.get('location_id'))
-        floor = self._get_floor_by_uuid(self.kwargs.get('floor_id'))
+        locations = get_organization_admin_authorized_locations(request.user)
+        return filter_blocks_with_locations(request, locations)
 
-        # get organizations tree of this admin
-        organizations_tree = self._get_organizations_tree(
-            self.request.user.organization)
-
-        # see if the organization of the location is within descendents of
-        # the organization of this admin.
-        if not organizations_tree.exists(location.organization):
-            raise exceptions.ValidationError("Invalid location provided.")
-
-        return self._filter_blocks_with_location_and_floor(location, floor)
-
-    def _get_employee_queryset(self):
+    def _get_employee_queryset(self, request):
         """
-        For employees, all floors are returned within the queried
-        location as long as the location is within authorized_locations for the
-        employee.
+        For employee, all blocks are returned within the queried
+        floor/location as long as the location is authorized.
         """
 
-        # get location and floor
-        location = self._get_location_by_uuid(self.kwargs.get('location_id'))
-        floor = self._get_floor_by_uuid(self.kwargs.get('floor_id'))
-
-        # see if the organization of the location and the employee match
-        if location.organization != self.user.organization:
-            raise exceptions.ValidationError("Invalid location provided.")
-
-        # see if the location is within employees 'authorized_locations'
-        if location not in self.user.authorized_locations:
-            raise exceptions.ValidationError(
-                "Unauthorized location requested.")
-
-        return self._filter_blocks_with_location_and_floor(location, floor)
+        locations = get_employee_authorized_locations(request.user)
+        return filter_blocks_with_locations(request, locations)
 
     def _perform_update_by_organization_admin(self, serializer):
+        """
+        For organization admin, the block is updated as long as it is within
+        the get queryset
+        """
+
+        if 'floor' in self.request.data:
+            # get floor
+            floor = get_object_by_id(
+                Floor, self.request.data.get('floor', None))
+
+            if not floor:
+                raise exceptions.ValidationError(
+                    {
+                        'floor': field_invalid_error()
+                    })
+
+            # see whether floor location is within authorized locations
+            locations = get_organization_admin_authorized_locations(
+                self.request.user)
+            if not locations.filter(id=floor.location.id).exists():
+                raise exceptions.ValidationError(
+                    {
+                        'location': field_invalid_error()
+                    })
+
         serializer.save()

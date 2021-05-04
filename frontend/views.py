@@ -1,3 +1,7 @@
+"""
+Defines the main react frontend application view to work inside django.
+"""
+
 import logging
 import os
 
@@ -12,11 +16,14 @@ class FrontendAppView(View):
     """
 
     def get(self, request):
+        """
+        Returns the react frontend html on GET call to this view.
+        """
         try:
             with open(
                 os.path.join(
-                    settings.REACT_APP_DIR, 'build', 'index.html')) as f:
-                return HttpResponse(f.read())
+                    settings.REACT_APP_DIR, 'build', 'index.html')) as index:
+                return HttpResponse(index.read())
         except FileNotFoundError:
             logging.exception('Production build of app not found')
             return HttpResponse(

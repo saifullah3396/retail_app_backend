@@ -6,15 +6,13 @@ import copy
 
 from core.permissions import AppDjangoModelPermissions, UserGroups
 
-from .models import Location, Floor, Block
+from .models import Block, Floor, Location
 
-"""
-Define the user group permissions for the models of this application.
-"""
+# Define the user group permissions for the models of this application.
 USER_GROUP_PERMISSIONS = {
     UserGroups.ORGANIZATION_ADMIN_GROUP.name: {
         Location: ['add', 'change', 'view', 'delete'],
-        Floor: ['add', 'change', 'view', 'delete'],
+        Floor: ['add', 'view', 'delete'],  # floor is not changeable
         Block: ['add', 'change', 'view', 'delete']
     },
     UserGroups.EMPLOYEE_GROUP.name: {
@@ -53,6 +51,9 @@ class FloorsListCreateDestroyPermission(AppDjangoModelPermissions):
     def __init__(self):
         self.perms_map = copy.deepcopy(self.perms_map)
         self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
+
+        # a permission that is added to disallow this operation
+        self.perms_map['DELETE'] = ['can_delete_floors_list']
 
 
 class FloorsRetrieveUpdateDestroyPermission(AppDjangoModelPermissions):

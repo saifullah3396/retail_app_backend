@@ -1,28 +1,62 @@
+# pylint: disable=missing-module-docstring
 import uuid
+
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.contrib.gis.db import models
-from django.contrib.gis.geos import Point
 
 
 class Camera(models.Model):
-    # generate unique uuid for each camera
+    """
+    A model of a camera associated with a block.
+    """
+
+    """Unique uuid for each camera."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    # user understandable identifying name for the place where the camera is
-    # mounted
-    place_name = models.CharField(default='Main', max_length=120, unique=True)
-
-    # camera ip address
+    """Camera ip Address."""
     ip_addr = models.CharField(max_length=120)
 
-    # camera coordinates with respect to block frame
-    coords = models.PointField(default=Point(0, 0))
+    """ Coordinates of the camera in image """
+    coords = ArrayField(models.IntegerField(default=0), size=2, null=True)
 
-    # block name with which the camera is associated
+    """ Coordinates of the reference points p0, p1, p2, p3 in frame """
+    point_coords_in_frame = ArrayField(
+        models.IntegerField(default=0), size=8, null=True)
+
+    """ Coordinates of the all the reference points in camera image pixel
+        coordinates """
+    point_coords_in_image = ArrayField(
+        models.IntegerField(default=0), size=8, null=True)
+
+    """ Block name with which the camera is associated """
     block = models.ForeignKey(
         'locations.Block',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
+    )
+
+    """ Server with which the camera is associated """
+    deepstream_server = models.ForeignKey(
+        'deepstream_servers.DeepstreamServer',
+        on_delete=models.PROTECT,
+        null=True
+    )
+
+    """ Frame with which the camera measurements are taken. """
+    measurement_frame = models.ForeignKey(
+        'measurement_frames.MeasurementFrame',
+        on_delete=models.PROTECT,
+        null=True
     )
 
     def __str__(self):
-        return "{}, {}".format(self.place_name, str(self.block))
+        """
+        String serializer of the model
+        """
+        return "Camera={}, {}, {}, {}".format(
+            self.ip_addr,
+            self.coords,
+            self.point_coords_in_frame,
+            self.point_coords_in_image,
+            str(self.deepstream_server),
+            str(self.measurement_frame),
+            str(self.block))

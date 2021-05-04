@@ -6,9 +6,17 @@ from django.contrib.auth.models import Group
 from rest_framework import exceptions, serializers
 
 from core.permissions import UserGroups
+from deepstream_servers.models import DeepstreamServer
+from locations.models import Location
+from organizations.models import Organization
 
 
 class WritableSerializerMethodField(serializers.SerializerMethodField):
+    """A serializer method field that allows both read/write operations.
+
+    Args:
+        method_name (string): Name of the method field
+    """
 
     def __init__(self, method_name=None, **kwargs):
         self.method_name = method_name
@@ -16,14 +24,12 @@ class WritableSerializerMethodField(serializers.SerializerMethodField):
         self.deserializer_field = kwargs.pop('deserializer_field')
 
         kwargs['source'] = '*'
-        super(serializers.SerializerMethodField, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def bind(self, field_name, parent):
-        retval = super().bind(field_name, parent)
+        super().bind(field_name, parent)
         if not self.setter_method_name:
             self.setter_method_name = f'set_{field_name}'
-
-        return retval
 
     def to_internal_value(self, data):
         value = self.deserializer_field.to_internal_value(data)
@@ -62,7 +68,7 @@ def is_in_group(user, group_name):
         return None
 
 
-def get_fn_by_group(user, group_to_fn_map):
+def get_fn_by_user_group(user, group_to_fn_map):
     """
     Returns the function to be called for the user group the user is in
     given the user group to function map.
@@ -98,8 +104,118 @@ def filter_queryset_by_id_list(query_set, id_list):
     return query_set.filter(id__in=id_list)
 
 
+def filter_objects_by_id_list(objects, id_list):
+    """
+    Filters the object by id list. If all ids in the list do not
+    match, a not found exception is raised.
+    """
+    filtered_objects = filter_queryset_by_id_list(
+        objects, id_list)
+
+    # make sure all the given ids are inside filtered objects,
+    # otherwise raise a validation error
+    if len(filtered_objects) != len(id_list):
+        raise exceptions.NotFound(
+            {
+                'id': 'The following requested ids are invalid: {}'.format(
+                    exclude_queryset_by_id_list(
+                        objects, id_list).values_list(
+                        'id', flat=True))
+            })
+    return filtered_objects
+
+
+def get_id_list(request):
+    """
+    Returns the list of ids from API request.
+    """
+    return request.query_params.getlist('id')
+
+
 def exclude_queryset_by_id_list(query_set, id_list):
     """
     Filters a queryset by excluding the given list of ids
     """
     return query_set.exclude(id__in=id_list)
+
+
+def get_staff_authorized_organizations():
+    """
+    Returns the locations authorized to staff user
+    """
+    Organization.objects.all()
+
+
+def get_organization_admin_authorized_organizations(user, include_self=True):
+    """
+    Returns the locations authorized to organization admin user
+    """
+    return user.organization.get_descendants(include_self=include_self)
+
+
+def get_employee_authorized_organizations(user):
+    """
+    Returns the locations authorized to employee user
+    """
+    return [user.organization]
+
+
+def get_staff_authorized_locations():
+    """
+    Returns the locations authorized to staff user
+    """
+    Location.objects.all()
+
+
+def get_organization_admin_authorized_locations(user, include_self=True):
+    """
+    Returns the locations authorized to organization admin user
+    """
+    organizations_tree = user.organization.get_descendants(
+        include_self=include_self)
+    return Location.objects.filter(organization__in=organizations_tree)
+
+
+def get_organization_servers(organization):
+    """
+    Returns the locations authorized to organization admin user
+    """
+    organizations_tree = organization.get_descendants(include_self=True)
+    return DeepstreamServer.objects.filter(organization__in=organizations_tree)
+
+
+def get_employee_authorized_locations(user):
+    """
+    Returns the locations authorized to employee user
+    """
+    return user.authorized_locations.all()
+
+
+def get_object_by_id(model, object_id):
+    """
+    Returns the model for given id
+    """
+    try:
+        return model.objects.get(id=object_id)
+    except model.DoesNotExist:
+        return None
+
+
+def field_not_found_error():
+    """Generates error message for when a field does not exist."""
+    return "Field not found."
+
+
+def field_with_id_not_found_error(field_id):
+    """Generates error message for when a field does not exist."""
+    return "Field with id={} not found.".format(field_id)
+
+
+def field_required_error():
+    """Generates error message for when a field is required."""
+    return "This is a required field."
+
+
+def field_invalid_error():
+    """Generates error message for when a field is invalid."""
+    return "Invalid field."

@@ -9,6 +9,9 @@
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/manage.py",
+            "env": {
+                "PYTHONPATH": "/home/sai/.virtualenvs/django-backend/bin/python;${workspaceFolder}"
+            },
             "args": [
                 "runserver"
             ],

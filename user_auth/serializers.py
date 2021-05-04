@@ -1,15 +1,16 @@
-from allauth.account.adapter import get_adapter
-from allauth.account.utils import setup_user_email
-from core.permissions import UserGroups
-from core.utils import *
-from core.utils import is_in_group
+"""
+Defines the serializers for application user registration/authentication.
+"""
+
 from django.contrib.auth.models import Group
+from rest_auth.registration.serializers import RegisterSerializer
+from rest_framework import exceptions, serializers
+
+from core.permissions import UserGroups
+from core.utils import get_user_from_serializer, is_organization_admin
 from locations.models import Location
 from organizations.models import Organization
-from rest_auth.registration.serializers import RegisterSerializer
-from rest_framework import exceptions, serializers, status
 from users.api.serializers import AppUserDetailRetrieveSerializer
-from users.models import AppUser
 
 
 class RegistrationSerializer(RegisterSerializer):
@@ -31,6 +32,9 @@ class RegistrationSerializer(RegisterSerializer):
         child=serializers.UUIDField(), required=False)
 
     def validate_group(self, group_id):
+        """
+        Validates the group id received as input
+        """
         try:
             group = Group.objects.get(name=group_id)
             user_groups = [g.name for g in UserGroups]
@@ -42,32 +46,43 @@ class RegistrationSerializer(RegisterSerializer):
                     }
                 )
             return group
-        except Group.DoesNotExist:
+        except Group.DoesNotExist as exc:
             raise serializers.ValidationError(
                 'Group of id={} does not exist. Available groups: {}'.format(
-                    group_id, [group.name for group in UserGroups]))
+                    group_id, [group.name for group in UserGroups])) from exc
 
     def validate_organization(self, organization_id):
-
+        """
+        Validates the organization id received as input
+        """
         try:
             return Organization.objects.get(id=organization_id)
-        except Organization.DoesNotExist:
+        except Organization.DoesNotExist as exc:
             raise serializers.ValidationError(
                 'Organization of id={} does not exist.'.format(
-                    organization_id))
+                    organization_id))from exc
 
     def validate_authorized_locations(self, location_ids):
+        """
+        Validates the list of authorized location ids received as input
+        """
         locations = []
         for location_name in location_ids:
             try:
                 location = Location.objects.get(id=location_name)
                 locations.append(location)
-            except Location.DoesNotExist:
+            except Location.DoesNotExist as exc:
                 raise serializers.ValidationError(
-                    'Location {} does not exist.'.format(location_name))
+                    'Location {} does not exist.'.format(location_name)
+                ) from exc
         return locations
 
     def validate_organization_user(self, data, request_user):
+        """
+        Validates whether the request user is allowed to perform this
+        registration.
+        """
+
         organization = data.get('organization')
         if not request_user.is_staff:
             # check if user is organization admin
@@ -91,6 +106,11 @@ class RegistrationSerializer(RegisterSerializer):
                     "Not authorized to register a user.")
 
     def validate_locations_hierarchy(self, data):
+        """
+        Validates whether the request user has the authorization to allocate
+        the input list of ids
+        """
+
         # locations are only updated in case its an employee
         organization = data.get('organization')
         locations = data.get('authorized_locations')
@@ -137,6 +157,7 @@ class RegistrationSerializer(RegisterSerializer):
         return cleaned_data
 
 
+# pylint: disable=abstract-method
 class JWTSerializer(serializers.Serializer):
     """
     Serializer for JWT authentication.
@@ -149,7 +170,6 @@ class JWTSerializer(serializers.Serializer):
         Required to allow using custom USER_DETAILS_SERIALIZER in
         JWTSerializer. Defining it here to avoid circular imports
         """
-        user = get_user_from_serializer(self, raise_exception=True)
         JWTUserDetailsSerializer = AppUserDetailRetrieveSerializer
         user_data = JWTUserDetailsSerializer(
             obj['user'], context=self.context).data

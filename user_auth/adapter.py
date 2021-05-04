@@ -1,11 +1,19 @@
+"""
+Defines the adapters used in user account creation and rest-auth.
+"""
+
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.utils import build_absolute_uri
-from backend import settings
-from core.permissions import UserGroups
 from django.urls import reverse
+
+from core.permissions import UserGroups
 
 
 class AppAccountAdapter(DefaultAccountAdapter):
+    """
+    Custom implements the DefaultAccountAdapter to save our custom AppUser
+    according to our requirements.
+    """
 
     def save_user(self, request, user, form, commit=True):
         user = super().save_user(request, user, form, commit)

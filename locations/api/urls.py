@@ -4,9 +4,12 @@ Defines the urls for the views defined in the locations api.
 
 from django.urls import path
 
-from .views.locations_views import *
-from .views.floors_views import *
-from .views.blocks_views import *
+from .views.blocks_views import (BlocksListCreateDestroyView,
+                                 BlocksRetrieveUpdateDestroyView)
+from .views.floors_views import (FloorsListCreateDestroyView,
+                                 FloorsRetrieveUpdateDestroyView)
+from .views.locations_views import (LocationsListCreateDestroyView,
+                                    LocationsRetrieveUpdateDestroyView)
 
 urlpatterns = [
     path(
@@ -18,19 +21,19 @@ urlpatterns = [
         LocationsRetrieveUpdateDestroyView.as_view(),
         name='locations_retrieve_update_delete'),
     path(
-        '<uuid:location_id>/floors/',
+        'floors/',
         FloorsListCreateDestroyView.as_view(),
         name='floors_list_create_delete'),
     path(
-        '<uuid:location_id>/floors/<pk>',
+        'floors/<pk>',
         FloorsRetrieveUpdateDestroyView.as_view(),
         name='floors_retrieve_update_delete'),
     path(
-        '<uuid:location_id>/floors/<uuid:floor_id>/blocks/',
+        'blocks/',
         BlocksListCreateDestroyView.as_view(),
         name='blocks_list_create_delete'),
     path(
-        '<uuid:location_id>/floors/<uuid:floor_id>/blocks/<pk>',
+        'blocks/<pk>',
         BlocksRetrieveUpdateDestroyView.as_view(),
         name='blocks_retrieve_update_delete'),
 ]

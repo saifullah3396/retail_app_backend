@@ -1,30 +1,34 @@
+"""
+Defines the REST API views for floors models.
+"""
 
-from core.utils import *
-from core.views import *
-from django.contrib.auth.models import Group
-from django_filters.rest_framework import DjangoFilterBackend
-from locations.api.serializers import *
+from rest_framework import exceptions
+
+from core.permissions import UserGroups
+from core.utils import (field_invalid_error, get_employee_authorized_locations,
+                        get_organization_admin_authorized_locations)
+from core.views import CoreListCreateDestroyView, CoreRetrieveUpdateDestroyView
+from locations.api.serializers import (FloorCreateSerializer,
+                                       FloorDetailSerializer,
+                                       FloorListSerializer,
+                                       FloorUpdateSerializer)
+from locations.api.utils import filter_floors_with_locations
 from locations.models import Floor, Location
-from locations.permissions import *
-from rest_framework import *
-from rest_framework import filters, pagination
-from rest_framework.generics import *
-from rest_framework.response import Response
-from rest_framework_jwt import authentication
+from locations.permissions import (FloorsListCreateDestroyPermission,
+                                   FloorsRetrieveUpdateDestroyPermission)
 
 
-class FloorsView:
+class FloorsListCreateDestroyView(CoreListCreateDestroyView):
+    """
+    Defines the list-create-destroy view for Floor.
+    """
+
+    queryset = Floor.objects.none()  # Added for model permissions
+    permission_classes = (FloorsListCreateDestroyPermission,)
     ordering_fields = ['id', 'number']
     filterset_fields = {
         'number': ['exact'],
     }
-
-    def _get_model(self):
-        """
-        Returns the get queryset for staff users.
-        """
-
-        return Floor
 
     def _order_by(self):
         """
@@ -32,284 +36,163 @@ class FloorsView:
         """
         return 'number'
 
-    def _get_queryset_by_staff(self):
+    def _get_list_serializer_class(self):
         """
-        Returns all the floors within any provided location for staff users.
+        Returns the list serializer.
         """
-        uuid = self.kwargs.get('location_id')
-        location = self._get_location_by_uuid(uuid)
-        return self._filter_floors_with_location(location)
+        return FloorListSerializer
 
-    def _get_organizations_tree(self, organization):
+    def _get_create_serializer_class(self):
         """
-        Returns the organizations descendents tree given the request type and
-        organzation.
+        Returns the create serializer.
         """
-        return self.organizations_tree_wrt_request[self.request.method](
-            organization)
+        return FloorCreateSerializer
 
-    def _get_location_by_uuid(self, uuid):
-        try:
-            return Location.objects.get(id=uuid)
-        except Location.DoesNotExist:
-            raise exceptions.ValidationError(
-                "Queried location does not exist.")
-
-    def _get_floors_in_location(self, location):
-        return Floor.objects.filter(location=location)
-
-    def _filter_floors_with_location(self, location):
-        # get all floors of the requested location
-        floors_in_location = self._get_floors_in_location(location)
-
-        # filter with ids if present
-        id_list = self._get_id_list()
-        if id_list:
-            return self._filter_objects_by_id_list(
-                floors_in_location, id_list)
-
-        return floors_in_location
-
-
-class FloorsListCreateDestroyView(CoreListCreateDestroyView, FloorsView):
-    """
-    Defines the list-create-destroy view for Floor.
-    """
-
-    queryset = Floor.objects.none()  # Added for model permissions
-    serializer_class = FloorListSerializer
-    permission_classes = (FloorsListCreateDestroyPermission,)
-
-    # Define the mapping from request type to query that returns the
-    # organizations tree that is used in the requests.
-    organizations_tree_wrt_request = {
-        'GET': lambda organization: organization.get_descendants(
-            include_self=True),
-        'POST': lambda organization: organization.get_descendants(
-            include_self=True),
-    }
-
-    def _get_model(self):
+    def _define_api_handler_by_group(self):
         """
-        Returns the model of this view
-        """
-
-        return FloorsView._get_model(self)
-
-    def _order_by(self):
-        """
-        Returns the field with respect to which queries are to be ordered.
-        """
-        return FloorsView._order_by(self)
-
-    def _get_queryset_by_staff(self):
-        """
-        Returns all the floors within any provided location for staff users.
-        """
-        return FloorsView._get_queryset_by_staff(self)
-
-    def _define_get_queryset_by_group_fn(self):
-        """
-        Returns a dictionary mapping user group to get_queryset function
+        Returns a dictionary mapping user group to rest api handler functions
         that will be called if the request user is in that user group.
         """
+        api_handler_by_group = super()._define_api_handler_by_group()
         return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._get_organization_admin_queryset,
-            UserGroups.EMPLOYEE_GROUP:
-                self._get_employee_queryset,
+            'get': {
+                **api_handler_by_group['get'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._get_organization_admin_queryset,
+                UserGroups.EMPLOYEE_GROUP:
+                    self._get_employee_queryset,
+            },
+            'create': {
+                **api_handler_by_group['create'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._perform_create_by_organization_admin
+            }
         }
 
-    def _define_perform_create_by_group_fn(self):
+    def _get_organization_admin_queryset(self, request):
         """
-        Returns a dictionary mapping user group to perform_create function
-        that will be called if the request user is in that user group.
-        """
-        return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._perform_create_by_organization_admin
-        }
-
-    def _get_organization_admin_queryset(self):
-        """
-        For organization admin, all floors are returned within the queried
-        location as long as the location is within the organization
-        descendents.
+        For organization admin, all floors are returned as long as the
+        floor location is authorized to the user.
         """
 
-        # get location uid
-        uuid = self.kwargs.get('location_id')
+        locations = get_organization_admin_authorized_locations(request.user)
+        return filter_floors_with_locations(request, locations)
 
-        # get the location
-        location = self._get_location_by_uuid(uuid)
-
-        # get organizations tree of this admin
-        organizations_tree = self._get_organizations_tree(
-            self.request.user.organization)
-
-        # see if the organization of the location is within descendents of
-        # the organization of this admin.
-        if not organizations_tree.exists(location.organization):
-            raise exceptions.ValidationError("Invalid location provided.")
-
-        return self._filter_floors_with_location(location)
-
-    def _get_employee_queryset(self):
+    def _get_employee_queryset(self, request):
         """
         For employees, all floors are returned within the queried
         location as long as the location is within authorized_locations for the
         employee.
         """
 
-        # get location uid
-        uuid = self.kwargs.get('location_id')
-
-        # get the location
-        location = self._get_location_by_uuid(uuid)
-
-        # see if the organization of the location and the employee match
-        if location.organization != self.user.organization:
-            raise exceptions.ValidationError("Invalid location provided.")
-
-        # see if the location is within employees 'authorized_locations'
-        if location not in self.user.authorized_locations:
-            raise exceptions.ValidationError(
-                "Unauthorized location requested.")
-
-        return self._filter_floors_with_location(location)
+        # get all locations authorized to user
+        locations = get_employee_authorized_locations(request.user)
+        return filter_floors_with_locations(request, locations)
 
     def _perform_create_by_organization_admin(self, serializer):
         """
-        For organization admin, the floor is created within the queried
-        location as long as the location is within the organization
-        descendents.
+        For organization admin, the floor is created as long as the
+        floor location is authorized to the user.
         """
 
-        # get location uid
-        uuid = self.kwargs.get('location_id')
-
-        # get the location
-        location = self._get_location_by_uuid(uuid)
-
-        # get organizations tree of this admin
-        organizations_tree = self._get_organizations_tree(
-            self.request.user.organization)
-
-        # see if the organization of the location is within descendents of
-        # the organization of this admin.
-        if not organizations_tree.exists(location.organization):
-            raise exceptions.ValidationError("Invalid location provided.")
+        # get all locations authorized to user
+        locations = \
+            get_organization_admin_authorized_locations(self.request.user)
+        if not locations.filter(id=self.request.data.get('location', None)):
+            raise exceptions.ValidationError(
+                {
+                    'location': field_invalid_error()
+                })
 
         # create floor in db
         serializer.save()
 
+    def delete(self, request, *args, **kwargs):
+        """Removes the ability to delete floors by a list of ids."""
+        raise exceptions.PermissionDenied()
 
-class FloorsRetrieveUpdateDestroyView(
-        CoreRetrieveUpdateDestroyView, FloorsView):
+
+class FloorsRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
     """
     Defines the retrieve-update-destroy view for floors.
     """
 
-    queryset = Location.objects.none()  # Added for model permissions
-    serializer_class = FloorDetailSerializer
-    permission_classes = (LocationsRetrieveUpdateDestroyPermission,)
+    queryset = Floor.objects.none()  # Added for model permissions
+    permission_classes = (FloorsRetrieveUpdateDestroyPermission,)
 
-    # Define the mapping from request type to query that returns the
-    # organizations tree that is used in the requests.
-    organizations_tree_wrt_request = {
-        'GET': lambda organization: organization.get_descendants(
-            include_self=True),
-        'POST': lambda organization: organization.get_descendants(
-            include_self=True),
-        'PATCH': lambda organization: organization.get_descendants(
-            include_self=True),
-        'DELETE': lambda organization: organization.get_descendants(
-            include_self=True
-        )
-    }
+    def _get_detail_serializer_class(self):
+        """
+        Returns the detail serializer.
+        """
+        return FloorDetailSerializer
 
-    def _get_model(self):
+    def _get_update_serializer_class(self):
         """
-        Returns the model of this view
+        Returns the update serializer.
         """
+        return FloorUpdateSerializer
 
-        return FloorsView._get_model(self)
-
-    def _get_queryset_by_staff(self):
+    def _define_api_handler_by_group(self):
         """
-        Returns all the floors within any provided location for staff users.
-        """
-        return FloorsView._get_queryset_by_staff(self)
-
-    def _define_get_queryset_by_group_fn(self):
-        """
-        Returns a dictionary mapping user group to get_queryset function
+        Returns a dictionary mapping user group to rest api handler functions
         that will be called if the request user is in that user group.
         """
+        api_handler_by_group = super()._define_api_handler_by_group()
         return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._get_organization_admin_queryset,
-            UserGroups.EMPLOYEE_GROUP:
-                self._get_employee_queryset,
+            'get': {
+                **api_handler_by_group['get'],
+                UserGroups.ORGANIZATION_ADMIN_GROUP:
+                    self._get_organization_admin_queryset,
+                UserGroups.EMPLOYEE_GROUP:
+                    self._get_employee_queryset,
+            },
+            'update': {
+                **api_handler_by_group['update']
+            }
         }
 
-    def _define_perform_update_by_group_fn(self):
+    def _get_organization_admin_queryset(self, request):
         """
-        Returns a dictionary mapping user group to perform_update function
-        that will be called if the request user is in that user group.
-        """
-        return {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                self._perform_update_by_organization_admin
-        }
-
-    def _get_organization_admin_queryset(self):
-        """
-        For organization admin, all floors are returned within the queried
-        location as long as the location is within the organization
-        descendents.
+        For organization admin, all floors are returned as long as the
+        floor location is authorized to the user.
         """
 
-        # get location uid
-        uuid = self.kwargs.get('location_id')
+        locations = get_organization_admin_authorized_locations(
+            request.user)
+        return filter_floors_with_locations(request, locations)
 
-        # get the location
-        location = self._get_location_by_uuid(uuid)
-
-        # get organizations tree of this admin
-        organizations_tree = self._get_organizations_tree(
-            self.request.user.organization)
-
-        # see if the organization of the location is within descendents of
-        # the organization of this admin.
-        if not organizations_tree.exists(location.organization):
-            raise exceptions.ValidationError("Invalid location provided.")
-
-        return self._filter_floors_with_location(location)
-
-    def _get_employee_queryset(self):
+    def _get_employee_queryset(self, request):
         """
         For employees, all floors are returned within the queried
         location as long as the location is within authorized_locations for the
         employee.
         """
 
-        # get location uid
-        uuid = self.kwargs.get('location_id')
+        locations = get_employee_authorized_locations(request.user)
+        return filter_floors_with_locations(request, locations)
 
-        # get the location
-        location = self._get_location_by_uuid(uuid)
-
-        # see if the organization of the location and the employee match
-        if location.organization != self.user.organization:
-            raise exceptions.ValidationError("Invalid location provided.")
-
-        # see if the location is within employees 'authorized_locations'
-        if location not in self.user.authorized_locations:
+    def perform_destroy(self, instance):
+        """
+        Implements the customized destroy functionalty for a floor
+        """
+        # get all floors in this floor's location
+        floors = Floor.objects.filter(
+            location=instance.location).order_by('number')
+        if instance.number != floors.last().number:
             raise exceptions.ValidationError(
-                "Unauthorized location requested.")
+                "Cannot be deleted. Higher floors depend on this floor.")
 
-        return self._filter_floors_with_location(location)
+        # pylint: disable=no-member
+        super().perform_destroy(instance)
 
-    def _perform_update_by_organization_admin(self, serializer):
-        serializer.save()
+    def put(self, request, *args, **kwargs):
+        """
+        Removes functionality to call PUT on a floor
+        """
+        raise exceptions.PermissionDenied()
+
+    def patch(self, request, *args, **kwargs):
+        """
+        Removes functionality to call PATCH on a floor
+        """
+        raise exceptions.PermissionDenied()

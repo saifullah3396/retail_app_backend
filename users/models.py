@@ -1,19 +1,23 @@
+"""
+Defines the model of an organization
+"""
 import uuid
-from django.db import models
-from django.contrib.auth.models import AbstractUser, UserManager
+
 from allauth.account.models import EmailAddress
-from backend import settings
+from django.contrib.auth.models import AbstractUser, UserManager
+from django.db import models
 
 
 class AppUserManager(UserManager):
+    """
+    Custom implements the user creation functions of UserManager.
+    """
+
     def create_user(self, username, email=None, password=None, **extra_fields):
         return self._create_user(username, email, password, **extra_fields)
 
     def create_superuser(
-            self,
-            username,
-            email,
-            password):
+            self, username, email=None, password=None, **extra_fields):
         """
         Creates and saves a superuser with the given email, date of
         birth and password.
@@ -51,7 +55,7 @@ class AppUser(AbstractUser):
     # organization with which this user is associated
     organization = models.ForeignKey(
         'organizations.Organization',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         null=True,
         blank=True
     )
