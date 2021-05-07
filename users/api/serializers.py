@@ -61,21 +61,27 @@ class AppUserListSerializer(serializers.ModelSerializer):
             'organization']
 
 
-class AppUserDetailOrganizationSerializer(serializers.ModelSerializer):
+class AppUserCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AppUser
+        fields = []
+
+
+class AppUserRetrieveOrganizationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Organization
         fields = ['id', 'name', 'parent']
 
 
-class AppUserDetailLocationSerializer(serializers.ModelSerializer):
+class AppUserRetrieveLocationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Location
         fields = ['id', 'name', 'organization']
 
 
-class AppUserDetailRetrieveSerializer(serializers.ModelSerializer):
+class AppUserRetrieveSerializer(serializers.ModelSerializer):
     group = serializers.SerializerMethodField(read_only=True)
     authorized_locations = serializers.SerializerMethodField(read_only=True)
     organization = serializers.SerializerMethodField(read_only=True)
@@ -121,7 +127,7 @@ class AppUserDetailRetrieveSerializer(serializers.ModelSerializer):
             locations = \
                 get_fn_by_user_group(
                     instance, self.group_to_locations_fn)(instance)
-        return AppUserDetailLocationSerializer(locations, many=True).data
+        return AppUserRetrieveLocationSerializer(locations, many=True).data
 
     def get_organization(self, instance):
         """
@@ -135,7 +141,7 @@ class AppUserDetailRetrieveSerializer(serializers.ModelSerializer):
             organizations = \
                 get_fn_by_user_group(
                     instance, self.group_to_organizations_fn)(instance)
-        return AppUserDetailOrganizationSerializer(
+        return AppUserRetrieveOrganizationSerializer(
             organizations, many=True).data
 
     class Meta:
@@ -163,7 +169,7 @@ class AppUserDetailRetrieveSerializer(serializers.ModelSerializer):
         }
 
 
-class AppUserDetailUpdateSerializer(serializers.ModelSerializer):
+class AppUserUpdateSerializer(serializers.ModelSerializer):
     group = serializers.CharField(required=False)
     organization = serializers.UUIDField(required=False)
     authorized_locations = serializers.ListField(
@@ -269,15 +275,15 @@ class AppUserDetailUpdateSerializer(serializers.ModelSerializer):
         }
 
 
-class AppUserDetailOrganizationAdminUpdateSerializer(
-        AppUserDetailUpdateSerializer):
+class AppUserOrganizationAdminUpdateSerializer(
+        AppUserUpdateSerializer):
     group = serializers.CharField(required=False)
     organization = serializers.UUIDField(required=False)
     authorized_locations = serializers.ListField(
         child=serializers.UUIDField(), required=False)
 
 
-class AppUserDetailEmployeeUpdateSerializer(AppUserDetailUpdateSerializer):
+class AppUserEmployeeUpdateSerializer(AppUserUpdateSerializer):
     group = serializers.CharField(required=False, read_only=True)
     organization = serializers.UUIDField(required=False, read_only=True)
     authorized_locations = serializers.ListField(
