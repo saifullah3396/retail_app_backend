@@ -72,17 +72,20 @@ class BaseAPIHandler:
         """
         Implements the customized get_queryset functionalty.
         """
-        if user.is_staff:
-            return self._api_handler_by_group[request_type]['staff'](
-                *args, **kwargs)
-        else:
-            if user.organization:
-                return get_fn_by_user_group(
-                    user, self._api_handler_by_group[request_type])(
-                        *args, **kwargs)
+
+        api_fn = None
+        if request_type in self._api_handler_by_group:
+            if user.is_staff:
+                if 'staff' in self._api_handler_by_group[request_type]:
+                    api_fn = self._api_handler_by_group[request_type]['staff']
             else:
-                raise exceptions.PermissionDenied(
-                    {"detail": "You must be part of an organization."})
+                if user.organization:
+                    api_fn = get_fn_by_user_group(
+                        user, self._api_handler_by_group[request_type])
+
+        if api_fn is None:
+            raise exceptions.PermissionDenied()
+        return api_fn(*args, **kwargs)
 
 
 class CoreAPIViewBase(GenericAPIView):
