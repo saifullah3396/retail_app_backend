@@ -10,7 +10,7 @@ from core.permissions import UserGroups
 from core.utils import get_user_from_serializer, is_organization_admin
 from locations.models import Location
 from organizations.models import Organization
-from users.api.serializers import AppUserDetailRetrieveSerializer
+from users.api.serializers import AppUserRetrieveSerializer
 
 
 class RegistrationSerializer(RegisterSerializer):
@@ -170,7 +170,7 @@ class JWTSerializer(serializers.Serializer):
         Required to allow using custom USER_DETAILS_SERIALIZER in
         JWTSerializer. Defining it here to avoid circular imports
         """
-        JWTUserDetailsSerializer = AppUserDetailRetrieveSerializer
+        JWTUserDetailsSerializer = AppUserRetrieveSerializer
         user_data = JWTUserDetailsSerializer(
             obj['user'], context=self.context).data
         return user_data
