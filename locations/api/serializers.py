@@ -152,11 +152,7 @@ class FloorDetailSerializer(serializers.ModelSerializer):
 class FloorUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Floor
-        fields = ('id', 'number', 'location')
-        extra_kwargs = {
-            'number': {'read_only': True},
-            'location': {'read_only': True}
-        }
+        fields = []
 
     def update(self, instance, validated_data):
         try:
