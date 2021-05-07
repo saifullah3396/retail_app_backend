@@ -146,9 +146,7 @@ class FloorsRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
                 UserGroups.EMPLOYEE_GROUP:
                     self._get_employee_queryset,
             },
-            'update': {
-                **api_handler_by_group['update']
-            }
+            'update': {}
         }
 
     def _get_organization_admin_queryset(self, request):
@@ -184,15 +182,3 @@ class FloorsRetrieveUpdateDestroyView(CoreRetrieveUpdateDestroyView):
 
         # pylint: disable=no-member
         super().perform_destroy(instance)
-
-    def put(self, request, *args, **kwargs):
-        """
-        Removes functionality to call PUT on a floor
-        """
-        raise exceptions.PermissionDenied()
-
-    def patch(self, request, *args, **kwargs):
-        """
-        Removes functionality to call PATCH on a floor
-        """
-        raise exceptions.PermissionDenied()
