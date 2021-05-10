@@ -661,7 +661,7 @@ class TestsBase(APITransactionTestCase, URLPatternsTestCase):
 
         # generate test groups
         groups_list = [
-            e.name for e in UserGroups]
+            group_enum.value for group_enum in UserGroups]
         groups_list.append('OTHER_GROUP')
         self.groups = self.create_groups(groups_list)
 
@@ -690,47 +690,47 @@ class TestsBase(APITransactionTestCase, URLPatternsTestCase):
         self.users_dict = {
             'staff_user': 'staff',
             'org_1_admin_user': {
-                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
+                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.value,
                 'organization': 'o1',
             },
             'org_2_admin_user': {
-                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
+                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.value,
                 'organization': 'o2',
             },
             'org_3_admin_user': {
-                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
+                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.value,
                 'organization': 'o3',
             },
             'org_4_admin_user': {
-                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
+                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.value,
                 'organization': 'o4_del',
             },
             'sub_org_11_admin_user': {
-                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
+                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.value,
                 'organization': 'sub1_o1',
             },
             'sub_org_12_admin_user': {
-                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
+                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.value,
                 'organization': 'sub1_o2',
             },
             'sub_org_21_admin_user': {
-                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
+                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.value,
                 'organization': 'sub2_o1',
             },
             'sub_org_22_admin_user': {
-                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
+                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.value,
                 'organization': 'sub2_o2',
             },
             'sub_org_13_admin_user': {
-                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
+                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.value,
                 'organization': 'sub1_o3',
             },
             'sub_org_23_admin_user': {
-                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.name,
+                'group': UserGroups.ORGANIZATION_ADMIN_GROUP.value,
                 'organization': 'sub2_o3',
             },
             'employee_user': {
-                'group': UserGroups.EMPLOYEE_GROUP.name,
+                'group': UserGroups.EMPLOYEE_GROUP.value,
                 'organization': 'sub1_o1',
                 'authorized_locations': [
                     'l1_sub1_o1',

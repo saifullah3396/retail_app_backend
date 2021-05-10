@@ -10,12 +10,12 @@ from core.permissions import AppDjangoModelPermissions, UserGroups
 # Define the user group permissions for the Organization model.
 USER_GROUP_PERMISSIONS = {
     # add organization admin permissions on Camera
-    UserGroups.ORGANIZATION_ADMIN_GROUP.name: {
+    UserGroups.ORGANIZATION_ADMIN_GROUP: {
         Camera: ['add', 'change', 'view', 'delete'],
     },
 
     # add employee permissions on Cameras
-    UserGroups.EMPLOYEE_GROUP.name: {
+    UserGroups.EMPLOYEE_GROUP: {
         Camera: ['view'],
     },
 }

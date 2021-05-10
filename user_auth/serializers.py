@@ -31,13 +31,13 @@ class RegistrationSerializer(RegisterSerializer):
     authorized_locations = serializers.ListField(
         child=serializers.UUIDField(), required=False)
 
-    def validate_group(self, group_id):
+    def validate_group(self, group_name):
         """
         Validates the group id received as input
         """
         try:
-            group = Group.objects.get(name=group_id)
-            user_groups = [g.name for g in UserGroups]
+            group = Group.objects.get(name=group_name)
+            user_groups = [g.value for g in UserGroups]
             if group.name not in user_groups:
                 raise serializers.ValidationError(
                     {
@@ -49,7 +49,7 @@ class RegistrationSerializer(RegisterSerializer):
         except Group.DoesNotExist as exc:
             raise serializers.ValidationError(
                 'Group of id={} does not exist. Available groups: {}'.format(
-                    group_id, [group.name for group in UserGroups])) from exc
+                    group_name, [g.value for g in UserGroups])) from exc
 
     def validate_organization(self, organization_id):
         """
@@ -170,7 +170,6 @@ class JWTSerializer(serializers.Serializer):
         Required to allow using custom USER_DETAILS_SERIALIZER in
         JWTSerializer. Defining it here to avoid circular imports
         """
-        JWTUserDetailsSerializer = AppUserRetrieveSerializer
-        user_data = JWTUserDetailsSerializer(
+        user_data = AppUserRetrieveSerializer(
             obj['user'], context=self.context).data
         return user_data

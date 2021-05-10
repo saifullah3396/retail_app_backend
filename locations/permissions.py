@@ -10,12 +10,12 @@ from .models import Block, Floor, Location
 
 # Define the user group permissions for the models of this application.
 USER_GROUP_PERMISSIONS = {
-    UserGroups.ORGANIZATION_ADMIN_GROUP.name: {
+    UserGroups.ORGANIZATION_ADMIN_GROUP: {
         Location: ['add', 'change', 'view', 'delete'],
         Floor: ['add', 'view', 'delete'],  # floor is not changeable
         Block: ['add', 'change', 'view', 'delete']
     },
-    UserGroups.EMPLOYEE_GROUP.name: {
+    UserGroups.EMPLOYEE_GROUP: {
         Location: ['view'],
         Floor: ['view'],
         Block: ['view']

@@ -30,7 +30,7 @@ class AppAccountAdapter(DefaultAccountAdapter):
             user.organization = organization
 
         # add all authorized locations to user if its an employee
-        if group.name == UserGroups.EMPLOYEE_GROUP.name:
+        if group.name == UserGroups.EMPLOYEE_GROUP:
             locations = data.get('authorized_locations')
             if locations is not None:
                 for location in locations:

@@ -11,12 +11,12 @@ from .models import Organization
 # Define the user group permissions for the Organization model.
 USER_GROUP_PERMISSIONS = {
     # add organization admin permissions on Organization
-    UserGroups.ORGANIZATION_ADMIN_GROUP.name: {
+    UserGroups.ORGANIZATION_ADMIN_GROUP: {
         Organization: ['add', 'change', 'view', 'delete'],
     },
 
     # add employee permissions on Organization
-    UserGroups.EMPLOYEE_GROUP.name: {
+    UserGroups.EMPLOYEE_GROUP: {
         Organization: ['view'],
     },
 }

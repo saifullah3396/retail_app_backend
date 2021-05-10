@@ -43,10 +43,10 @@ class AppUserListSerializer(serializers.ModelSerializer):
         """
 
         if instance.is_staff:
-            return 'SUPER_USER_GROUP'
+            return 'super_user'
 
-        for group in UserGroups:
-            group = instance.groups.filter(name=group.name)
+        for group_enum in UserGroups:
+            group = instance.groups.filter(name=group_enum.value)
             if group.exists():
                 return group.first().name
 
@@ -96,22 +96,16 @@ class AppUserRetrieveSerializer(serializers.ModelSerializer):
                 get_employee_authorized_locations
         }
 
-        self.group_to_organizations_fn = {
-            UserGroups.ORGANIZATION_ADMIN_GROUP:
-                get_organization_admin_authorized_organizations,
-            UserGroups.EMPLOYEE_GROUP: get_employee_authorized_organizations
-        }
-
     def get_group(self, instance):
         """
         Returns the name of the user group assigned to this user.
         """
 
         if instance.is_staff:
-            return 'SUPER_USER_GROUP'
+            return 'super_user'
 
-        for group in UserGroups:
-            group = instance.groups.filter(name=group.name)
+        for group_enum in UserGroups:
+            group = instance.groups.filter(name=group_enum.value)
             if group.exists():
                 return group.first().name
 
@@ -121,9 +115,7 @@ class AppUserRetrieveSerializer(serializers.ModelSerializer):
         """
 
         locations = Location.objects.none()
-        if instance.is_staff:
-            locations = get_staff_authorized_locations()
-        else:
+        if not instance.is_staff:
             locations = \
                 get_fn_by_user_group(
                     instance, self.group_to_locations_fn)(instance)
@@ -131,18 +123,14 @@ class AppUserRetrieveSerializer(serializers.ModelSerializer):
 
     def get_organization(self, instance):
         """
-        Returns details of all the organizations authorized to this user.
+        Returns the user organization
         """
 
-        organizations = Organization.objects.none()
-        if instance.is_staff:
-            organizations = get_staff_authorized_organizations()
+        if not instance.is_staff:
+            return AppUserRetrieveOrganizationSerializer(
+                instance.organization).data
         else:
-            organizations = \
-                get_fn_by_user_group(
-                    instance, self.group_to_organizations_fn)(instance)
-        return AppUserRetrieveOrganizationSerializer(
-            organizations, many=True).data
+            return None
 
     class Meta:
         model = AppUser
@@ -155,18 +143,8 @@ class AppUserRetrieveSerializer(serializers.ModelSerializer):
             'is_staff',
             'group',
             'authorized_locations',
-            'organization']
-        extra_kwargs = {
-            'id': {'read_only': True},
-            'username': {'read_only': True},
-            'email': {'read_only': True},
-            'first_name': {'read_only': True},
-            'last_name': {'read_only': True},
-            'is_staff': {'read_only': True},
-            'group': {'read_only': True},
-            'authorized_locations': {'read_only': True},
-            'organization': {'read_only': True}
-        }
+            'organization',
+            'avatar']
 
 
 class AppUserUpdateSerializer(serializers.ModelSerializer):
@@ -178,9 +156,9 @@ class AppUserUpdateSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def set_group(self, group_name):
+    def validate_group(self, group_name):
         """
-        Sets the user group based on the input group_name received.
+        Validates the user group based on the input group_name received.
         """
 
         try:
@@ -202,9 +180,9 @@ class AppUserUpdateSerializer(serializers.ModelSerializer):
                 }
             }) from exc
 
-    def set_authorized_locations(self, location_ids):
+    def validate_authorized_locations(self, location_ids):
         """
-        Adds the received locations to authorized list of user.
+        Valdiates the received locations to authorized list of user.
         """
 
         locations = []
@@ -221,9 +199,9 @@ class AppUserUpdateSerializer(serializers.ModelSerializer):
             'authorized_locations': locations
         }
 
-    def set_organization(self, organization_id):
+    def validate_organization(self, organization_id):
         """
-        Sets the user organization based on given organization id.
+        Valdiates the user organization based on given organization id.
         """
         try:
             return {
@@ -251,7 +229,7 @@ class AppUserUpdateSerializer(serializers.ModelSerializer):
             instance.organization = organization
 
         # add all authorized locations to user if its an employee
-        if instance.groups.filter(name=UserGroups.EMPLOYEE_GROUP.name).exists():
+        if instance.groups.filter(name=UserGroups.EMPLOYEE_GROUP).exists():
             locations = validated_data.pop('authorized_locations')
             if locations is not None:
                 for location in locations:

@@ -23,7 +23,7 @@ class Command(BaseCommand):
         Must be implemented in child class to return a dictionary of groups
         and their authorized permission, e.g
 
-        'GroupName': {
+        'GroupEnum': {
             models.Model: ['add', 'change', 'delete', 'view'],
         }
         """
@@ -40,17 +40,17 @@ class Command(BaseCommand):
 
         # get group permissions
         group_permissions = self.get_group_permissions()
-        for group_name in group_permissions:
+        for group_enum in group_permissions:
 
             # create a new group
-            group, _ = Group.objects.get_or_create(name=group_name)
+            group, _ = Group.objects.get_or_create(name=group_enum.value)
 
             # loop models in group
-            for model_cls in group_permissions[group_name]:
+            for model_cls in group_permissions[group_enum]:
 
                 # loop permissions in group/model
                 for _, perm_name in \
-                        enumerate(group_permissions[group_name][model_cls]):
+                        enumerate(group_permissions[group_enum][model_cls]):
 
                     # generate permission name as Django would generate it
                     codename = perm_name + "_" + model_cls._meta.model_name

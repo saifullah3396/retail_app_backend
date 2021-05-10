@@ -262,6 +262,8 @@ REST_AUTH_REGISTER_SERIALIZERS = {
 REST_AUTH_SERIALIZERS = {
     'JWT_SERIALIZER':
         'user_auth.serializers.JWTSerializer',
+    'USER_DETAILS_SERIALIZER':
+        'users.api.serializers.AppUserRetrieveSerializer',
 }
 
 ACCOUNT_ADAPTER = 'user_auth.adapter.AppAccountAdapter'

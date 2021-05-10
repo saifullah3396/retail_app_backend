@@ -10,10 +10,10 @@ from .models import MeasurementFrame
 
 # Define the user group permissions for the models of this application.
 USER_GROUP_PERMISSIONS = {
-    UserGroups.ORGANIZATION_ADMIN_GROUP.name: {
+    UserGroups.ORGANIZATION_ADMIN_GROUP: {
         MeasurementFrame: ['add', 'change', 'view', 'delete'],
     },
-    UserGroups.EMPLOYEE_GROUP.name: {
+    UserGroups.EMPLOYEE_GROUP: {
         MeasurementFrame: ['view'],
     },
 }

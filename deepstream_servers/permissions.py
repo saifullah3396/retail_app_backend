@@ -10,12 +10,12 @@ from .models import DeepstreamServer
 
 USER_GROUP_PERMISSIONS = {
     # add organization admin permissions on DeepstreamServer
-    UserGroups.ORGANIZATION_ADMIN_GROUP.name: {
+    UserGroups.ORGANIZATION_ADMIN_GROUP: {
         DeepstreamServer: ['add', 'change', 'view', 'delete'],
     },
 
     # add employee permissions on DeepstreamServer
-    UserGroups.EMPLOYEE_GROUP.name: {
+    UserGroups.EMPLOYEE_GROUP: {
         DeepstreamServer: ['view'],
     },
 }

@@ -9,10 +9,10 @@ from core.permissions import AppDjangoModelPermissions, UserGroups
 from .models import AppUser
 
 USER_GROUP_PERMISSIONS = {
-    UserGroups.ORGANIZATION_ADMIN_GROUP.name: {
+    UserGroups.ORGANIZATION_ADMIN_GROUP: {
         AppUser: ['add', 'change', 'view', 'delete'],
     },
-    UserGroups.EMPLOYEE_GROUP.name: {
+    UserGroups.EMPLOYEE_GROUP: {
         AppUser: ['view', 'change'],
     },
 }

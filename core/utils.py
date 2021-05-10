@@ -56,13 +56,13 @@ def get_user_from_serializer(serializer, raise_exception=False):
     return request_user
 
 
-def is_in_group(user, group_name):
+def is_in_group(user, group_enum):
     """
     Takes a user and a group name, and returns True if the user is in that
     group.
     """
     try:
-        return Group.objects.get(name=group_name).\
+        return Group.objects.get(name=group_enum.value).\
             user_set.filter(id=user.id).exists()
     except Group.DoesNotExist:
         return None
@@ -74,9 +74,9 @@ def get_fn_by_user_group(user, group_to_fn_map):
     given the user group to function map.
     """
     func = None
-    for group in UserGroups:
-        if is_in_group(user, group.name):
-            func = group_to_fn_map.get(group, None)
+    for group_enum in UserGroups:
+        if is_in_group(user, group_enum):
+            func = group_to_fn_map.get(group_enum, None)
             break
     return func
 
@@ -85,14 +85,14 @@ def is_organization_admin(user):
     """
     Returns true if the user is in ORGANIZATION_ADMIN_GROUP user group.
     """
-    return is_in_group(user, UserGroups.ORGANIZATION_ADMIN_GROUP.name)
+    return is_in_group(user, UserGroups.ORGANIZATION_ADMIN_GROUP)
 
 
 def is_employee(user):
     """
     Returns true if the user is in EMPLOYEE_GROUP user group.
     """
-    return is_in_group(user, UserGroups.EMPLOYEE_GROUP.name)
+    return is_in_group(user, UserGroups.EMPLOYEE_GROUP)
 
 
 def filter_queryset_by_id_list(query_set, id_list):
@@ -141,7 +141,7 @@ def get_staff_authorized_organizations():
     """
     Returns the locations authorized to staff user
     """
-    Organization.objects.all()
+    return Organization.objects.all()
 
 
 def get_organization_admin_authorized_organizations(user, include_self=True):
@@ -162,7 +162,7 @@ def get_staff_authorized_locations():
     """
     Returns the locations authorized to staff user
     """
-    Location.objects.all()
+    return Location.objects.all()
 
 
 def get_organization_admin_authorized_locations(user, include_self=True):

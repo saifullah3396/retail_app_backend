@@ -12,8 +12,8 @@ class UserGroups(Enum):
     An enumration for all the user groups that are available in our
     applications
     """
-    ORGANIZATION_ADMIN_GROUP = 1
-    EMPLOYEE_GROUP = 2
+    ORGANIZATION_ADMIN_GROUP = "organization_admin"
+    EMPLOYEE_GROUP = "employee_group"
 
 
 class AppDjangoModelPermissions(permissions.DjangoModelPermissions):
