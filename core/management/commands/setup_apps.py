@@ -18,23 +18,25 @@ class Command(BaseCommand):
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)
 
-    def create_groups(self, app_config):
+    def create_user_groups(self, app_config, *args, **options):
         """
-        Calls the create_groups command from the specific application. Each
+        Calls the create_user_groups command from the specific application. Each
         call generates the user groups defined in core/permissions.py (or gets
         them if they already exist) along with app specific permissions on
         those groups.
         """
         if module_has_submodule(
-                app_config.module, "management.commands.create_groups"):
+                app_config.module, "management.commands.create_user_groups"):
             command = import_module(
-                '.management.commands.create_groups', app_config.name)
-            call_command(command.Command())
+                '.management.commands.create_user_groups', app_config.name)
+            call_command(command.Command(), **options)
+
+    def add_arguments(self, parser):
+        parser.add_argument('--silent', action='store_true')
 
     def handle(self, *args, **options):
         """
         Runs the command
         """
-
         for app_config in apps.get_app_configs():
-            self.create_groups(app_config)
+            self.create_user_groups(app_config, **options)

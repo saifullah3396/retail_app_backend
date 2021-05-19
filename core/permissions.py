@@ -2,24 +2,20 @@
 Defines the core permissions functionality used across our applications.
 """
 
-from enum import Enum
+
+import copy
 
 from rest_framework import permissions
-
-
-class UserGroups(Enum):
-    """
-    An enumration for all the user groups that are available in our
-    applications
-    """
-    ORGANIZATION_ADMIN_GROUP = "organization_admin"
-    EMPLOYEE_GROUP = "employee_group"
 
 
 class AppDjangoModelPermissions(permissions.DjangoModelPermissions):
     """
     Customizes the base DjangoModlePermissions class.
     """
+
+    def __init__(self):
+        self.perms_map = copy.deepcopy(self.perms_map)
+        self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
 
     def _queryset(self, view):
         """

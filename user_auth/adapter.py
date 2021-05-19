@@ -4,9 +4,10 @@ Defines the adapters used in user account creation and rest-auth.
 
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.utils import build_absolute_uri
-from django.urls import reverse
+from rest_framework import serializers
 
-from core.permissions import UserGroups
+from backend.settings import ACCOUNT_EMAIL_CONFIRMATION_URL
+from user_auth.models import DefaultUserGroups, UserGroup
 
 
 class AppAccountAdapter(DefaultAccountAdapter):
@@ -17,30 +18,21 @@ class AppAccountAdapter(DefaultAccountAdapter):
 
     def save_user(self, request, user, form, commit=True):
         user = super().save_user(request, user, form, commit)
-        data = form.cleaned_data
 
-        # set user permission groups
-        group = data.get('group')
-        if group is not None:
-            user.groups.add(group)
-
-        # add organization to user
-        organization = data.get('organization')
-        if organization is not None:
-            user.organization = organization
-
-        # add all authorized locations to user if its an employee
-        if group.name == UserGroups.EMPLOYEE_GROUP:
-            locations = data.get('authorized_locations')
-            if locations is not None:
-                for location in locations:
-                    user.authorized_locations.add(location)
+        # by default the user will be assigned to FREE_USER group
+        try:
+            free_user_group = UserGroup.objects.get(
+                name=DefaultUserGroups.FREE_USER.name)
+            user.groups.add(free_user_group)
+        except UserGroup.DoesNotExist:
+            raise serializers.ValidationError(
+                'Error while trying to assign group to user.')
 
         # commit user
         user.save()
         return user
 
     def get_email_confirmation_url(self, request, emailconfirmation):
-        url = reverse("verify_email", args=[emailconfirmation.key])
+        url = ACCOUNT_EMAIL_CONFIRMATION_URL.format(emailconfirmation.key)
         ret = build_absolute_uri(request, url)
         return ret

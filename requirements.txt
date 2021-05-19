@@ -14,9 +14,13 @@ python-dotenv
 channels
 pika
 aio_pika
+django-organizations
 django_extensions
 ./django-rest-auth
 ./django-rest-framework-jwt
 pylint_django
 pytest-django
 pytest-subtests
+drf-extensions
+django-safedelete
+factory-boy

@@ -14,10 +14,11 @@ import os
 
 import dj_database_url
 from dotenv import load_dotenv
+from safedelete import HARD_DELETE, SOFT_DELETE_CASCADE
 
 # build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BASE_URL = "http://0.0.0.0/"
+FRONTEND_URL = 'http://localhost:3000'
 
 # load environment variables stored in .env for local development
 load_dotenv(os.path.join(BASE_DIR, '.env'))
@@ -41,7 +42,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_WHITELIST = (
-    'http://localhost:3000',
+    FRONTEND_URL,
 )
 
 # AMQP Server configuration
@@ -63,6 +64,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_filters',
     'django_extensions',
+    'safedelete',
+    'organizations',
 
     # applications used in rest registration
     'django.contrib.sites',
@@ -80,16 +83,17 @@ INSTALLED_APPS = [
     'channels',
 
     # our applications
+    'core',
     'users',
     'user_auth',
-    'core',
-    'organizations',
+    'app_organizations',
+    'outlets',
     'locations',
-    'measurement_frames',
-    'deepstream_servers',
-    'cameras',
-    # 'deepstream_manager',
-    'frontend',
+    # 'measurement_frames',
+    # 'deepstream_servers',
+    # 'cameras',
+    # # 'deepstream_manager',
+    # 'frontend',
 ]
 
 # application middlewares
@@ -112,7 +116,7 @@ ROOT_URLCONF = 'backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -173,17 +177,29 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
-# base user model config
+# configuration for user models
 AUTH_USER_MODEL = "users.AppUser"
+USER_GROUP_MODEL = "user_auth.UserGroup"
+
+# configuration for organization models
+ORGANIZATION_MODEL = "app_organizations.AppOrganization"
+ORGANIZATION_USER_MODEL = "app_organizations.AppOrganizationUser"
+ORGANIZATION_OWNER_MODEL = "app_organizations.AppOrganizationOwner"
+ORGANIZATION_INVITED_MODEL = "app_organizations.AppOrganizationInvited"
+ORGANIZATION_GROUP_MODEL = "app_organizations.OrganizationGroup"
+ORGANIZATION_USER_AUTH_BACKEND = \
+    'app_organizations.backends.OrganizationUserBackend'
+ORGS_SLUGFIELD = "core.db.fields.CustomAutoSlugField"
 
 # user authentication backends
 AUTHENTICATION_BACKENDS = [
     # needed to login by username in Django admin, regardless of `allauth`
-    'django.contrib.auth.backends.ModelBackend',
+    'user_auth.backends.UserAuthBackend',
 
     # `allauth` specific authentication methods, such as login by e-mail
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
+
 
 # password validators
 AUTH_PASSWORD_VALIDATORS = [
@@ -223,9 +239,9 @@ ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
 ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 86400
-ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'
-LOGIN_REDIRECT_URL = '/accounts/email/'
 ACCOUNT_EMAIL_CONFIRMATION_HMAC = False
+ACCOUNT_EMAIL_CONFIRMATION_URL = FRONTEND_URL + '/verify_email/?key={}'
+ACCOUNT_PASSWORD_RESET_CONFIRM = FRONTEND_URL + '/password_reset/confirm/'
 
 # REST framework settings
 REST_FRAMEWORK = {
@@ -250,20 +266,21 @@ REST_FRAMEWORK = {
     'DATETIME_FORMAT': "%Y-%m-%d %H:%M:%S.%f%z",
 }
 
-REST_AUTH_REGISTER_PERMISSION_CLASSES = [
-    'rest_framework.permissions.IsAuthenticated',
-    'users.permissions.AppUsersListCreateDestroyPermission']
+# REST_AUTH_REGISTER_PERMISSION_CLASSES = [
+#     'rest_framework.permissions.IsAuthenticated']
 
 REST_AUTH_REGISTER_SERIALIZERS = {
     'REGISTER_SERIALIZER':
-    'user_auth.serializers.RegistrationSerializer',
+        'user_auth.serializers.RegistrationSerializer',
 }
 
 REST_AUTH_SERIALIZERS = {
     'JWT_SERIALIZER':
         'user_auth.serializers.JWTSerializer',
     'USER_DETAILS_SERIALIZER':
-        'users.api.serializers.AppUserRetrieveSerializer',
+        'users.api.app_user.serializers.AppUserRetrieveSerializer',
+    'PASSWORD_RESET_SERIALIZER':
+        'user_auth.serializers.PasswordResetSerializer',
 }
 
 ACCOUNT_ADAPTER = 'user_auth.adapter.AppAccountAdapter'
@@ -314,6 +331,10 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
+        'django.server': {
+            '()': 'django.utils.log.ServerFormatter',
+            'format': '[%(server_time)s] %(message)s',
+        },
         'verbose': {
             'format':
                 '{levelname} {asctime} {module} {process:d} {thread:d} '
@@ -343,6 +364,11 @@ LOGGING = {
         },
     },
     'handlers': {
+        'django.server': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'django.server',
+        },
         'console': {
             'level': 'INFO',
             'filters': ['require_debug_true'],
@@ -368,13 +394,18 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers': ['console'],
-            'propagate': True,
+            'handlers': ['console', 'mail_admins'],
+            'level': 'INFO',
         },
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
-            'propagate': False,
+            'propagate': True,
+        },
+        'django.server': {
+            'handlers': ['django.server'],
+            'level': 'INFO',
+            'propagate': True,
         },
         'deepstream_manager_input_request_logger': {
             'handlers': ['deepstream_manager_input_request_handler'],
@@ -386,3 +417,18 @@ LOGGING = {
         }
     }
 }
+
+CACHE_KEY_GENERATOR = \
+    lambda model: '{}_updated_at_timestamp'.format(model.__name__)
+
+if DEBUG:
+    CACHES = {
+        'default': {
+            # dummy caching for tests
+            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        }
+    }
+
+# safe delete settings
+SAFE_DELETE_INTERPRET_UNDELETED_OBJECTS_AS_CREATED = True
+DEFAULT_ADMIN_DELETION_POLICY = HARD_DELETE

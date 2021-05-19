@@ -1,17 +1,23 @@
 """
 Defines the models of this application.
 """
+# pylint: disable=pointless-string-statement
 
 import uuid
 
 from django.db import models
+from django.utils.translation import gettext_lazy as _
+from safedelete import SOFT_DELETE, SOFT_DELETE_CASCADE
+from safedelete.models import SafeDeleteModel
+
+from core.db.fields import CustomAutoSlugField
 
 
-# pylint: disable=pointless-string-statement
-class Location(models.Model):
+class Location(SafeDeleteModel):
     """
-    A model of a location associated with any organization
+    An abstract model of a location
     """
+    _safedelete_policy = SOFT_DELETE
 
     """Unique uuid for each location."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -19,28 +25,41 @@ class Location(models.Model):
     """Location name."""
     name = models.CharField(max_length=120)
 
-    """Organization with which this location is associated."""
-    organization = models.ForeignKey(
-        'organizations.Organization',
-        on_delete=models.PROTECT,
-    )
+    """Location slug."""
+    slug = CustomAutoSlugField(
+        max_length=120,
+        blank=False,
+        editable=True,
+        unique=True,
+        populate_from="name",
+        help_text=_(
+            "The name in all lowercase, suitable for URL identification"),)
 
-    class Meta:
-        """Don't allow non-unique locations for any given organization."""
-        unique_together = ('name', 'organization',)
+
+class OutletLocation(Location):
+    """
+    A model of a location associated with a organization
+    """
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
+    """Outlet with which this location is associated."""
+    outlet = models.ForeignKey(
+        'outlets.Outlet',
+        on_delete=models.CASCADE)
 
     def __str__(self):
         """
         String serializer of the model
         """
         return "Location={}, Organization={}".format(
-            self.name, self.organization.name)
+            self.name, self.outlet.name)
 
 
-class Floor(models.Model):
+class Floor(SafeDeleteModel):
     """
     A model of a floor associated with a location
     """
+    _safedelete_policy = SOFT_DELETE_CASCADE
 
     """Unique uuid for each location."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -51,7 +70,7 @@ class Floor(models.Model):
     """Location with which this floor is associated."""
     location = models.ForeignKey(
         'locations.Location',
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
     )
 
     class Meta:
@@ -65,10 +84,11 @@ class Floor(models.Model):
         return "Floor={}, {}".format(self.number, str(self.location))
 
 
-class Block(models.Model):
+class Block(SafeDeleteModel):
     """
     A model of a single block floor associated with a location
     """
+    _safedelete_policy = SOFT_DELETE_CASCADE
 
     """Unique uuid for each location."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -86,7 +106,7 @@ class Block(models.Model):
     """Floor with which this block is associated."""
     floor = models.ForeignKey(
         'locations.Floor',
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
     )
 
     class Meta:
