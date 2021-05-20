@@ -9,14 +9,13 @@ from app_organizations.api.organization.serializers import (
     AppOrganizationUserCreateSerializer, AppOrganizationUserListSerializer,
     AppOrganizationUserRetrieveSerializer, AppOrganizationUserUpdateSerializer)
 from app_organizations.models import AppOrganization, AppOrganizationUser
-from app_organizations.permissions import \
-    AppOrganizationsListCreateDestroyPermission
-from core import views
-from core.permissions import AppDjangoModelPermissions
-from app_organizations.permissions import OrganizationDjangoModelPermissions
+from app_organizations.permissions import (
+    AppOrganizationsListCreateDestroyPermission,
+    OrganizationDjangoModelPermissions)
 from app_organizations.views import (BaseOrganizationListGetQuerySet,
                                      BaseOrganizationRetrieveGetQuerySet,
                                      GetOrganizationMixin)
+from core import views
 
 
 class AppOrganizationsListCreateDestroyView(
@@ -54,7 +53,7 @@ class AppOrganizationsRetrieveUpdateDestroyView(
     Defines the organizations retrieve-update-destroy view.
     """
 
-    lookup_url_kwarg = 'organization_pk'
+    lookup_url_kwarg = 'organization'
     queryset = AppOrganization.objects.none()  # Added for model permissions
     permission_classes = (OrganizationDjangoModelPermissions,)
     retrieve_serializer = AppOrganizationRetrieveSerializer

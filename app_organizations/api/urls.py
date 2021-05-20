@@ -2,6 +2,7 @@
 Defines the urls for the views defined in the organizations api.
 """
 
+from django.conf.urls import include
 from django.urls import path
 
 from app_organizations.api.group.views import (
@@ -19,31 +20,45 @@ urlpatterns = [
         AppOrganizationsListCreateDestroyView.as_view(),
         name='app_organizations_list_create_destroy'),
     path(
-        '<uuid:organization_pk>',
-        AppOrganizationsRetrieveUpdateDestroyView.as_view(),
-        name='app_organizations_retrieve_update_destroy'),
-    path(
-        '<uuid:organization_pk>/users/',
-        AppOrganizationUsersListCreateDestroyView.as_view(),
-        name='app_organization_users_retrieve_update_destroy'),
-    path(
-        '<uuid:organization_pk>/users/<pk>',
-        AppOrganizationUsersRetrieveUpdateDestroyView.as_view(),
-        name='app_organization_users_retrieve_update_destroy'),
-    path(
-        '<uuid:organization_pk>/groups/',
-        OrganizationGroupsListCreateDestroyView.as_view(),
-        name='org_groups_list_create_destroy'),
-    path(
-        '<uuid:organization_pk>/groups/<name>',
-        OrganizationGroupsRetrieveUpdateDestroyView.as_view(),
-        name='org_groups_list_create_destroy'),
-    path(
-        '<uuid:organization_pk>/groups/<name>/users/add/',
-        AddUserView.as_view(),
-        name='org_groups_add_user'),
-    path(
-        '<uuid:organization_pk>/groups/<name>/users/remove/',
-        RemoveUserView.as_view(),
-        name='org_groups_remove_user')
+        '<organization>/',
+        include([
+            path(
+                '',
+                AppOrganizationsRetrieveUpdateDestroyView.as_view(),
+                name='app_organizations_retrieve_update_destroy'),
+            path(
+                'users/',
+                include([
+                    path(
+                        '',
+                        AppOrganizationUsersListCreateDestroyView.as_view(),
+                        name='app_organization_users_retrieve_update_destroy'),
+                    path(
+                        '<pk>/',
+                        AppOrganizationUsersRetrieveUpdateDestroyView.as_view(),
+                        name='app_organization_users_retrieve_update_destroy'),
+                ])),
+            path(
+                'groups/',
+                include([
+                    path(
+                        '',
+                        OrganizationGroupsListCreateDestroyView.as_view(),
+                        name='org_groups_list_create_destroy'),
+                    path(
+                        '<name>/',
+                        OrganizationGroupsRetrieveUpdateDestroyView.as_view(),
+                        name='org_groups_list_create_destroy'),
+                    path(
+                        '<name>/users/add/',
+                        AddUserView.as_view(),
+                        name='org_groups_add_user'),
+                    path(
+                        '<name>/users/remove/',
+                        RemoveUserView.as_view(),
+                        name='org_groups_remove_user')
+                ])),
+        ])
+    )
+
 ]

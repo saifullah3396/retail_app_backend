@@ -7,9 +7,9 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from rest_framework import exceptions, serializers
 
-from core.utils import get_organization_user_model
 from app_organizations.models import (DefaultOrganizationGroups,
                                       OrganizationGroup)
+from core.utils import get_organization_user_model
 
 ORGANIZATION_USER_MODEL = get_organization_user_model()
 
@@ -41,11 +41,10 @@ class OrganizationGroupCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         try:
-            organization = self.context['view'].get_organization()
-            instance, _ = self.Meta.model.objects.update_or_create(**{
-                **validated_data,
-                "organization": organization
-            })
+            organization = self.context['view'].validate_kwargs()
+            validated_data['organization'] = organization
+            instance, _ = self.Meta.model.objects.update_or_create(
+                validated_data)
             return instance
         except IntegrityError as ex:
             raise serializers.ValidationError({"detail": ex.__cause__})
@@ -54,7 +53,7 @@ class OrganizationGroupCreateSerializer(serializers.ModelSerializer):
 class OrganizationGroupRetrieveUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = ORGANIZATION_USER_MODEL
-        fields = ['id']
+        fields = ['id', 'user']
 
 
 class OrganizationGroupRetrieveSerializer(serializers.ModelSerializer):
@@ -79,6 +78,7 @@ class OrganizationGroupRetrieveSerializer(serializers.ModelSerializer):
         return data
 
 
+
 class OrganizationGroupUpdateSerializer(serializers.ModelSerializer):
     users = serializers.SerializerMethodField()
 
@@ -100,7 +100,7 @@ class OrganizationGroupUpdateSerializer(serializers.ModelSerializer):
         return authority
 
     def get_users(self, instance):
-        return OrganizationGroupRetrieveAppUserSerializer(
+        return OrganizationGroupRetrieveUserSerializer(
             instance.organization_user_set.all(),
             many=True,
             context=self.context).data
@@ -134,7 +134,7 @@ class AddRemoveUserSerializerBase(serializers.ModelSerializer):
         }
 
     def get_users(self, instance):
-        return OrganizationGroupRetrieveAppUserSerializer(
+        return OrganizationGroupRetrieveUserSerializer(
             instance.organization_user_set.all(),
             many=True,
             context=self.context).data

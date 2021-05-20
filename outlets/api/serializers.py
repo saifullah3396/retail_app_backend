@@ -37,7 +37,7 @@ class OutletCreateSerializer(serializers.ModelSerializer):
         """
         Create the organization using the organizations create utility.
         """
-        organization = self.context['view'].get_organization()
+        organization = self.context['view'].validate_kwargs()
         return create_outlet(
             user=get_user_from_serializer(self),
             name=validated_data["name"],
@@ -83,6 +83,12 @@ class OutletUserCreateSerializer(serializers.ModelSerializer):
             'user': {'required': True}
         }
 
+    def validate_user(self, user):
+        organization = self.context['view'].get_organization()
+        if not organization.users.filter(id=user.id).exists():
+            raise exceptions.ValidationError(field_not_found_error())
+        return user
+
     def create(self, validated_data):
         try:
             return self._create(validated_data)
@@ -93,21 +99,8 @@ class OutletUserCreateSerializer(serializers.ModelSerializer):
         """
         Create the outlet user by adding it to outlet
         """
-        organization = self.context['view'].get_organization()
-        user = validated_data['user']
-        if not organization.users.filter(id=user.id).exists():
-            raise exceptions.ValidationError({
-                "user": field_not_found_error()
-            })
-
-        outlet = self.context['view'].get_outlet()
-        if outlet.organization != organization:  # match organization
-            raise exceptions.ValidationError({
-                "outlet": field_invalid_error()
-            })
-
-        return outlet.add_user(user)
-        # return outlet.add_user(validated_data['user'])
+        outlet = self.context['view'].validate_kwargs()
+        return outlet.add_user(validated_data['user'])
 
 
 class OutletUserListSerializer(serializers.ModelSerializer):

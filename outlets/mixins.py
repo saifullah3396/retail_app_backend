@@ -13,7 +13,7 @@ class GetOutletMixin:
     @cached_property
     def outlet(self):
         return get_object_or_404(
-            Outlet, pk=self.kwargs.get("outlet_pk", None))
+            Outlet, pk=self.kwargs.get("outlet", None))
 
     def get_outlet(self):
         return self.outlet

@@ -5,11 +5,10 @@ Defines the unit tests related to 'create' api requests for this application.
 from django.urls import include, path
 from rest_framework import status
 
-from app_organizations.models import AppOrganization
+from app_organizations.models import AppOrganization, DefaultOrganizationGroups
 from app_organizations.tests.factories import app_organization_factory
 from core.tests.base import TestsBase
 from core.tests.utils import generate_fake_data
-from app_organizations.models import DefaultOrganizationGroups
 from users.tests.factories.user_factory import generate_user_factory
 
 NUM_TEST_USERS = 2
@@ -60,7 +59,7 @@ class AppOrganizationsRetrieveUpdateDestroyTests(TestsBase):
         Super user can see all organizations while normal users only their
         organizations.
         """
-        query_organization = self.orgs[query_args['organization_pk']]
+        query_organization = self.orgs[query_args['organization']]
 
         if user.is_superuser:
             # super user can get every user detail
@@ -82,7 +81,7 @@ class AppOrganizationsRetrieveUpdateDestroyTests(TestsBase):
         update their own organizations.
         """
         query_organization = AppOrganization.objects.get(
-            id=query_args['organization_pk'])
+            id=query_args['organization'])
 
         if user.is_superuser:
             # super user can get every user detail
@@ -129,7 +128,7 @@ class AppOrganizationsRetrieveUpdateDestroyTests(TestsBase):
         """
 
         query_organization = AppOrganization.objects.get(
-            id=query_args['organization_pk'])
+            id=query_args['organization'])
 
         if user.is_superuser:
             # super user can get every user detail
@@ -167,7 +166,7 @@ class AppOrganizationsRetrieveUpdateDestroyTests(TestsBase):
                 'request': [
                     {
                         'name': 'retrieve_organization_{}'.format(org.name),
-                        'query_args': {'organization_pk': org.id},
+                        'query_args': {'organization': org.id},
                         'response_check_fn': self.retrieve_organization_response_check_fn,
                     }  # generate requests for all organizations to retrieve all other organizations
                     for org in self.orgs.values()]
@@ -183,7 +182,7 @@ class AppOrganizationsRetrieveUpdateDestroyTests(TestsBase):
                             **generate_fake_data(app_organization_factory.AppOrganizationFactory),
                         },
                         'data_format': 'multipart',
-                        'query_args': {'organization_pk': org.id},
+                        'query_args': {'organization': org.id},
                         'response_check_fn': self.update_organization_response_check_fn,
                     }  # generate requests for all organizations to update all other organizations
                     for org in self.orgs.values()]
@@ -196,7 +195,7 @@ class AppOrganizationsRetrieveUpdateDestroyTests(TestsBase):
                     {
                         'name': 'destroy_organization_{}'.format(org.name),
                         # undelete deleted organization models
-                        'query_args': {'organization_pk': org.id},
+                        'query_args': {'organization': org.id},
                         # undelete all organizations to test results
                         'post_test_cb': lambda: AppOrganization.objects.deleted_only().undelete(),
                         'response_check_fn': self.destroy_organization_response_check_fn,

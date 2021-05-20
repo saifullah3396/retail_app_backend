@@ -6,8 +6,10 @@ Defines the models of this application.
 import uuid
 
 from django.db import models
+from django.db.models import Q, UniqueConstraint, When
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from safedelete import SOFT_DELETE, SOFT_DELETE_CASCADE
+from safedelete import SOFT_DELETE_CASCADE
 from safedelete.models import SafeDeleteModel
 
 from core.db.fields import CustomAutoSlugField
@@ -17,7 +19,7 @@ class Location(SafeDeleteModel):
     """
     An abstract model of a location
     """
-    _safedelete_policy = SOFT_DELETE
+    _safedelete_policy = SOFT_DELETE_CASCADE
 
     """Unique uuid for each location."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -25,15 +27,11 @@ class Location(SafeDeleteModel):
     """Location name."""
     name = models.CharField(max_length=120)
 
-    """Location slug."""
-    slug = CustomAutoSlugField(
-        max_length=120,
-        blank=False,
-        editable=True,
-        unique=True,
-        populate_from="name",
-        help_text=_(
-            "The name in all lowercase, suitable for URL identification"),)
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=["name"], condition=Q(
+                deleted__isnull=True), name='unique_location_if_not_deleted')
+        ]
 
 
 class OutletLocation(Location):
@@ -75,7 +73,10 @@ class Floor(SafeDeleteModel):
 
     class Meta:
         """Don't allow non-unique floors for any given location."""
-        unique_together = ('number', 'location',)
+        constraints = [
+            UniqueConstraint(fields=['number', 'location'], condition=Q(
+                deleted__isnull=True), name='unique_floor_if_not_deleted')
+        ]
 
     def __str__(self):
         """
@@ -111,7 +112,10 @@ class Block(SafeDeleteModel):
 
     class Meta:
         """Don't allow non-unique blocks for any given floor."""
-        unique_together = ('name', 'floor',)
+        constraints = [
+            UniqueConstraint(fields=["name", "floor"], condition=Q(
+                deleted__isnull=True), name='unique_block_if_not_deleted')
+        ]
 
     def __str__(self):
         """

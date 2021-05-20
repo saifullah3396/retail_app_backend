@@ -94,7 +94,7 @@ class AppOrganizationUserCreateSerializer(serializers.ModelSerializer):
         """
         Create the organization using the organizations create utility.
         """
-        organization = self.context['view'].get_organization()
+        organization = self.context['view'].validate_kwargs()
         return organization.add_user(validated_data['user'])
 
 

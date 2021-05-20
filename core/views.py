@@ -108,11 +108,14 @@ class CoreAPIViewBase(GenericAPIView, ModelMixin):
 class CoreListGetQuerySet(GenericAPIView, ModelMixin):
     order_by = 'id'
 
-    def _get_list_queryset(self):
+    def _get_list_queryset(self, model=None):
         """
         Returns the list queryset for super users.
         """
-        return self.model.objects.all()
+        if model:
+            return model.objects.all()
+        else:
+            return self.model.objects.all()
 
     def _get_list_queryset_superuser(self):
         return self._get_list_queryset()
@@ -137,6 +140,9 @@ class CoreListGetQuerySet(GenericAPIView, ModelMixin):
                 objects, lookup_list, self.lookup_url_kwarg)
 
         return objects
+
+    def validate_kwargs(self):
+        return None
 
 
 class CoreListAPIView(CoreListGetQuerySet, ListAPIView, CoreAPIViewBase):
@@ -230,8 +236,11 @@ class CoreListDestroyAPIView(DestroyAPIView, CoreAPIViewBase):
 
 
 class CoreRetrieveGetQueryset(GenericAPIView, ModelMixin):
-    def _get_retrieve_queryset(self):
-        return self.model.objects.all()
+    def _get_retrieve_queryset(self, model=None):
+        if model:
+            return model.objects.all()
+        else:
+            return self.model.objects.all()
 
     def _get_retrieve_queryset_superuser(self):
         return self._get_retrieve_queryset()
@@ -249,6 +258,9 @@ class CoreRetrieveGetQueryset(GenericAPIView, ModelMixin):
             return self._get_retrieve_queryset_superuser()
         else:
             return self._get_retrieve_queryset_user()
+
+    def validate_kwargs(self):
+        return None
 
 
 class CoreRetrieveAPIView(

@@ -15,7 +15,7 @@ class GetOrganizationMixin:
     @cached_property
     def organization(self):
         return get_object_or_404(
-            ORGANIZATION_MODEL, pk=self.kwargs.get("organization_pk", None))
+            ORGANIZATION_MODEL, pk=self.kwargs.get("organization", None))
 
     def get_organization(self):
         return self.organization
