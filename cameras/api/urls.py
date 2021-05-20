@@ -12,7 +12,7 @@ urlpatterns = [
         CamerasListCreateDestroyView.as_view(),
         name='cameras_list_create_delete'),
     path(
-        '<pk>',
+        '<pk>/',
         CamerasRetrieveUpdateDestroyView.as_view(),
         name='cameras_retrieve_update_delete'),
 ]

@@ -10,6 +10,7 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.mail import send_mail
 from django.core.validators import EmailValidator
 from django.db import models
+from django.db.models import Q, UniqueConstraint, When
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from safedelete import DELETED_VISIBLE_BY_PK, SOFT_DELETE_CASCADE
@@ -89,6 +90,10 @@ class AppUser(AbstractBaseUser, UserPermissionsMixin, SafeDeleteModel):
     class Meta:
         verbose_name = _('user')
         verbose_name_plural = _('users')
+        constraints = [
+            UniqueConstraint(fields=['email'], condition=Q(
+                deleted__isnull=True), name='unique_email_if_not_deleted')
+        ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
 
@@ -99,8 +104,7 @@ class AppUser(AbstractBaseUser, UserPermissionsMixin, SafeDeleteModel):
         validators=[email_validator],
         error_messages={
             'unique': _("A user with that email address already exists."),
-        },
-        unique=True
+        }
     )
 
     first_name = models.CharField(_('first name'), max_length=150, blank=True)

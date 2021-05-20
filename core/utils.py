@@ -9,8 +9,6 @@ from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest
 from django.utils.cache import get_cache_key
 from django.utils.module_loading import import_string
-# from deepstream_servers.models import DeepstreamServer
-# from locations.models import Location
 from organizations.models import Organization
 from rest_framework import exceptions, serializers
 
@@ -54,31 +52,6 @@ def get_user_from_serializer(serializer, raise_exception=False):
             # most probably this will never get called
             raise exceptions.PermissionDenied()
     return request_user
-
-
-def user_in_group(user, group_enum):
-    """
-    Takes a user and a group name, and returns True if the user is in that
-    group.
-    """
-    try:
-        return Group.objects.get(name=group_enum).\
-            user_set.filter(id=user.id).exists()
-    except Group.DoesNotExist:
-        return None
-
-
-def get_fn_by_user_group(user, group_to_fn_map):
-    """
-    Returns the function to be called for the user group the user is in
-    given the user group to function map.
-    """
-    func = None
-    for group_enum in UserGroups:
-        if user_in_group(user, group_enum):
-            func = group_to_fn_map.get(group_enum, None)
-            break
-    return func
 
 
 def filter_queryset_by_lookup_list(query_set, lookup_list, lookup_param):
@@ -127,79 +100,6 @@ def get_lookup_list(request, lookup_param):
     Returns the list of ids from API request.
     """
     return request.query_params.getlist(lookup_param)
-
-
-def get_staff_authorized_organizations():
-    """
-    Returns the locations authorized to staff user
-    """
-    return Organization.objects.all()
-
-
-def get_organization_admin_authorized_organizations(user, include_self=True):
-    """
-    Returns the locations authorized to organization admin user
-    """
-    return user.organization.get_descendants(include_self=include_self)
-
-
-def get_employee_authorized_organizations(user):
-    """
-    Returns the locations authorized to employee user
-    """
-    return [user.organization]
-
-
-def get_staff_authorized_locations():
-    """
-    Returns the locations authorized to staff user
-    """
-    return Location.objects.all()
-
-
-def get_organization_admin_authorized_locations(user, include_self=True):
-    """
-    Returns the locations authorized to organization admin user
-    """
-    organizations_tree = user.organization.get_descendants(
-        include_self=include_self)
-    return Location.objects.filter(organization__in=organizations_tree)
-
-
-def get_organization_servers(organization):
-    """
-    Returns the locations authorized to organization admin user
-    """
-    organizations_tree = organization.get_descendants(include_self=True)
-    return DeepstreamServer.objects.filter(organization__in=organizations_tree)
-
-
-def get_employee_authorized_locations(user):
-    """
-    Returns the locations authorized to employee user
-    """
-    return user.authorized_locations.all()
-
-
-def get_object_by_id(model, object_id):
-    """
-    Returns the model for given id
-    """
-    try:
-        return model.objects.get(id=object_id)
-    except model.DoesNotExist:
-        return None
-
-
-def invalidate_cache_for_path(path):
-    """
-    Invalidates the cache for given url path
-    """
-    request = HttpRequest()
-    request.path = path
-    key = get_cache_key(request)
-    if cache.has_key(key):
-        cache.delete(key)
 
 
 def get_user_group_model():

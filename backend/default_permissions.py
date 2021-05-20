@@ -7,9 +7,12 @@ import copy
 from django.contrib.auth import get_user_model
 
 from app_organizations.models import DefaultOrganizationGroups
+# from cameras.models import Camera
 from core.utils import (get_organization_group_model, get_organization_model,
                         get_organization_user_model, get_user_group_model)
+from ds_servers.models import DSDiagnostics, DSLogEntry, DSServer
 from locations.models import Block, Floor, Location
+from measurement_frames.models import MeasurementFrame
 from outlets.models import Outlet, OutletUser
 from user_auth.models import DefaultUserGroups
 
@@ -26,15 +29,17 @@ USER_GROUP_PERMISSIONS = {
         USER_MODEL: ['change', 'view', 'delete'],
         USER_GROUP_MODEL: ['view'],
         ORGANIZATION_MODEL: ['add', 'change', 'view', 'delete'],
-        Outlet: ['add', 'change', 'view', 'delete'],
-        Location: ['add', 'change', 'view', 'delete'],
-        Floor: ['add', 'view', 'delete'],
-        Block: ['add', 'change', 'view', 'delete'],
 
         # models that are handled according to permissions inside
         # organization groups must have all permission on user group end
         ORGANIZATION_USER_MODEL: ['add', 'change', 'view', 'delete'],
         ORGANIZATION_GROUP_MODEL: ['add', 'change', 'view', 'delete'],
+        Outlet: ['add', 'change', 'view', 'delete'],
+        Location: ['add', 'change', 'view', 'delete'],
+        Floor: ['add', 'view', 'delete'],
+        Block: ['add', 'change', 'view', 'delete'],
+        # Camera: ['add', 'change', 'view', 'delete'],
+        MeasurementFrame: ['add', 'change', 'view', 'delete'],
     },
 }
 
@@ -49,6 +54,8 @@ ORGANIZATION_GROUP_PERMISSIONS = {
         Location: ['add', 'change', 'view', 'delete'],
         Floor: ['add', 'view', 'delete'],
         Block: ['add', 'change', 'view', 'delete'],
+        MeasurementFrame: ['add', 'change', 'view', 'delete'],
+        # Camera: ['add', 'change', 'view', 'delete'],
     },
 
     # add organization admin permissions on ORGANIZATION_MODEL
@@ -60,6 +67,8 @@ ORGANIZATION_GROUP_PERMISSIONS = {
         Location: ['add', 'change', 'view', 'delete'],
         Floor: ['add', 'view', 'delete'],
         Block: ['add', 'change', 'view', 'delete'],
+        MeasurementFrame: ['add', 'change', 'view', 'delete'],
+        # Camera: ['add', 'change', 'view', 'delete'],
     },
 
     # add organization member permissions on ORGANIZATION_MODEL
@@ -71,6 +80,8 @@ ORGANIZATION_GROUP_PERMISSIONS = {
         Outlet: ['view'],
         Location: ['view'],
         Floor: ['view'],
-        Block: ['view']
+        Block: ['view'],
+        MeasurementFrame: ['add', 'change', 'view', 'delete'],
+        # Camera: ['view'],
     },
 }

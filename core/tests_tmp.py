@@ -19,7 +19,7 @@ from rest_framework_jwt.settings import api_settings
 
 from backend.settings import MEDIA_ROOT
 from cameras.models import Camera
-from deepstream_servers.models import DeepstreamServer
+from ds_servers.models import DSServer
 from locations.models import Block, Floor, Location
 from measurement_frames.models import MeasurementFrame
 from users.models import AppUser
@@ -182,7 +182,7 @@ class TestsBase(APITransactionTestCase, URLPatternsTestCase):
         """
         item_dict = {}
         for (item_name, data) in data.items():
-            item_dict[item_name] = DeepstreamServer(
+            item_dict[item_name] = DSServer(
                 ip_addr=data['ip_addr'],
                 mac_addr=data['mac_addr'],
                 connected_at=data['connected_at'],

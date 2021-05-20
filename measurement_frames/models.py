@@ -2,19 +2,17 @@
 Defines the models of this application.
 """
 
-import uuid
 
 from django.db import models
+from django.db.models.constraints import Q, UniqueConstraint
+from safedelete.models import SafeDeleteModel
 
 
 # pylint: disable=pointless-string-statement
-class MeasurementFrame(models.Model):
+class MeasurementFrame(SafeDeleteModel):
     """
     A model of a single measurement frame associated with a block
     """
-
-    """Unique uuid for each frame."""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     """Name of the position where frame is assigned."""
     name = models.CharField(max_length=150)
@@ -32,7 +30,10 @@ class MeasurementFrame(models.Model):
 
     class Meta:
         """Don't allow non-unique names for any given block."""
-        unique_together = ('name', 'block',)
+        constraints = [
+            UniqueConstraint(fields=["name", "block"], condition=Q(
+                deleted__isnull=True), name='unique_frame_if_not_deleted')
+        ]
 
     def __str__(self):
         """

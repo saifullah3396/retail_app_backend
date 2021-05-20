@@ -13,7 +13,7 @@ from .models import AppUser
 
 class AppUserAdmin(BaseAdmin):
     """
-    Defines custom user admin interface view
+    Defines custom admin interface view
     """
     list_display = list_display_fn(())
     list_filter = list_filter_fn(())

@@ -12,28 +12,9 @@ from app_organizations.api.urls import urlpatterns as organizations
 from .settings import MEDIA_ROOT, MEDIA_URL
 
 api_urlpatterns = [
-    path('users/', include([
-        path('', include('users.api.urls')),
-        path('', include('user_auth.api.urls')),
-    ])),
-    path('organizations/', include([
-        path('', include('app_organizations.api.urls')),
-        path('<organization>/', include([
-            path('outlets/', include([
-                path('', include('outlets.api.urls')),
-                path('<outlet>/', include([
-                    path('locations/', include([
-                        path('', include('locations.api.urls')),
-                        # path('floors/<floor>/block/<blocks>', include([
-                        #     # path('frames/', include('measurement_frames.api.urls')),
-                        #     # path('cameras/', include('cameras.api.urls')),
-                        # ]))
-                    ]))
-                ]))
-            ])),
-            # path('deepstream_servers/', include('deepstream_servers.api.urls')),
-        ])),
-    ])),
+    path('users/', include('users.api.urls')),
+    path('organizations/', include('app_organizations.api.urls')),
+    path('ds_servers/', include('ds_servers.api.urls'))
 ]
 
 urlpatterns = [

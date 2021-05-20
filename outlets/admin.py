@@ -11,7 +11,7 @@ from .models import Outlet, OutletOwner, OutletUser
 
 class OutletAdmin(BaseAdmin):
     """
-    Defines custom user admin interface view
+    Defines custom admin interface view
     """
     list_display = list_display_fn(())
     list_filter = list_filter_fn(())
@@ -19,14 +19,14 @@ class OutletAdmin(BaseAdmin):
 
 class OutletUserAdmin(BaseAdmin):
     """
-    Defines custom user admin interface view
+    Defines custom admin interface view
     """
     list_display = list_display_fn(("user", "organization",))
 
 
 class OutletOwnerAdmin(BaseAdmin):
     """
-    Defines custom user admin interface view
+    Defines custom admin interface view
     """
 
     list_display = list_display_fn(("organization_user", "organization",))

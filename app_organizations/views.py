@@ -8,9 +8,9 @@ class BaseOrganizationListGetQuerySet(
     def _get_list_queryset(self, model=None):
         organization = self.validate_kwargs()
         if model:
-            return model.objects.filter(organization=organization)
+            return model.objects.filter(organization=organization.id)
         else:
-            return self.model.objects.filter(organization=organization)
+            return self.model.objects.filter(organization=organization.id)
 
     def validate_kwargs(self):
         return self.get_organization()
@@ -21,9 +21,9 @@ class BaseOrganizationRetrieveGetQuerySet(
     def _get_retrieve_queryset(self, model=None):
         organization = self.validate_kwargs()
         if model:
-            return model.objects.filter(organization=organization)
+            return model.objects.filter(organization=organization.id)
         else:
-            return self.model.objects.filter(organization=organization)
+            return self.model.objects.filter(organization=organization.id)
 
     def validate_kwargs(self):
         return self.get_organization()

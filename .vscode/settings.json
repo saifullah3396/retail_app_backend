@@ -35,22 +35,11 @@
         "**/.svn": true,
         "**/CVS": true,
         "**/__pycache__": true,
-        "organizations_auth": true,
-        "app_organizations": false,
-        "cameras": true,
-        "core": false,
         "deepstream_manager": true,
-        "deepstream_servers": true,
         "django-rest-auth": true,
         "django-rest-framework-jwt": true,
         "frontend": true,
         "heat_maps": true,
-        "locations": false,
-        "measurement_frames": true,
-        "media": true,
-        "static": true,
         "templates": true,
-        "user_auth": false,
-        "users": false
     }
 }

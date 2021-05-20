@@ -78,7 +78,6 @@ class OrganizationGroupRetrieveSerializer(serializers.ModelSerializer):
         return data
 
 
-
 class OrganizationGroupUpdateSerializer(serializers.ModelSerializer):
     users = serializers.SerializerMethodField()
 
@@ -122,7 +121,7 @@ class OrganizationGroupUpdateSerializer(serializers.ModelSerializer):
 
 class AddRemoveUserSerializerBase(serializers.ModelSerializer):
     users = serializers.SerializerMethodField()
-    user = serializers.UUIDField(required=True, write_only=True)
+    user = serializers.IntegerField(required=True, write_only=True)
 
     class Meta:
         model = OrganizationGroup

@@ -11,8 +11,8 @@ from core.tests.base import TestsBase
 from core.tests.utils import generate_fake_data
 from users.tests.factories.user_factory import generate_user_factory
 
-NUM_TEST_USERS = 2
-NUM_TEST_ORGS = 2
+NUM_TEST_USERS = 10
+NUM_TEST_ORGS = 10
 
 
 # pylint: disable=line-too-long
@@ -110,7 +110,7 @@ class AppOrganizationsRetrieveUpdateDestroyTests(TestsBase):
             # make sure only the updatable data is updated
             self.assertDictContainsSubset(
                 {
-                    'id': str(query_organization.id),  # unchanged field
+                    'id': query_organization.id,  # unchanged field
                     'name': data['name'],  # changed field
                 },
                 response.data)

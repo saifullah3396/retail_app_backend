@@ -149,6 +149,7 @@ class LocationCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         try:
             validated_data = self._updated_data(validated_data)
+            print(validated_data)
             return super().create(validated_data)
         except IntegrityError as ex:
             raise serializers.ValidationError({"detail": ex.__cause__})
@@ -166,6 +167,7 @@ class OutletLocationCreateSerializer(LocationCreateSerializer):
         }
 
     def _updated_data(self, validated_data):
+        print("CREATE")
         validated_data['outlet'] = self.context['view'].validate_kwargs()
         return validated_data
 

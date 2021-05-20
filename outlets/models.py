@@ -3,7 +3,6 @@ Defines the outlet related models for our application based on
 django-organizations.
 """
 
-import uuid
 
 from django.db import models
 from django.db.models.fields import related
@@ -34,9 +33,6 @@ class Outlet(SafeDeleteModel, AbstractOrganization):
     """
     _safedelete_policy = SOFT_DELETE_CASCADE
 
-    """Unique uuid for each organization."""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
     """Avatar image for each organization."""
     avatar = models.ImageField(
         upload_to='organizations/outlets/avatars', blank=True, null=True)
@@ -64,9 +60,6 @@ class OutletUser(SafeDeleteModel, AbstractOrganizationUser):
         verbose_name = _("outlet user")
         verbose_name_plural = _("outlet users")
         unique_together = ("user", "organization")
-
-    """Unique uuid for each organization user."""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     outlet = AliasField(db_column='organization_id')
 

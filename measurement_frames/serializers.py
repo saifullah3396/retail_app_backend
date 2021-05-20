@@ -7,7 +7,7 @@ from rest_framework import serializers
 from .models import MeasurementFrame
 
 
-class MeasurementFrameDetailSerializerDeepstream(serializers.ModelSerializer):
+class MeasurementFrameDetailSerializerDS(serializers.ModelSerializer):
     """
     Serializer for measurement frame uesd whiled sending its data to the
     deepstream servers.

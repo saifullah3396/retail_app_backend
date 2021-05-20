@@ -6,10 +6,10 @@ from django.contrib import admin
 
 from core.admin import BaseAdmin, list_display_fn, list_filter_fn
 
-from .models import Block, Floor, OutletLocation
+from .models import DSDiagnostics, DSLogEntry, DSServer
 
 
-class OutletLocationAdmin(BaseAdmin):
+class DSServerAdmin(BaseAdmin):
     """
     Defines custom admin interface view
     """
@@ -17,7 +17,7 @@ class OutletLocationAdmin(BaseAdmin):
     list_filter = list_filter_fn(())
 
 
-class FloorAdmin(BaseAdmin):
+class DSDiagnosticsAdmin(BaseAdmin):
     """
     Defines custom admin interface view
     """
@@ -25,7 +25,7 @@ class FloorAdmin(BaseAdmin):
     list_filter = list_filter_fn(())
 
 
-class BlockAdmin(BaseAdmin):
+class DSLogEntryAdmin(BaseAdmin):
     """
     Defines custom admin interface view
     """
@@ -33,6 +33,6 @@ class BlockAdmin(BaseAdmin):
     list_filter = list_filter_fn(())
 
 
-admin.site.register(OutletLocation, OutletLocationAdmin)
-admin.site.register(Floor, FloorAdmin)
-admin.site.register(Block, BlockAdmin)
+admin.site.register(DSServer, DSServerAdmin)
+admin.site.register(DSDiagnostics, DSDiagnosticsAdmin)
+admin.site.register(DSLogEntry, DSLogEntryAdmin)

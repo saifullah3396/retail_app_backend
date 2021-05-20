@@ -3,7 +3,6 @@ Defines the models of this application.
 """
 # pylint: disable=pointless-string-statement
 
-import uuid
 
 from django.db import models
 from django.db.models import Q, UniqueConstraint, When
@@ -20,9 +19,6 @@ class Location(SafeDeleteModel):
     An abstract model of a location
     """
     _safedelete_policy = SOFT_DELETE_CASCADE
-
-    """Unique uuid for each location."""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     """Location name."""
     name = models.CharField(max_length=120)
@@ -59,9 +55,6 @@ class Floor(SafeDeleteModel):
     """
     _safedelete_policy = SOFT_DELETE_CASCADE
 
-    """Unique uuid for each location."""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
     """Floor number."""
     number = models.PositiveIntegerField()
 
@@ -90,9 +83,6 @@ class Block(SafeDeleteModel):
     A model of a single block floor associated with a location
     """
     _safedelete_policy = SOFT_DELETE_CASCADE
-
-    """Unique uuid for each location."""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     """Name number."""
     name = models.CharField(max_length=150)

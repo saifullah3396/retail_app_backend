@@ -13,44 +13,49 @@ class MeasurementFrameListSerializer(serializers.ModelSerializer):
     class Meta:
         model = MeasurementFrame
         fields = ('id', 'name', 'pixel_pose_x',
-                  'pixel_pose_y', 'pixel_pose_theta', 'block')
+                  'pixel_pose_y', 'pixel_pose_theta')
 
 
 class MeasurementFrameCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = MeasurementFrame
-        fields = ('id', 'name', 'pixel_pose_x',
-                  'pixel_pose_y', 'pixel_pose_theta', 'block')
+        fields = (
+            'id',
+            'name',
+            'pixel_pose_x',
+            'pixel_pose_y',
+            'pixel_pose_theta')
         extra_kwargs = {
             'name': {'required': True},
             'pixel_pose_x': {'required': True},
             'pixel_pose_y': {'required': True},
-            'pixel_pose_theta': {'required': True},
-            'block': {'required': True},
+            'pixel_pose_theta': {'required': True}
         }
 
     def create(self, validated_data):
         try:
+            validated_data['block'] = self.context['view'].validate_kwargs()
             return super().create(validated_data)
         except IntegrityError as ex:
             raise serializers.ValidationError({"detail": ex.__cause__})
 
 
-class MeasurementFrameDetailSerializer(serializers.ModelSerializer):
+class MeasurementFrameRetrieveSerializer(serializers.ModelSerializer):
     class Meta:
         model = MeasurementFrame
-        fields = ('id', 'name', 'pixel_pose_x',
-                  'pixel_pose_y', 'pixel_pose_theta', 'block')
+        fields = (
+            'id',
+            'name',
+            'pixel_pose_x',
+            'pixel_pose_y',
+            'pixel_pose_theta')
 
 
 class MeasurementFrameUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = MeasurementFrame
         fields = ('id', 'name', 'pixel_pose_x',
-                  'pixel_pose_y', 'pixel_pose_theta', 'block')
-        extra_kwargs = {
-            'block': {'read_only': True},
-        }
+                  'pixel_pose_y', 'pixel_pose_theta')
 
     def update(self, instance, validated_data):
         try:

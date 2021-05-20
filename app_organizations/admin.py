@@ -5,7 +5,6 @@ Registers the models to the admin interface
 from django.contrib import admin
 from organizations.models import (Organization, OrganizationOwner,
                                   OrganizationUser)
-from safedelete.admin import SafeDeleteAdmin, highlight_deleted
 
 from core.admin import BaseAdmin, list_display_fn, list_filter_fn
 
@@ -15,7 +14,7 @@ from .models import (AppOrganization, AppOrganizationOwner,
 
 class OrganizationGroupAdmin(BaseAdmin):
     """
-    Defines custom user admin interface view
+    Defines custom admin interface view
     """
     list_display = list_display_fn(())
     list_filter = list_filter_fn(())
@@ -23,7 +22,7 @@ class OrganizationGroupAdmin(BaseAdmin):
 
 class AppOrganizationAdmin(BaseAdmin):
     """
-    Defines custom user admin interface view
+    Defines custom admin interface view
     """
     list_display = list_display_fn(())
     list_filter = list_filter_fn(())
@@ -31,14 +30,14 @@ class AppOrganizationAdmin(BaseAdmin):
 
 class AppOrganizationUserAdmin(BaseAdmin):
     """
-    Defines custom user admin interface view
+    Defines custom admin interface view
     """
     list_display = list_display_fn(("user", "organization",))
 
 
 class AppOrganizationOwnerAdmin(BaseAdmin):
     """
-    Defines custom user admin interface view
+    Defines custom admin interface view
     """
 
     list_display = list_display_fn(("organization_user", "organization",))

@@ -17,20 +17,22 @@ class RegistrationSerializer(RegisterSerializer):
     Extends the register serializer to add custom fields.
     """
 
-    def save(self, request):
-        """
-        Extend the adapter to create user from update_or_create method so it
-        goes through safe delete
-        """
-        adapter = get_adapter()
-        self.cleaned_data = self.get_cleaned_data()
-        email = self.cleaned_data.get("email")
-        print('email', email)
-        user, _ = get_user_model().objects.update_or_create(email=email)
-        adapter.save_user(request, user, self)
-        self.custom_signup(request, user)
-        setup_user_email(request, user, [])
-        return user
+    # This is not needed now since user has unique email only if deleted
+    # condition
+
+    # def save(self, request):
+    #     """
+    #     Extend the adapter to create user from update_or_create method so it
+    #     goes through safe delete
+    #     """
+    #     adapter = get_adapter()
+    #     self.cleaned_data = self.get_cleaned_data()
+    #     email = self.cleaned_data.get("email")
+    #     user, _ = get_user_model().objects.update_or_create(email=email)
+    #     adapter.save_user(request, user, self)
+    #     self.custom_signup(request, user)
+    #     setup_user_email(request, user, [])
+    #     return user
 
 # pylint: disable=abstract-method
 

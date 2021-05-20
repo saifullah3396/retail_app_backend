@@ -25,7 +25,7 @@ class BaseOutletListGetQuerySet(
     def validate_kwargs(self):
         organization = super().validate_kwargs()
         outlet = self.get_outlet()
-        if outlet.organization != organization:
+        if outlet.organization.id != organization.id:
             raise exceptions.ValidationError({
                 "outlet": field_not_found_error()
             })
@@ -46,7 +46,7 @@ class BaseOutletRetrieveGetQuerySet(
     def validate_kwargs(self):
         organization = super().validate_kwargs()
         outlet = self.get_outlet()
-        if outlet.organization != organization:
+        if outlet.organization.id != organization.id:
             raise exceptions.ValidationError({
                 "outlet": field_not_found_error()
             })

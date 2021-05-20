@@ -3,7 +3,6 @@ Defines the organization related models for our application based on
 django-organizations.
 """
 
-import uuid
 from enum import Enum
 from importlib import import_module
 
@@ -164,9 +163,6 @@ class AppOrganization(SafeDeleteModel, AbstractOrganization):
     """
     _safedelete_policy = SOFT_DELETE_CASCADE
 
-    """Unique uuid for each organization."""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
     """Avatar image for each organization."""
     avatar = models.ImageField(
         upload_to='organizations/avatars', blank=True, null=True)
@@ -188,9 +184,6 @@ class AppOrganizationUser(SafeDeleteModel, OrganizationPermissionsMixin,
         proxy = False
         verbose_name = _("organization user")
         verbose_name_plural = _("organization users")
-
-    """Unique uuid for each organization user."""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     def __str__(self):
         return '{}'.format(self.user.username)

@@ -26,7 +26,7 @@ class BaseOutletLocationListGetQuerySet(
     def validate_kwargs(self):
         outlet = super().validate_kwargs()
         location = self.get_location()
-        if location.outlet != outlet:
+        if location.outlet.id != outlet.id:
             raise exceptions.ValidationError({
                 "location": field_not_found_error()
             })
@@ -47,7 +47,7 @@ class BaseOutletLocationRetrieveGetQuerySet(
     def validate_kwargs(self):
         outlet = super().validate_kwargs()
         location = self.get_location()
-        if location.outlet != outlet:
+        if location.outlet.id != outlet.id:
             raise exceptions.ValidationError({
                 "location": field_not_found_error()
             })
@@ -67,7 +67,7 @@ class BaseFloorListGetQuerySet(
     def validate_kwargs(self):
         location = super().validate_kwargs()
         floor = self.get_floor()
-        if floor.location != location:
+        if floor.location.id != location.id:
             raise exceptions.ValidationError({
                 "floor": field_not_found_error()
             })
@@ -88,7 +88,7 @@ class BaseFloorRetrieveGetQuerySet(
     def validate_kwargs(self):
         location = super().validate_kwargs()
         floor = self.get_floor()
-        if floor.location != location:
+        if floor.location.id != location.id:
             raise exceptions.ValidationError({
                 "floor": field_not_found_error()
             })
@@ -108,7 +108,7 @@ class BaseBlockListGetQuerySet(
     def validate_kwargs(self):
         floor = super().validate_kwargs()
         block = self.get_block()
-        if block.floor != floor:
+        if block.floor.id != floor.id:
             raise exceptions.ValidationError({
                 "block": field_not_found_error()
             })
@@ -129,7 +129,7 @@ class BaseBlockRetrieveGetQuerySet(
     def validate_kwargs(self):
         floor = super().validate_kwargs()
         block = self.get_block()
-        if block.floor != floor:
+        if block.floor.id != floor.id:
             raise exceptions.ValidationError({
                 "block": field_not_found_error()
             })

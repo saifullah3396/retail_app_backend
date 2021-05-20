@@ -7,11 +7,11 @@ from rest_framework import serializers
 from cameras.models import Camera
 from measurement_frames.models import MeasurementFrame
 from measurement_frames.serializers import \
-    MeasurementFrameDetailSerializerDeepstream
+    MeasurementFrameDetailSerializerDS
 
 
 # pylint: disable=missing-class-docstring
-class CameraDetailSerializerDeepstream(serializers.ModelSerializer):
+class CameraDetailSerializerDS(serializers.ModelSerializer):
     class Meta:
         model = Camera
         fields = '__all__'
@@ -25,7 +25,7 @@ class CameraDetailSerializerDeepstream(serializers.ModelSerializer):
         try:
             measurement_frame = \
                 MeasurementFrame.objects.get(id=camera.measurement_frame.id)
-            return MeasurementFrameDetailSerializerDeepstream(
+            return MeasurementFrameDetailSerializerDS(
                 measurement_frame, context=self.context).data
         except MeasurementFrame.DoesNotExist:
             return None

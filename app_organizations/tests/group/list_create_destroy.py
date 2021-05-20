@@ -20,8 +20,8 @@ from users.tests.factories import user_factory
 
 # get user model
 GROUP_MODEL = OrganizationGroup
-NUM_TEST_USERS = 1
-NUM_TEST_ORGS = 2
+NUM_TEST_USERS = 10
+NUM_TEST_ORGS = 10
 
 
 def generate_fake_group_data():

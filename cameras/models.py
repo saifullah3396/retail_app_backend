@@ -1,32 +1,22 @@
 # pylint: disable=missing-module-docstring
-import uuid
-
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
+from django.db.models import Q, UniqueConstraint
+from safedelete.config import SOFT_DELETE_CASCADE
+from safedelete.models import SafeDeleteModel
 
 
-class Camera(models.Model):
+class Camera(SafeDeleteModel):
     """
     A model of a camera associated with a block.
     """
-
-    """Unique uuid for each camera."""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    _safedelete_policy = SOFT_DELETE_CASCADE
 
     """Camera ip Address."""
     ip_addr = models.CharField(max_length=120)
 
-    """ Coordinates of the camera in image """
+    """ Pixel coordinates of the camera in the map """
     coords = ArrayField(models.IntegerField(default=0), size=2, null=True)
-
-    """ Coordinates of the reference points p0, p1, p2, p3 in frame """
-    point_coords_in_frame = ArrayField(
-        models.IntegerField(default=0), size=8, null=True)
-
-    """ Coordinates of the all the reference points in camera image pixel
-        coordinates """
-    point_coords_in_image = ArrayField(
-        models.IntegerField(default=0), size=8, null=True)
 
     """ Block name with which the camera is associated """
     block = models.ForeignKey(
@@ -34,29 +24,34 @@ class Camera(models.Model):
         on_delete=models.PROTECT,
     )
 
-    """ Server with which the camera is associated """
-    deepstream_server = models.ForeignKey(
-        'deepstream_servers.DeepstreamServer',
-        on_delete=models.PROTECT,
-        null=True
-    )
+    class Meta:
+        """Don't allow non-unique ip addresses for any given block."""
+        constraints = [
+            UniqueConstraint(fields=["ip_addr", "block"], condition=Q(
+                deleted__isnull=True), name='unique_camera_if_not_deleted')
+        ]
 
-    """ Frame with which the camera measurements are taken. """
-    measurement_frame = models.ForeignKey(
-        'measurement_frames.MeasurementFrame',
-        on_delete=models.PROTECT,
-        null=True
-    )
+    # """ Coordinates of the reference points p0, p1, p2, p3 in frame """
+    # point_coords_in_frame = ArrayField(
+    #     models.IntegerField(default=0), size=8, null=True)
+
+    # """ Coordinates of the all the reference points in camera image pixel
+    #     coordinates """
+    # point_coords_in_image = ArrayField(
+    #     models.IntegerField(default=0), size=8, null=True)
+
+    # """ Frame with which the camera measurements are taken. """
+    # measurement_frame = models.ForeignKey(
+    #     'measurement_frames.MeasurementFrame',
+    #     on_delete=models.PROTECT,
+    #     null=True
+    # )
 
     def __str__(self):
         """
         String serializer of the model
         """
-        return "Camera={}, {}, {}, {}".format(
+        return "Camera={}, {}, {}".format(
             self.ip_addr,
             self.coords,
-            self.point_coords_in_frame,
-            self.point_coords_in_image,
-            str(self.deepstream_server),
-            str(self.measurement_frame),
             str(self.block))
